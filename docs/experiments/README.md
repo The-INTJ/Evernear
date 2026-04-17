@@ -22,9 +22,10 @@ Read [FOR_HUMAN_AND_AI_ROADMAP--DOC.md](../../FOR_HUMAN_AND_AI_ROADMAP--DOC.md) 
 
 ## Current experiments
 - [EXP-001: Shared Anchor Substrate Under Live Edits](./EXP-001-shared-anchor-substrate.md)
-- [EXP-002: Matching Normalization and Chapter-Scale Performance](./EXP-002-matching-normalization-and-scale.md)
+- [EXP-002: Live Visible-Range Matching and Rule Normalization](./EXP-002-matching-normalization-and-scale.md)
 - [EXP-003: Lexical Prototype Walkthrough](./EXP-003-lexical-prototype-walkthrough.md)
 - [EXP-004: ProseMirror Prototype Walkthrough](./EXP-004-prosemirror-prototype-walkthrough.md)
+- [EXP-005: Pretext Layout Viability](./EXP-005-pretext-layout-viability.md)
 
 ## Decided
 - Experiments exist to make the expensive unknowns obvious early.

@@ -37,7 +37,7 @@ Read [src/db/README.md](../README.md) first, then [src/shared/domain/README.md](
 - Repository boundaries are worth naming early so storage complexity does not bleed upward.
 
 ## Open
-- Whether matching queries live inside `EntityRepository` or in a dedicated read-service layer.
+- Whether live rule compilation sits beside `EntityRepository` or in a dedicated renderer or shared matching service.
 
 ## Deferred
 - Heavy CQRS-style separation unless the codebase actually needs it.

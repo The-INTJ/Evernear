@@ -15,6 +15,7 @@ Accepted
 Evernear is a desktop-first, local-first writing product whose differentiator is semantic context and multi-panel re-entry flow, not cloud collaboration.
 The project needs a stack that is practical to build, supports strong local workflows, and gives the editor enough room for custom behavior without turning the shell into the main challenge.
 The editor recommendation also has to respect the load-bearing reality that Evernear is really about anchored ranges, derived decorations, and document-adjacent context, not generic rich text.
+Long-document layout and visible-range tracking are still open enough that Pretext deserves an explicit spike before the repo commits too hard to one rendering strategy.
 
 ## Decision
 Use:
@@ -32,6 +33,7 @@ Keep the repo as a single desktop app with strong internal boundaries instead of
 - Runtime boundaries are explicit: `main`, `preload`, `renderer`, `shared`, `db`.
 - We accept Electron overhead in exchange for speed of execution and ecosystem support.
 - We accept ProseMirror's extra upfront schema and plugin ceremony because transaction mapping and decorations better match Evernear's anchored-range problems.
+- We keep long-document layout strategy somewhat open until the Pretext spike says whether it meaningfully changes document-view or viewport-mapping design.
 - We avoid early package extraction until the codebase creates real pressure for it.
 
 ## Decided
@@ -40,6 +42,7 @@ Keep the repo as a single desktop app with strong internal boundaries instead of
 ## Open
 - Exact state-management and migration-tool choices within the baseline.
 - Whether the thin Phase 1 editor spike exposes any ProseMirror-specific pain large enough to reverse this call.
+- Whether Pretext belongs as a document-view helper, a broader layout primitive, or not at all.
 
 ## Deferred
 - Alternative shells or editor foundations unless the chosen stack proves inadequate.

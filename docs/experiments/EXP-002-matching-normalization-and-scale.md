@@ -1,4 +1,4 @@
-# EXP-002: Matching Normalization and Chapter-Scale Performance
+# EXP-002: Live Visible-Range Matching and Rule Normalization
 
 ## Status
 Planned
@@ -12,10 +12,10 @@ Planned
 - [src/renderer/editor/OPEN_QUESTIONS.md](../../src/renderer/editor/OPEN_QUESTIONS.md)
 
 ## Question
-Can matching stay trustworthy and fast when capitalization, possessives, aliases, and long manuscripts all show up at once?
+Can live visible-range matching stay trustworthy and fast while typing and scrolling, without ever precomputing stored document match sets?
 
 ## Why this is load-bearing
-Entity-aware reading falls apart if matching is either too noisy, too brittle, or too slow on real chapters.
+Entity-aware reading falls apart if matching is either too noisy, too brittle, or too slow in the exact moment text is on screen.
 
 ## Working hypothesis
 The practical early pipeline is:
@@ -23,7 +23,10 @@ The practical early pipeline is:
 - normalize text and rules in the same way
 - keep literal and alias rules on a fast path
 - keep regex or exotic rules on a clearly bounded slow path
-- recompute the active document immediately and the wider project in the background
+- compile entity rules when entities change
+- derive the visible text range from current layout state
+- live-calculate matches only for the visible range when highlighting is enabled
+- allow live matching to be disabled while writing
 
 ## Normalization sketch
 ```ts
@@ -55,11 +58,20 @@ function compileRules(rules: NormalizedRule[]) {
   };
 }
 
-function matchDocument(docText: string, compiled: CompiledRules): MatchHit[] {
-  const normalizedDoc = normalizeForMatch(docText);
-  const fastHits = compiled.fastPath.scan(normalizedDoc);
-  const slowHits = compiled.slowPath.flatMap((rule) => runBoundedRegex(rule, normalizedDoc));
+function matchVisibleRange(visibleText: string, compiled: CompiledRules): MatchHit[] {
+  const normalizedText = normalizeForMatch(visibleText);
+  const fastHits = compiled.fastPath.scan(normalizedText);
+  const slowHits = compiled.slowPath.flatMap((rule) => runBoundedRegex(rule, normalizedText));
   return postProcessHits([...fastHits, ...slowHits]);
+}
+
+function deriveVisibleMatches(state: ViewState) {
+  if (!state.highlightingEnabled) {
+    return [];
+  }
+
+  const visibleText = materializeVisibleText(state.visibleRange);
+  return matchVisibleRange(visibleText, state.compiledRules);
 }
 ```
 
@@ -69,18 +81,19 @@ function matchDocument(docText: string, compiled: CompiledRules): MatchHit[] {
   - possessives
   - short aliases that risk false positives
   - duplicate names across contexts
-- Test one active chapter plus a full 200k-word project.
+- Test one long chapter and a few extreme viewport sizes.
 - Compare:
-  - naive regex union
+  - naive regex union over visible text
   - normalized literal or alias index plus bounded regex fallback
-- Record latency and obvious false-positive cases.
+- Record latency while typing, scrolling, toggling highlighting, and switching visible spans.
+- Confirm that no document-level or project-level match table is introduced.
 
 ## Acceptance criteria
-- A normal chapter recompute feels instant enough for typing and rereading.
-- A 200k-word project refresh can happen in the background without feeling hostile.
+- Visible-range recompute feels instant enough for typing and rereading.
+- Disabling highlighting cleanly removes matching work from the writing path.
 - Possessives, capitalization shifts, and aliases are explainable from the rule model.
 - The first implementation path stays simple enough to debug.
 
 ## Notes for later pass
 - If the fast path is good enough, stop there.
-- Do not build search-engine complexity just because large-scale indexing sounds impressive.
+- Do not build precomputed document match tables just because whole-corpus indexing sounds impressive.

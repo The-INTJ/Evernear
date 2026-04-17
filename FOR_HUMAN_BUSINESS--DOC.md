@@ -1,7 +1,7 @@
 # FOR_HUMAN_BUSINESS--DOC
 
 ## Last change
-2026-04-17: restored the load-bearing product risks, linked annotations to the same anchoring problem as slice boundaries, and shifted the editor recommendation toward ProseMirror.
+2026-04-17: clarified entities as match-rule and slice libraries, made matching explicitly live rather than precomputed, and added Pretext as an exploratory layout spike.
 
 ## Current core
 Evernear is a local-first desktop writing environment for complex fiction, especially fantasy.
@@ -15,6 +15,7 @@ The core product loop is:
 
 ## Important structure
 - The product is organized around `Project`, `Document`, `Entity`, `MatchingRule`, `Slice`, `SliceBoundary`, `TextAnchor`, `Annotation`, and `Panel/LayoutState`.
+- An `Entity` owns a list of things that should match in text plus the library of slices those matches should open.
 - `TextAnchor` is the load-bearing idea behind both reusable slice boundaries and direct document annotations.
 - An annotation is a quiet personal note anchored straight to the main document, not a collaborative comment system and not a second-class afterthought.
 - The app is organized around `main`, `preload`, `renderer`, `shared`, and `db` so product ideas map cleanly to runtime boundaries.
@@ -26,7 +27,7 @@ The core product loop is:
 - Open a local project.
 - Create and edit documents.
 - Create entities with matching rules and associate them with slices.
-- Match entities inside story text and render derived highlights.
+- Live-calculate entity matches inside visible story text and render derived highlights when highlighting is enabled.
 - Use hover to open a modal with the slice viewer and click to open a persistent panel.
 - Persist enough local state that the workflow survives closing and reopening the app.
 
@@ -35,14 +36,16 @@ The full annotation surface can land after the central loop proves itself, but i
 ## Major risks
 - Shared anchor healing under live edits could fail in ways that break both slice boundaries and annotations.
 - Too much entity highlighting can make the document harder to read.
-  - This is intentional if one turns on all entities. Grouping, filtering, and contrast controls can keep it useful.
+  - This is intentional if one turns on all entities. Grouping, filtering, contrast controls, and simply turning highlighting off while actively writing can keep it useful.
 - Matching normalization can become either too weak to trust or too aggressive to trust, especially with aliases, capitalization, and possessives.
+- Long-document layout and viewport tracking can become more expensive than the matching itself if the app has to keep asking the DOM where text lives.
 - SQLite-first storage can feel opaque if export and ownership are treated as an afterthought.
 
 ## Future considerations
 - Boundary editing and reusable slice-boundary management.
 - `All Slices` mode, overlap inspection, and merge/link workflows.
 - Annotation style controls built on the same shared anchor substrate.
+- Whether Pretext materially improves long-document layout and visible-range tracking.
 - Better panel persistence and multi-monitor friendliness.
 - Full document view from a slice inside the panel.
 - Shared-slice and co-occurrence graph views later if they prove useful.
@@ -52,6 +55,7 @@ The full annotation surface can land after the central loop proves itself, but i
 - Desktop-first, local-first, single-user-first.
 - The product is story-centric and entity-aware, not a generic notes tool.
 - Entities define meaning, not visuals.
+- Matches are live-calculated from current text when needed, never stored or precomputed as document truth.
 - Highlights are derived, never stored.
 - Modal and panel are different views over the same slice data.
 - The working stack baseline is Electron, React, TypeScript, Vite, ProseMirror as the current editor front-runner, and SQLite.
@@ -60,6 +64,7 @@ The full annotation surface can land after the central loop proves itself, but i
 ## Open
 - How aggressive entity highlighting should be before it becomes visual spam.
   - For the words, an author can group entities. For a document, seeing all linked boundaries can be a toggle.
+- Whether Pretext changes the long-document rendering or document-view strategy enough to reshape the current editor-layout recommendation.
 - What exact project packaging/export format best balances portability and simplicity.
 - How much boundary editing and annotation authoring belong in the first build that proves the product loop.
 

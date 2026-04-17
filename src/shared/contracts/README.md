@@ -25,7 +25,7 @@ Read [src/shared/README.md](../README.md) first, then [src/main/README.md](../..
 ## Contract families
 - Project open, create, and close.
 - Document list, load, and save.
-- Entity list, create, update, delete, and match retrieval.
+- Entity list, create, update, delete, and matching-rule load.
 - Pane and layout load and save.
 - Annotation load and save later.
 - Export and package operations.

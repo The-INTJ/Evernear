@@ -14,6 +14,8 @@ Read [src/renderer/features/README.md](../README.md), then [src/shared/domain/RE
 
 ## Owns
 - Entity creation and editing UI.
+- Editing the list of things an entity should match in text.
+- Editing the slice library an entity should surface when one of those matches is activated.
 - Showing derived highlights inside story text.
 - Hover modal requests and click-to-open panel behavior.
 - Renderer-side management of how entities expose their associated slices.
@@ -24,7 +26,7 @@ Read [src/renderer/features/README.md](../README.md), then [src/shared/domain/RE
 - Slice-boundary persistence or document-view editing.
 
 ## Inputs and outputs
-- Inputs: entities, matching rules, slice associations, derived match results, local interaction state.
+- Inputs: entities, matching rules, slice associations, visible-range derived match results, local interaction state, highlight mode.
 - Outputs: create/edit entity intents, modal requests, panel-open intents, local presentation state.
 
 ## Key relationships
@@ -41,11 +43,14 @@ Read [src/renderer/features/README.md](../README.md), then [src/shared/domain/RE
 
 ## Decided
 - Entities are a first-class feature area, not a helper for hyperlinks.
+- Entity matches are derived live from current text, not precomputed and stored.
 - Hover modal and persistent panel behavior belong in the honest core workflow.
+- Live matching should be disable-able so writing mode can stay visually quiet.
 
 ## Open
 - How match confidence or ambiguity should be presented when matching rules overlap.
 - Whether the first workflow should start with whole-document slices before boundary editing lands.
+- Whether highlighting-off while writing should fully skip matching work or just suppress rendering.
 
 ## Deferred
 - Advanced matching logic beyond the rules needed to prove the concept.

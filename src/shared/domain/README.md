@@ -25,8 +25,8 @@ Read [FOR_HUMAN_CODE--DOC.md](../../../FOR_HUMAN_CODE--DOC.md) first. This folde
 | --- | --- | --- |
 | `Project` | groups one story workspace | local-first, single-user-first |
 | `Document` | holds editable narrative or reference content | story, lore, notes, reference all fit here |
-| `Entity` | defines semantic meaning that can be detected in text | owns matching rules and slice associations; it is not visual |
-| `MatchingRule` | describes how text maps to an entity | can be literal, alias-based, or pattern-based |
+| `Entity` | defines semantic meaning that can be detected in text and open related context | owns a list of matching rules and a library of slices; it is not visual |
+| `MatchingRule` | describes one thing an entity should match in text | can be literal, alias-based, or pattern-based |
 | `TextAnchor` | gives the app a durable way to find a range again after edits | shared substrate for slice boundaries and annotations |
 | `Slice` | references a bounded relevant region, whole document, or later another asset | does not own content |
 | `SliceBoundary` | captures a reusable anchored range inside a document | multiple slices may share one boundary |
@@ -41,6 +41,7 @@ Read [FOR_HUMAN_CODE--DOC.md](../../../FOR_HUMAN_CODE--DOC.md) first. This folde
 ## Key relationships
 - `db/schema` should map to these concepts without distorting the many-to-many `Entity` to `Slice` relationship.
 - `SliceBoundary` and `Annotation` should share the same `TextAnchor` payload shape even if they persist in different tables.
+- Match results are derived live from current text and should not become stored rows.
 - `renderer/features` should consume these names directly rather than invent local synonyms.
 
 ## Decided

@@ -13,8 +13,8 @@ Read [FOR_HUMAN_BUSINESS--DOC.md](../../FOR_HUMAN_BUSINESS--DOC.md) and [FOR_HUM
 ## Core terms
 | Term | Meaning | Notes |
 | --- | --- | --- |
-| `Entity` | first-class semantic definition used to detect and resolve references in text | owns matching rules and slice associations; it is not visual |
-| `MatchingRule` | the rule an entity uses to match text | may be literal, alias-based, or pattern-based |
+| `Entity` | first-class semantic definition used to detect and resolve references in text | owns a list of matching rules and a slice library; it is not visual |
+| `MatchingRule` | one item in an entity's match list | may be literal, alias-based, or pattern-based |
 | `TextAnchor` | durable selector payload for a range inside a document | shared substrate for slice boundaries and annotations |
 | `Slice` | reference to a bounded piece of content | can point to part of a document, a whole document, or later a non-text asset |
 | `SliceBoundary` | reusable anchored range inside a document | multiple slices may share one boundary |
@@ -48,6 +48,7 @@ Read [FOR_HUMAN_BUSINESS--DOC.md](../../FOR_HUMAN_BUSINESS--DOC.md) and [FOR_HUM
 
 ## Key principles
 - Entities define meaning, not visuals.
+- Matches are live-derived, never precomputed as stored document truth.
 - Slices define context, not ownership.
 - Boundaries are reusable, not implicit.
 - Slice boundaries and annotations share the same anchor substrate.

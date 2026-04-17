@@ -17,9 +17,13 @@ It should name proof, sequence, and exit criteria, not pretend a committee exist
 ## Load-bearing ideas
 - `TextAnchor` healing under live edits.
   - This serves both reusable slice boundaries and direct document annotations.
-- Matching normalization plus performance at chapter scale and project scale.
+- Live visible-range matching.
+  - Matches are derived on demand from current text, never precomputed as document truth.
+- Matching normalization plus performance while typing and scrolling.
 - Editor-host fit.
   - Lexical stays worth a gut-check, but ProseMirror is the current front-runner because its transaction and decoration model already speaks the language Evernear needs.
+- Pretext layout fit.
+  - It may help solve long-document layout and visible-range mapping before the repo commits too hard to a document-view strategy.
 - Document persistence.
   - Snapshot writes plus plain-text projection should be proven early so the editor host does not quietly dictate the storage model later.
 
@@ -42,7 +46,8 @@ Validation criteria:
 Before the honest product loop:
 
 - spike shared anchor healing for slice boundaries and annotations
-- spike matching normalization and chapter-scale performance
+- spike live visible-range matching, rule normalization, and invalidation while typing
+- spike Pretext as a possible long-document layout and visible-range mapping helper
 - gut-check Lexical versus ProseMirror with pseudo-build walkthroughs and a thin follow-up prototype if needed
 - prove the document snapshot model round-trips cleanly through SQLite
 
@@ -50,6 +55,9 @@ Validation criteria:
 
 - insert, delete, split, and join edits do not make shared anchors feel obviously fragile
 - matching handles capitalization, possessives, and aliases without collapsing trust
+- visible-range matching stays responsive while typing and scrolling, with no need for precomputed document match tables
+- if highlighting is disabled, the typing path stays free of unnecessary match work
+- it becomes clear whether Pretext helps enough to influence long-document layout design
 - one editor host is clearly less accidental work for Evernear
 - document snapshots persist and reload without losing structure or corrupting plain-text projection
 
@@ -139,4 +147,6 @@ Validation criteria:
 ## Current recommendation
 - Keep ProseMirror as the current editor front-runner.
 - Keep the shared anchor problem load-bearing and explicit.
+- Do not precompute or persist document match sets.
+- Explore Pretext before locking the long-document layout strategy.
 - Do not let a "working" editor shell outrun the proof needed for anchors, matching, and persistence.

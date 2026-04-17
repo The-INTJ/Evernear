@@ -16,7 +16,8 @@ The most expensive rewrite risks in Evernear are not shell setup risks.
 They are:
 
 - anchored ranges surviving live edits
-- matching normalization and performance at realistic manuscript scale
+- live visible-range matching, rule normalization, and invalidation while typing
+- understanding whether Pretext changes the long-document layout picture
 - picking an editor host that does not force accidental infrastructure work
 - keeping document persistence simple enough to trust
 
@@ -28,7 +29,8 @@ Phase 2 is gated by Phase 1 proof work.
 Before the foundational shell is treated as settled, the repo should have current experiment records for:
 
 - shared anchor healing for slice boundaries and annotations
-- matching normalization and performance
+- live visible-range matching and rule normalization
+- Pretext layout viability
 - editor-host fit
 - document snapshot round-tripping
 

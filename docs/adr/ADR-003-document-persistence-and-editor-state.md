@@ -20,7 +20,7 @@ Evernear is currently single-user-first and local-first.
 It needs:
 
 - reliable document round-tripping
-- a plain-text projection for matching and export helpers
+- a plain-text projection for export and other non-editor text utilities
 - clean separation between persisted truth and transient editor UI state
 - room for slice boundaries and annotations to live outside the editor's ephemeral runtime objects
 
@@ -34,7 +34,7 @@ The working row shape is:
 - `contentFormat`: identifies the editor schema family
 - `contentSchemaVersion`: identifies the stored snapshot version
 - `contentJson`: stores the canonical structured document snapshot
-- `plainText`: stores the denormalized text projection used by matching, search, and export helpers
+- `plainText`: stores the denormalized text projection used by search, export, and other non-editor helpers
 
 Do not persist:
 
@@ -52,7 +52,7 @@ They persist through shared `TextAnchor` payloads that can be mapped forward dur
 ## Consequences
 - The storage model stays understandable and debuggable.
 - The editor host can be swapped only through an explicit migration, which is acceptable because `contentFormat` and `contentSchemaVersion` make that blast radius visible.
-- Matching and export helpers can work from `plainText` without having to parse editor internals every time.
+- Export and other non-editor helpers can work from `plainText` without having to parse editor internals every time.
 - Collaboration-oriented storage patterns are deliberately deferred.
 
 ## Decided
