@@ -26,7 +26,7 @@ Read [src/renderer/README.md](../../README.md) and [FOR_HUMAN_BUSINESS--DOC.md](
 - Outputs: panel open, close, pin, and document-view navigation actions, plus layout updates.
 
 ## Key relationships
-- Receives intents from `entities`, `documents`, and later `annotations`.
+- Receives intents from `entities`, `documents`, and `annotations`.
 - Persists layout through contracts backed by `db`.
 - Should stay simpler than a full IDE docking framework until the core flow is proven.
 - Hosts the persistent panel view for slices and the deeper document view when needed.

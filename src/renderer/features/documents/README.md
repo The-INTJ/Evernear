@@ -17,7 +17,7 @@ Read [src/renderer/features/README.md](../README.md), then [src/shared/domain/RE
 - Renderer-side handling of active document context.
 
 ## Does not own
-- Lexical editor internals.
+- Editor internals.
 - Canonical storage schema.
 - Entity matching rules or slice-boundary definitions.
 

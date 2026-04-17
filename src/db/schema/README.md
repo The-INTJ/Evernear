@@ -24,10 +24,10 @@ Read [src/db/README.md](../README.md) first, then [src/shared/domain/README.md](
 | Area | Likely tables | Notes |
 | --- | --- | --- |
 | project | `project_meta`, `project_preferences` | small, stable metadata |
-| documents | `documents` | exact content storage shape still open |
+| documents | `documents` | stores editor snapshot JSON plus plain-text projection |
 | entities | `entities`, `matching_rules`, `entity_slices` | core semantic model plus many-to-many slice links |
-| slices | `slices`, `slice_boundaries` | slice references plus reusable bounds |
-| annotations | `annotations` | lower urgency than entities |
+| slices | `slices`, `slice_boundaries` | slice references plus reusable anchored bounds |
+| annotations | `annotations` | same anchor payload shape as `slice_boundaries`, quieter UI meaning |
 | workspace | `panel_layouts`, `workspace_state` | local persistence for flow |
 
 Highlights are derived from matching results and should not become their own stored table family.
@@ -40,8 +40,7 @@ Highlights are derived from matching results and should not become their own sto
 - The schema will track product concepts directly enough that the app remains understandable.
 
 ## Open
-- Exact document content representation.
-- Exact slice-boundary columns and update strategy.
+- Exact anchor payload column split and whether any selector fields should be broken out for indexing.
 - Exact foreign-key and cascade policy.
 
 ## Deferred

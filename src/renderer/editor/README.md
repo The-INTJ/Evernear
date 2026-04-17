@@ -12,9 +12,10 @@ Read [src/renderer/README.md](../README.md) first. Then read [src/shared/domain/
 - [src/shared/domain/README.md](../../shared/domain/README.md)
 
 ## Owns
-- The Lexical host setup.
+- The editor host setup.
 - Rendering and interaction hooks for derived highlights.
 - Selection, hover, click, and document-view boundary affordances inside the writing surface.
+- The editor-local mapping and decoration path for shared anchors.
 
 ## Does not own
 - Canonical entity data.
@@ -31,19 +32,21 @@ Read [src/renderer/README.md](../README.md) first. Then read [src/shared/domain/
 - Must stay separable from persistence and OS concerns.
 
 ## Likely future code here
-- `lexical-host`
+- `prosemirror-host`
 - `decorations`
+- `transaction-bridge`
 - `interaction-handlers`
 - `selection-anchor` helpers
 - `boundary-handle` helpers for document view
 
 ## Decided
-- Lexical is the editor foundation.
+- ProseMirror is the current editor-host recommendation.
 - Semantic behavior should layer onto the editor rather than redefine the whole app around editor internals.
+- Derived highlights and quiet annotation underlines should ride on editor decorations, not stored document marks.
 
 ## Open
-- Whether derived highlights are pure decorations, plugin state, or a mixed approach.
-- How far custom node work should go before the core workflow is proven.
+- The minimum prose-first schema needed before formatting ambitions start to sprawl.
+- How far widget or node-view work should go before the core workflow is proven.
 
 ## Deferred
 - Rich formatting ambitions that do not directly serve writing and re-entry.

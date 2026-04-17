@@ -27,9 +27,10 @@ Read [FOR_HUMAN_CODE--DOC.md](../../../FOR_HUMAN_CODE--DOC.md) first. This folde
 | `Document` | holds editable narrative or reference content | story, lore, notes, reference all fit here |
 | `Entity` | defines semantic meaning that can be detected in text | owns matching rules and slice associations; it is not visual |
 | `MatchingRule` | describes how text maps to an entity | can be literal, alias-based, or pattern-based |
+| `TextAnchor` | gives the app a durable way to find a range again after edits | shared substrate for slice boundaries and annotations |
 | `Slice` | references a bounded relevant region, whole document, or later another asset | does not own content |
-| `SliceBoundary` | captures reusable start and end positions inside a document | multiple slices may share one boundary |
-| `Annotation` | captures low-noise personal notes | not collaborative review comments |
+| `SliceBoundary` | captures a reusable anchored range inside a document | multiple slices may share one boundary |
+| `Annotation` | captures low-noise personal notes | direct document anchors, not collaborative review comments |
 | `Highlight` | provides the visual effect of a match in text | derived, never stored |
 | `SliceViewer` | shows the slices associated with an entity | shared by modal and panel surfaces |
 | `Modal` | handles temporary hover preview | disappears on mouse exit |
@@ -39,6 +40,7 @@ Read [FOR_HUMAN_CODE--DOC.md](../../../FOR_HUMAN_CODE--DOC.md) first. This folde
 
 ## Key relationships
 - `db/schema` should map to these concepts without distorting the many-to-many `Entity` to `Slice` relationship.
+- `SliceBoundary` and `Annotation` should share the same `TextAnchor` payload shape even if they persist in different tables.
 - `renderer/features` should consume these names directly rather than invent local synonyms.
 
 ## Decided

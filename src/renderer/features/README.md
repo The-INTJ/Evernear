@@ -25,7 +25,7 @@ Read [src/renderer/README.md](../README.md) first. This folder groups user-facin
 - `documents`: listing, opening, and organizing writing material.
 - `entities`: creating and using semantic context.
 - `panes`: persistent panel, slice-viewer, and document-view behavior.
-- `annotations`: low-noise note capture.
+- `annotations`: low-noise note capture built on the same anchor substrate as slice boundaries.
 
 ## Decided
 - Feature folders exist to make the product shape readable early, not to force premature micro-architecture.

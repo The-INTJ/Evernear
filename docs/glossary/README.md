@@ -15,8 +15,10 @@ Read [FOR_HUMAN_BUSINESS--DOC.md](../../FOR_HUMAN_BUSINESS--DOC.md) and [FOR_HUM
 | --- | --- | --- |
 | `Entity` | first-class semantic definition used to detect and resolve references in text | owns matching rules and slice associations; it is not visual |
 | `MatchingRule` | the rule an entity uses to match text | may be literal, alias-based, or pattern-based |
+| `TextAnchor` | durable selector payload for a range inside a document | shared substrate for slice boundaries and annotations |
 | `Slice` | reference to a bounded piece of content | can point to part of a document, a whole document, or later a non-text asset |
-| `SliceBoundary` | reusable start/end definition inside a document | multiple slices may share one boundary |
+| `SliceBoundary` | reusable anchored range inside a document | multiple slices may share one boundary |
+| `Annotation` | low-noise personal note anchored directly to the main document | conceptually a direct anchored span, not a collaborative comment thread |
 | `Highlight` | derived visual effect produced when a matching rule hits text | computed, never stored |
 
 ## UI surfaces
@@ -30,6 +32,7 @@ Read [FOR_HUMAN_BUSINESS--DOC.md](../../FOR_HUMAN_BUSINESS--DOC.md) and [FOR_HUM
 ## Boundary language
 | Term | Meaning | Notes |
 | --- | --- | --- |
+| `AnchorHealing` | process that maps or re-resolves a `TextAnchor` after edits | mapping first, quote or context repair second |
 | `VerticalBoundaries` | subtle left/right indicators for a slice's horizontal extent | persist while viewing a slice |
 | `HorizontalBoundaries` | prominent top/bottom indicators for slice start and end | define exact slice limits |
 | `BoundaryEditing` | changing a slice boundary by dragging handles or typing within the slice | edits inside bounds auto-expand the boundary |
@@ -47,5 +50,6 @@ Read [FOR_HUMAN_BUSINESS--DOC.md](../../FOR_HUMAN_BUSINESS--DOC.md) and [FOR_HUM
 - Entities define meaning, not visuals.
 - Slices define context, not ownership.
 - Boundaries are reusable, not implicit.
+- Slice boundaries and annotations share the same anchor substrate.
 - Highlights are derived, never stored.
 - Modal and panel are different views over the same underlying data.
