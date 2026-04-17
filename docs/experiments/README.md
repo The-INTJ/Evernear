@@ -21,14 +21,26 @@ Read [FOR_HUMAN_AND_AI_ROADMAP--DOC.md](../../FOR_HUMAN_AND_AI_ROADMAP--DOC.md) 
 - Routine implementation notes that are not rewrite-risk material.
 
 ## Current experiments
+[RESOLVE]
+- [EXP-001: Shared Anchor Substrate Under Live Edits](./EXP-001-shared-anchor-substrate.md) — Planned
+- [EXP-002: Matching Normalization and Chapter-Scale Performance](./EXP-002-matching-normalization-and-scale.md) — Planned
+- [EXP-003: Lexical Prototype Walkthrough](./EXP-003-lexical-prototype-walkthrough.md) — Resolved, Lexical not selected
+- [EXP-004: ProseMirror Prototype Walkthrough](./EXP-004-prosemirror-prototype-walkthrough.md) — Resolved, ProseMirror selected
+- [EXP-005: Event Log and Checkpoint Replay](./EXP-005-event-log-and-checkpoint-replay.md) — Planned
 - [EXP-001: Shared Anchor Substrate Under Live Edits](./EXP-001-shared-anchor-substrate.md)
 - [EXP-002: Live Visible-Range Matching and Rule Normalization](./EXP-002-matching-normalization-and-scale.md)
 - [EXP-003: Lexical Prototype Walkthrough](./EXP-003-lexical-prototype-walkthrough.md)
 - [EXP-004: ProseMirror Prototype Walkthrough](./EXP-004-prosemirror-prototype-walkthrough.md)
 - [EXP-005: Pretext Layout Viability](./EXP-005-pretext-layout-viability.md)
 
+## Conventions
+- Each experiment uses `EXP-NNN-<slug>` and a `Status` of `Planned`, `Running`, `Resolved`, or `Abandoned`.
+- Resolved experiments stay here indefinitely. They are the memory of why the project did not pick the other thing.
+- Experiments that resolve should produce or update an ADR, then link to it.
+
 ## Decided
 - Experiments exist to make the expensive unknowns obvious early.
+- Resolved experiments remain in the repo rather than being deleted.
 
 ## Open
 - Which acceptance thresholds should become numeric versus descriptive after the first runnable spikes.

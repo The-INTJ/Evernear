@@ -1,7 +1,7 @@
 # EXP-004: ProseMirror Prototype Walkthrough
 
 ## Status
-Planned
+Resolved — ProseMirror selected
 
 ## Date
 2026-04-17
@@ -82,3 +82,11 @@ const view = new EditorView(host, {
 
 ## Provisional verdict
 ProseMirror is the better fit for Evernear because the core product problems already look like ProseMirror problems: transactions, mapped ranges, decorations, and editor state that can stay honest next to external domain logic.
+
+## Result
+Resolved in favor of ProseMirror. The walkthrough confirmed that transactions, `Mapping`, `Decoration`, and plugin state each match a load-bearing Evernear concern directly rather than being worked around. `Step` additionally gives the history layer in [ADR-006](../adr/ADR-006-event-sourced-document-and-metadata-history.md) a clean primitive to build on.
+
+## Follow-up
+- [ADR-005](../adr/ADR-005-editor-foundation-locked-to-prosemirror.md) locks ProseMirror in as the editor foundation.
+- [ADR-006](../adr/ADR-006-event-sourced-document-and-metadata-history.md) assumes `Step` as its document-content history primitive.
+- Remaining open question at the seam: raw ProseMirror versus a TipTap-style wrapper. That is tracked inside ADR-005 rather than here.
