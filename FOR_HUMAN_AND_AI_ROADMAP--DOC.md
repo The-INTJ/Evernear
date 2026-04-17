@@ -1,7 +1,7 @@
 # FOR_HUMAN_AND_AI_ROADMAP--DOC
 
 ## Last change
-2026-04-17: carried forward the phased plan from `Initial_Guide.md` using the repo's current vocabulary and explicitly called out the load-bearing proof gates.
+2026-04-17: aligned the phased plan with the locked ProseMirror decision and added event-log plus checkpoint replay as a Phase 1 proof gate.
 
 ## Why this exists
 This is the shared execution map for one human decision-maker and repeated AI implementation passes.
@@ -20,12 +20,14 @@ It should name proof, sequence, and exit criteria, not pretend a committee exist
 - Live visible-range matching.
   - Matches are derived on demand from current text, never precomputed as document truth.
 - Matching normalization plus performance while typing and scrolling.
-- Editor-host fit.
-  - Lexical stays worth a gut-check, but ProseMirror is the current front-runner because its transaction and decoration model already speaks the language Evernear needs.
+- Event-log and checkpoint replay.
+  - History must stay fast and correct enough that replay, rebuild, and restore remain trustworthy.
 - Pretext layout fit.
   - It may help solve long-document layout and visible-range mapping before the repo commits too hard to a document-view strategy.
 - Document persistence.
   - Snapshot writes plus plain-text projection should be proven early so the editor host does not quietly dictate the storage model later.
+
+ProseMirror editor-host fit is already resolved by EXP-003, EXP-004, and ADR-005. Phase 1 no longer needs to reopen that decision.
 
 ## Phase 0: Documentation spine
 Before major app code:
@@ -47,8 +49,8 @@ Before the honest product loop:
 
 - spike shared anchor healing for slice boundaries and annotations
 - spike live visible-range matching, rule normalization, and invalidation while typing
+- spike event-log and checkpoint replay with projection rebuild checks
 - spike Pretext as a possible long-document layout and visible-range mapping helper
-- gut-check Lexical versus ProseMirror with pseudo-build walkthroughs and a thin follow-up prototype if needed
 - prove the document snapshot model round-trips cleanly through SQLite
 
 Validation criteria:
@@ -57,8 +59,8 @@ Validation criteria:
 - matching handles capitalization, possessives, and aliases without collapsing trust
 - visible-range matching stays responsive while typing and scrolling, with no need for precomputed document match tables
 - if highlighting is disabled, the typing path stays free of unnecessary match work
+- event-log writes stay fast enough at typing pace, historical opens stay acceptable, and rebuilds match live projections exactly
 - it becomes clear whether Pretext helps enough to influence long-document layout design
-- one editor host is clearly less accidental work for Evernear
 - document snapshots persist and reload without losing structure or corrupting plain-text projection
 
 Phase 2 is blocked until these pass well enough to trust.
@@ -67,7 +69,7 @@ Phase 2 is blocked until these pass well enough to trust.
 Prove the technical baseline:
 
 - Electron, React, TypeScript, and Vite running cleanly
-- chosen editor host integrated
+- the chosen editor foundation integrated
 - SQLite integrated
 - local project opening and saving working
 - a small preload boundary defined and working
@@ -75,7 +77,7 @@ Prove the technical baseline:
 Validation criteria:
 
 - a local project opens, loads a document snapshot, and saves it back cleanly
-- the main/preload/renderer boundary stays typed and narrow
+- the main, preload, and renderer boundary stays typed and narrow
 - the editor host does not force architecture shortcuts already rejected in Phase 1
 
 ## Phase 3: Truthful core loop
@@ -129,11 +131,13 @@ Only after the core flows feel right:
 - better panel persistence
 - stronger export and package behavior
 - detachable windows or multi-monitor behavior only if justified by actual use
+- broaden history from restore-first into checkpoints and timeline surfaces
 
 Validation criteria:
 
 - reopening a project restores useful context instead of a blank shell
 - export and package behavior make author ownership feel real, not promised
+- history feels durable enough that restore and replay can be trusted
 
 ## Later or optional
 - images or non-document targets
@@ -145,8 +149,8 @@ Validation criteria:
   - not the direction here
 
 ## Current recommendation
-- Keep ProseMirror as the current editor front-runner.
+- Keep ProseMirror as the editor foundation.
 - Keep the shared anchor problem load-bearing and explicit.
 - Do not precompute or persist document match sets.
 - Explore Pretext before locking the long-document layout strategy.
-- Do not let a "working" editor shell outrun the proof needed for anchors, matching, and persistence.
+- Do not let a "working" editor shell outrun the proof needed for anchors, matching, persistence, and history replay.

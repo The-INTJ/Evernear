@@ -1,4 +1,4 @@
-# EXP-005: Pretext Layout Viability
+# EXP-006: Pretext Layout Viability
 
 ## Status
 Planned

@@ -1,7 +1,7 @@
 # FOR_HUMAN_BUSINESS--DOC
 
 ## Last change
-[RESOLVE]
+2026-04-17: cleaned the merged planning pass, aligned the history promise with the actual MVP architecture, and removed stale editor-choice language.
 2026-04-17: clarified entities as match-rule and slice libraries, made matching explicitly live rather than precomputed, and added Pretext as an exploratory layout spike.
 2026-04-17: locked ProseMirror in as the editor foundation and added event-sourced history as part of the product's ownership and re-entry promises.
 
@@ -15,7 +15,7 @@ The core product loop is:
 - preview related slices without leaving flow
 - open a persistent panel for deeper reference when needed
 
-A quieter but foundational promise supports the loop: a writer's work is never lost or flattened. Every prose change, entity definition, matching rule, slice, and boundary is captured in an append-only history that the writer can scrub back through.
+A quieter but foundational promise supports the loop: a writer's work is never lost or flattened. Every prose change, entity definition, matching rule, slice, and boundary is captured in append-only history that can later support a unified timeline.
 
 ## Important structure
 - The product is organized around `Project`, `Document`, `Entity`, `MatchingRule`, `Slice`, `SliceBoundary`, `TextAnchor`, `Annotation`, and `Panel/LayoutState`.
@@ -24,9 +24,9 @@ A quieter but foundational promise supports the loop: a writer's work is never l
 - An annotation is a quiet personal note anchored straight to the main document, not a collaborative comment system and not a second-class afterthought.
 - The app is organized around `main`, `preload`, `renderer`, `shared`, and `db` so product ideas map cleanly to runtime boundaries.
 - The repo is intentionally doc-only right now. Each future code folder contains markdown that explains what will eventually live there and what broader docs to read first.
-- SQLite is the current canonical project store, with explicit author-ownership protections through export/package support that carries history, not just current state.
+- SQLite is the canonical project store, with explicit author-ownership protections through export and package support that carries history, not just current state.
 - Highlights are derived from entity matches and should not become stored records.
-- History is event-sourced: an append-only event log plus the ProseMirror step log are the canonical record; the tables a writer's queries hit are rebuildable projections.
+- History is event-sourced: an append-only domain event log plus the ProseMirror step log are the canonical record; the tables writers query are rebuildable projections.
 
 ## Truthful MVP
 - Open a local project.
@@ -35,30 +35,27 @@ A quieter but foundational promise supports the loop: a writer's work is never l
 - Live-calculate entity matches inside visible story text and render derived highlights when highlighting is enabled.
 - Use hover to open a modal with the slice viewer and click to open a persistent panel.
 - Persist enough local state that the workflow survives closing and reopening the app.
-- Capture history from day one — even if the visible UI for it is only a simple restore-previous-version action immediately after MVP.
+- Capture history from day one, even if the first visible surface is only a simple restore-previous-version action after MVP.
 
 The full annotation surface can land after the central loop proves itself, but its design cannot wait because it rides on the same anchoring substrate as slice boundaries. The full timeline UI can land after the truthful MVP, but the history plumbing cannot, because retrofitting it would mean rewriting the write path.
 
 ## Major risks
 - Shared anchor healing under live edits could fail in ways that break both slice boundaries and annotations.
 - Too much entity highlighting can make the document harder to read.
-  - This is intentional if one turns on all entities. Grouping, filtering, contrast controls, and simply turning highlighting off while actively writing can keep it useful.
 - Matching normalization can become either too weak to trust or too aggressive to trust, especially with aliases, capitalization, and possessives.
-[RESOLVE]
 - Long-document layout and viewport tracking can become more expensive than the matching itself if the app has to keep asking the DOM where text lives.
-- SQLite-first storage can feel opaque if export and ownership are treated as an afterthought.
 - SQLite-first storage can feel opaque if export and ownership are treated as an afterthought, and history doubles what export must carry.
 - Event-sourced history pays off only if every mutation writes through the log; any backdoor around it silently corrupts the guarantee.
 
 ## Future considerations
 - Boundary editing and reusable slice-boundary management.
-- `All Slices` mode, overlap inspection, and merge/link workflows.
+- `All Slices` mode, overlap inspection, and merge or link workflows.
 - Annotation style controls built on the same shared anchor substrate.
 - Whether Pretext materially improves long-document layout and visible-range tracking.
 - Better panel persistence and multi-monitor friendliness.
 - Full document view from a slice inside the panel.
 - Shared-slice and co-occurrence graph views later if they prove useful.
-- Strong project export/import that carries history so the app remains respectful of author ownership.
+- Strong project export and import that carries history so the app remains respectful of author ownership.
 - A writer-facing timeline that unifies prose edits and metadata changes.
 - Named checkpoints such as "before Chapter 3 rewrite."
 
@@ -70,17 +67,15 @@ The full annotation surface can land after the central loop proves itself, but i
 - Highlights are derived, never stored.
 - Modal and panel are different views over the same slice data.
 - The working stack baseline is Electron, React, TypeScript, Vite, ProseMirror, and SQLite.
-- History is event-sourced. Writers get time travel over prose and metadata on the same timeline.
+- History is event-sourced. Writers eventually get time travel over prose and metadata on the same timeline.
+- The first visible history surface can be a minimal restore-previous-version action; the broader timeline comes later.
 - Merge, conflict resolution, and collaboration are permanently out of scope.
 - The repo should show a real future-ish app structure now, even before code exists.
 
 ## Open
 - How aggressive entity highlighting should be before it becomes visual spam.
-  - For the words, an author can group entities. For a document, seeing all linked boundaries can be a toggle.
-  [RESOLVE]
-- What exact project packaging/export format best balances portability and simplicity when history must travel with the project.
-- Whether Pretext changes the long-document rendering or document-view strategy enough to reshape the current editor-layout recommendation.
-- What exact project packaging/export format best balances portability and simplicity.
+- What exact project packaging and export format best balances portability and simplicity when history must travel with the project.
+- Whether Pretext changes the long-document rendering or document-view strategy enough to reshape the current layout recommendation.
 - How much boundary editing and annotation authoring belong in the first build that proves the product loop.
 - How much history UI ships with the truthful MVP beyond the underlying storage.
 
@@ -90,5 +85,4 @@ The full annotation surface can land after the central loop proves itself, but i
 - Plugin ecosystems.
 - Mobile.
 - AI-assisted authoring as a core product identity.
-  - We will never do this.
 - Branching as a visible product feature.

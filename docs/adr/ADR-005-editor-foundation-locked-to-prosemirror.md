@@ -14,19 +14,19 @@ Accepted
 - [EXP-004](../experiments/EXP-004-prosemirror-prototype-walkthrough.md)
 
 ## Context
-ADR-001 named ProseMirror as the current front-runner and left the choice open pending the walkthroughs captured in EXP-003 and EXP-004. Those walkthroughs showed that ProseMirror's transactions, `Mapping`, and `Decoration` model line up directly with Evernear's core problems — anchor healing, derived highlights, boundary editing, and a history layer that can be built on `Step`. Lexical would push the same work into bespoke infrastructure around the editor rather than through primitives inside it.
+ADR-001 left the editor choice open pending the walkthroughs captured in EXP-003 and EXP-004. Those walkthroughs showed that ProseMirror's transactions, `Mapping`, and `Decoration` model line up directly with Evernear's core problems: anchor healing, derived highlights, boundary editing, and a history layer that can be built on `Step`. Lexical would push the same work into bespoke infrastructure around the editor rather than through primitives inside it.
 
-ADR-006 makes a history subsystem that rides on ProseMirror `Step` records a first-class concern, which makes "front-runner" language no longer honest. The editor choice has to be a floor that later decisions can stand on.
+ADR-006 makes a history subsystem that rides on ProseMirror `Step` records a first-class concern, which means the editor choice has to be a floor that later decisions can stand on rather than a soft preference.
 
 ## Decision
 ProseMirror is the editor foundation for Evernear. All planning and implementation passes should treat it as assumed rather than pending. Lexical is rejected. The question is closed unless a concrete ProseMirror-specific blocker surfaces.
 
 ## Consequences
-- Planning docs and code-facing READMEs stop using front-runner language for the editor.
+- Planning docs and code-facing READMEs stop treating the editor choice as tentative.
 - Anchor healing under edits rides on ProseMirror transaction `Mapping`.
 - Derived entity highlights and quiet annotation underlines are ProseMirror `Decoration` objects.
 - The history layer in ADR-006 can assume `Step` as a stable primitive.
-- The React seam question — raw ProseMirror versus a TipTap-style wrapper — lives inside this decision rather than as a cross-cutting open question.
+- The React seam question - raw ProseMirror versus a TipTap-style wrapper - lives inside this decision rather than as a cross-cutting open question.
 
 ## Decided
 - ProseMirror is the editor foundation.

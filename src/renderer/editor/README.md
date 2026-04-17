@@ -24,7 +24,7 @@ Read [src/renderer/README.md](../README.md) first. Then read [src/shared/domain/
 
 ## Inputs and outputs
 - Inputs: document content, derived highlight results, active slice boundaries, active interaction state.
-- Outputs: edit events, hover/click events, selection anchors, boundary-edit gestures, display-ready decorations.
+- Outputs: edit events, hover and click events, selection anchors, boundary-edit gestures, display-ready decorations.
 
 ## Key relationships
 - Receives domain results from feature or shared layers.
@@ -40,9 +40,10 @@ Read [src/renderer/README.md](../README.md) first. Then read [src/shared/domain/
 - `boundary-handle` helpers for document view
 
 ## Decided
-- ProseMirror is the current editor-host recommendation.
+- ProseMirror is the editor foundation.
 - Semantic behavior should layer onto the editor rather than redefine the whole app around editor internals.
 - Derived highlights and quiet annotation underlines should ride on editor decorations, not stored document marks.
+- `Step` and `Mapping` are the editor-side primitives that feed document history and anchor migration.
 
 ## Open
 - The minimum prose-first schema needed before formatting ambitions start to sprawl.

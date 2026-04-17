@@ -18,14 +18,14 @@ Read [src/db/README.md](../README.md) first, then [ADR-006](../../../docs/adr/AD
 - Invariants that keep projections consistent with the logs under normal writes.
 
 ## Does not own
-- Append-only log storage itself — that lives in `schema` and `repositories`.
-- Domain vocabulary — that lives in `shared/domain`.
+- Append-only log storage itself - that lives in `schema` and `repositories`.
+- Domain vocabulary - that lives in `shared/domain`.
 - Renderer-side view models.
 
 ## Core idea
-Projections are deterministic functions of the event log plus the document step log plus document checkpoints. Mutations always commit as append-then-project inside a single SQLite transaction. If a projection drifts or its shape changes, drop it and rebuild from the logs.
+Projections are deterministic functions of the event log plus the document step log plus document checkpoints. Mutations commit as append-then-project inside a single SQLite transaction. If a projection drifts or its shape changes, drop it and rebuild from the logs.
 
-Document current-state follows the same rule: the `documents` row is a head-of-history view that equals the nearest checkpoint advanced by all subsequent steps.
+Document current-state follows the same rule: the `documents` row is the head current-state projection for a document, while `document_checkpoints` stores historical replay bases advanced by later steps.
 
 ## Likely future code here
 - `projection-runner`
@@ -33,7 +33,7 @@ Document current-state follows the same rule: the `documents` row is a head-of-h
 - `slice-projection`
 - `annotation-projection`
 - `boundary-projection`
-- `document-projection` — nearest checkpoint plus forward replay
+- `document-projection` - nearest checkpoint plus forward replay
 - `workspace-projection`
 
 ## Key relationships
@@ -45,11 +45,12 @@ Document current-state follows the same rule: the `documents` row is a head-of-h
 - The logs and checkpoints are canonical; current-state tables are derived.
 - Mutations write log and projection atomically within one SQLite transaction.
 - Projections must be rebuildable from scratch.
+- MVP projection maintenance runs inline in the write path.
 
 ## Open
-- Whether projections run inline inside the write path or asynchronously with a guaranteed catch-up barrier.
 - How to signal a projection shape migration during schema evolution.
 
 ## Deferred
+- Async projection maintenance or catch-up barriers.
 - Background incremental projection maintenance beyond what correctness requires.
 - Multi-projection analytics layers.

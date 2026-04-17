@@ -11,11 +11,13 @@ Read [FOR_HUMAN_CODE--DOC.md](../../FOR_HUMAN_CODE--DOC.md) first, then [FLOW.md
 - [FOR_HUMAN_CODE--DOC.md](../../FOR_HUMAN_CODE--DOC.md)
 - [ADR-002](../../docs/adr/ADR-002-sqlite-first-with-portability.md)
 - [ADR-003](../../docs/adr/ADR-003-document-persistence-and-editor-state.md)
+- [ADR-006](../../docs/adr/ADR-006-event-sourced-document-and-metadata-history.md)
 
 ## Owns
 - SQLite project storage.
 - Schema direction and migrations.
 - Repository boundaries.
+- History log, checkpoint, and projection mechanics.
 - Export and package support so author ownership remains real.
 
 ## Does not own
@@ -30,11 +32,13 @@ Read [FOR_HUMAN_CODE--DOC.md](../../FOR_HUMAN_CODE--DOC.md) first, then [FLOW.md
 ## Key relationships
 - Works from shared domain concepts, not the other way around.
 - Serves `main` and the rest of the app through repository and contract layers.
+- Keeps append-only history, checkpoints, and current-state projections aligned.
 
 ## Likely future code here
 - `sqlite-bootstrap`
 - `migrations`
 - `repositories`
+- `projection-runner`
 - `export-service`
 
 ## Decided
@@ -42,6 +46,7 @@ Read [FOR_HUMAN_CODE--DOC.md](../../FOR_HUMAN_CODE--DOC.md) first, then [FLOW.md
 - Portability and export are part of the database-layer responsibility, not a bolt-on utility.
 - Documents persist as full snapshots plus a plain-text projection, not delta streams.
 - Slice boundaries and annotations share the same anchor-payload shape.
+- Domain events, document steps, and document checkpoints are the canonical history record; current-state tables are derived.
 
 ## Open
 - The exact local project package shape.

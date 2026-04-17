@@ -1,4 +1,4 @@
-# ADR-004: Prove Load-Bearing Editor Risks Before Phase 2
+# ADR-004: Prove Load-Bearing Risks Before Phase 2
 
 ## Status
 Accepted
@@ -17,11 +17,13 @@ They are:
 
 - anchored ranges surviving live edits
 - live visible-range matching, rule normalization, and invalidation while typing
+- event-log and checkpoint replay drifting from current-state projections
 - understanding whether Pretext changes the long-document layout picture
-- picking an editor host that does not force accidental infrastructure work
 - keeping document persistence simple enough to trust
 
-If feature work starts before those are proven well enough, the codebase can look productive while still heading toward a rewrite.
+Editor-host fit was part of this risk bundle originally and is now resolved by EXP-003, EXP-004, and ADR-005. The remaining Phase 1 proof work still blocks the foundational shell.
+
+If feature work starts before these are proven well enough, the codebase can look productive while still heading toward a rewrite.
 
 ## Decision
 Phase 2 is gated by Phase 1 proof work.
@@ -30,11 +32,9 @@ Before the foundational shell is treated as settled, the repo should have curren
 
 - shared anchor healing for slice boundaries and annotations
 - live visible-range matching and rule normalization
+- event-log and checkpoint replay, including rebuild-from-log verification
 - Pretext layout viability
-- editor-host fit
 - document snapshot round-tripping
-
-The editor-host comparison may start with pseudo-build walkthroughs, but it should not be treated as closed unless one option is clearly less accidental work for Evernear's anchored-range workflow.
 
 ## Consequences
 - Early progress becomes slightly slower on paper, but much safer in practice.
@@ -45,7 +45,7 @@ The editor-host comparison may start with pseudo-build walkthroughs, but it shou
 - Load-bearing proof now is cheaper than architectural regret later.
 
 ## Open
-- The exact numeric thresholds for matching and anchor-healing acceptance.
+- The exact numeric thresholds for matching, anchor-healing, and replay acceptance.
 
 ## Deferred
 - A broader milestone governance process beyond what this repo currently needs.
