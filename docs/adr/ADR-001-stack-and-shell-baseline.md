@@ -22,7 +22,7 @@ Use:
 - Electron for the desktop shell
 - React and TypeScript for the renderer
 - Vite for development and build tooling
-- ProseMirror as the current editor front-runner
+- ProseMirror as the editor foundation (locked in by [ADR-005](./ADR-005-editor-foundation-locked-to-prosemirror.md))
 - SQLite for local project storage
 
 Keep the repo as a single desktop app with strong internal boundaries instead of starting with a package workspace.
@@ -39,7 +39,6 @@ Keep the repo as a single desktop app with strong internal boundaries instead of
 
 ## Open
 - Exact state-management and migration-tool choices within the baseline.
-- Whether the thin Phase 1 editor spike exposes any ProseMirror-specific pain large enough to reverse this call.
 
 ## Deferred
 - Alternative shells or editor foundations unless the chosen stack proves inadequate.

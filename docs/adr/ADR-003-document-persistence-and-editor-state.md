@@ -56,12 +56,15 @@ They persist through shared `TextAnchor` payloads that can be mapped forward dur
 - Collaboration-oriented storage patterns are deliberately deferred.
 
 ## Decided
-- The canonical persistence model is snapshot-based, not delta-based.
+- The canonical persistence model for current-state is snapshot-based, not delta-based.
+- Snapshot writes are reused as checkpoints by the history layer defined in [ADR-006](./ADR-006-event-sourced-document-and-metadata-history.md).
 
 ## Open
 - Exact save cadence and batching policy.
 - Exact SQLite column names and whether `plainText` should live in the same table or a tightly-coupled companion table.
 
 ## Deferred
-- Persisted edit history.
 - Collaboration-first document storage.
+
+## Superseded deferrals
+- Persisted edit history. Lifted by [ADR-006](./ADR-006-event-sourced-document-and-metadata-history.md), which adds an event-sourced history layer that reuses these snapshots as checkpoints.

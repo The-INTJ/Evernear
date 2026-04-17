@@ -1,7 +1,7 @@
 # EXP-003: Lexical Prototype Walkthrough
 
 ## Status
-Planned
+Resolved — Lexical not selected
 
 ## Date
 2026-04-17
@@ -82,3 +82,10 @@ function EvernearPersistencePlugin() {
 
 ## Provisional verdict
 Lexical is viable, but for Evernear it looks like more accidental platform work around anchors, range mapping, and decorations than the product really wants.
+
+## Result
+Resolved against Lexical. The anchor-healing, decoration, and history needs that make Evernear Evernear all want a transaction-mapping model inside the editor rather than beside it. See [EXP-004](./EXP-004-prosemirror-prototype-walkthrough.md) for the walkthrough on the chosen side.
+
+## Follow-up
+- [ADR-005](../adr/ADR-005-editor-foundation-locked-to-prosemirror.md) records ProseMirror as the locked-in editor foundation.
+- This file stays as the memory of why Lexical was not chosen. It should not be deleted.

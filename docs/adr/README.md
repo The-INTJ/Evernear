@@ -23,6 +23,8 @@ Read [docs/README.md](../README.md) first, then [FOR_HUMAN_CODE--DOC.md](../../F
 - [ADR-002: SQLite First with Portability](./ADR-002-sqlite-first-with-portability.md)
 - [ADR-003: Document Persistence and Editor State](./ADR-003-document-persistence-and-editor-state.md)
 - [ADR-004: Prove Load-Bearing Editor Risks Before Phase 2](./ADR-004-prove-load-bearing-editor-risks-before-phase-2.md)
+- [ADR-005: Editor Foundation Locked to ProseMirror](./ADR-005-editor-foundation-locked-to-prosemirror.md)
+- [ADR-006: Event-Sourced Document and Metadata History](./ADR-006-event-sourced-document-and-metadata-history.md)
 
 ## Decided
 - ADRs should stay lightweight in this phase.
