@@ -1,0 +1,48 @@
+# Editor
+
+## Status
+MVP now
+
+## If you landed here first
+Read [src/renderer/README.md](../README.md) first. Then read [src/shared/domain/README.md](../../shared/domain/README.md) so the editor behavior stays grounded in domain language rather than ad hoc UI terms.
+
+## Parent reads
+- [src/renderer/README.md](../README.md)
+- [FOR_HUMAN_CODE--DOC.md](../../../FOR_HUMAN_CODE--DOC.md)
+- [src/shared/domain/README.md](../../shared/domain/README.md)
+
+## Owns
+- The Lexical host setup.
+- Rendering and interaction hooks for semantic highlighting and previews.
+- Selection, hover, click, and later slice-aware affordances inside the writing surface.
+
+## Does not own
+- Canonical entity data.
+- Database access.
+- Project lifecycle logic.
+
+## Inputs and outputs
+- Inputs: document content, entity matches, category styles, active interaction state.
+- Outputs: edit events, hover/click events, selection anchors, display-ready decorations.
+
+## Key relationships
+- Receives domain results from feature or shared layers.
+- Feeds interaction intents back into pane and feature workflows.
+- Must stay separable from persistence and OS concerns.
+
+## Likely future code here
+- `lexical-host`
+- `decorations`
+- `interaction-handlers`
+- `selection-anchor` helpers
+
+## Decided
+- Lexical is the editor foundation.
+- Semantic behavior should layer onto the editor rather than redefine the whole app around editor internals.
+
+## Open
+- Whether semantic overlays are pure decorations, plugin state, or a mixed approach.
+- How far custom node work should go before the core workflow is proven.
+
+## Deferred
+- Rich formatting ambitions that do not directly serve writing and re-entry.
