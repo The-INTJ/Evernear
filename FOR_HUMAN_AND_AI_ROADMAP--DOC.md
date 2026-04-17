@@ -1,6 +1,7 @@
 # FOR_HUMAN_AND_AI_ROADMAP--DOC
 
 ## Last change
+2026-04-17: added document-organization phases, large-import and clean-copy proof points, and reserved slice-preserving text transfer as an explicit later concern.
 2026-04-17: aligned the phased plan with the locked ProseMirror decision and added event-log plus checkpoint replay as a Phase 1 proof gate.
 
 ## Why this exists
@@ -15,13 +16,19 @@ This is not a staffing document.
 It should name proof, sequence, and exit criteria, not pretend a committee exists.
 
 ## Load-bearing ideas
+- Document organization spine.
+  - Folders organize documents now; anchored outline nodes can later navigate a huge document without turning chapters into separate documents by force.
 - `TextAnchor` healing under live edits.
   - This serves both reusable slice boundaries and direct document annotations.
 - Live visible-range matching.
   - Matches are derived on demand from current text, never precomputed as document truth.
 - Matching normalization plus performance while typing and scrolling.
+- Clean text interoperability.
+  - Writers need to paste large prose in and copy clean prose back out without editor-only artifacts leaking into the clipboard.
 - Event-log and checkpoint replay.
   - History must stay fast and correct enough that replay, rebuild, and restore remain trustworthy.
+- Future text-transfer provenance.
+  - Slice-preserving copy or move is later, but the architecture must leave room for it now.
 - Pretext layout fit.
   - It may help solve long-document layout and visible-range mapping before the repo commits too hard to a document-view strategy.
 - Document persistence.
@@ -33,6 +40,10 @@ ProseMirror editor-host fit is already resolved by EXP-003, EXP-004, and ADR-005
 Before major app code:
 
 - keep the top-level business, code, and roadmap docs aligned
+- define the project-tree model around folders plus generic documents
+- document that organization is orthogonal to entities and slices
+- reserve `DocumentOutlineNode`, `ProjectNavNode`, and `TextTransferProvenance` in the shared vocabulary
+- document the clean copy-out promise and large-import workflow
 - create ADRs for stack, storage, and proof gates
 - create `docs/experiments`
 - create reusable templates for feature briefs, experiments, retrospectives, and ADRs
@@ -43,6 +54,7 @@ Validation criteria:
 - the repo clearly shows where architecture decisions live
 - the hard problems are named before implementation pressure blurs them
 - no major concept is still trapped inside `Initial_Guide.md`
+- the organization model is clear enough that future code passes do not improvise folders, kinds, and outline behavior differently
 
 ## Phase 1: Load-bearing spikes
 Before the honest product loop:
@@ -52,6 +64,8 @@ Before the honest product loop:
 - spike event-log and checkpoint replay with projection rebuild checks
 - spike Pretext as a possible long-document layout and visible-range mapping helper
 - prove the document snapshot model round-trips cleanly through SQLite
+- prove 50k+ word paste-in and save-reload round trips cleanly
+- prove `Ctrl+A` and `Ctrl+C` copy clean prose out even when derived highlights or boundary decorations exist
 
 Validation criteria:
 
@@ -62,6 +76,8 @@ Validation criteria:
 - event-log writes stay fast enough at typing pace, historical opens stay acceptable, and rebuilds match live projections exactly
 - it becomes clear whether Pretext helps enough to influence long-document layout design
 - document snapshots persist and reload without losing structure or corrupting plain-text projection
+- imported long-form prose stays editable without obvious degradation
+- clipboard output does not include entity markup, slice chrome, or other UI-only artifacts
 
 Phase 2 is blocked until these pass well enough to trust.
 
@@ -80,11 +96,25 @@ Validation criteria:
 - the main, preload, and renderer boundary stays typed and narrow
 - the editor host does not force architecture shortcuts already rejected in Phase 1
 
-## Phase 3: Truthful core loop
-Prove the central product promise:
+## Phase 3: Writing workspace spine
+Prove the writing workspace before semantic overlays depend on it:
 
 - create and open a project
-- create and edit documents
+- create folders and generic documents
+- reorder documents and move them between folders
+- open, edit, and save large imported story and reference documents
+- switch quickly between imported story and world docs
+
+Validation criteria:
+
+- the project tree restores correctly after closing and reopening
+- folders help organization without becoming a second semantic system
+- documents stay generic rather than splitting early into behavior-heavy kinds
+- large imported material feels native enough to keep using
+
+## Phase 4: Truthful core loop
+Prove the central product promise:
+
 - create entities and matching rules
 - associate entities with slices
 - derive highlights inside story text
@@ -93,11 +123,12 @@ Prove the central product promise:
 
 Validation criteria:
 
-- the workflow already helps with re-entry on real text, not just toy samples
+- the workflow already helps with re-entry on imported real text, not just toy samples
+- entity workflows do not depend on a special document taxonomy
 - derived highlights are useful without becoming immediate visual spam
 - modal and panel feel like one continuous workflow rather than two unrelated features
 
-## Phase 4: Boundary-aware context and annotations
+## Phase 5: Boundary-aware context and annotations
 Introduce the shared anchor substrate in earnest:
 
 - reusable slice boundaries
@@ -112,9 +143,11 @@ Validation criteria:
 - annotation visuals stay noticeably quieter than entity highlights
 - the shared anchor model feels like one system, not two overlapping hacks
 
-## Phase 5: Overlap and inspection tools
+## Phase 6: Outline navigation and overlap inspection
 Introduce:
 
+- `DocumentOutlineNode` entries for `book`, `part`, `chapter`, `section`, or custom navigation inside a document
+- project-tree expansion from folders and documents into navigable outline entries where useful
 - `All Slices` toggle
 - overlap visualization
 - clearer multi-boundary presentation
@@ -122,10 +155,11 @@ Introduce:
 
 Validation criteria:
 
+- outline nodes stay navigable after normal edits and make huge single-document manuscripts easier to re-enter
 - overlap tools make old material easier to inspect rather than busier to read
 - shared boundaries remain understandable when several slices refer to the same region
 
-## Phase 6: Layout and ownership polish
+## Phase 7: Layout and ownership polish
 Only after the core flows feel right:
 
 - better panel persistence
@@ -144,13 +178,16 @@ Validation criteria:
 - richer packaging polish
 - deeper search or analytics
 - graph-style relationship views
+- slice-preserving `Move Slice` workflows after anchored structure, clipboard provenance, and history replay are stable
 - collaboration or cloud features
 - AI-assisted authoring as product identity
   - not the direction here
 
 ## Current recommendation
 - Keep ProseMirror as the editor foundation.
+- Keep organization orthogonal to entity meaning.
 - Keep the shared anchor problem load-bearing and explicit.
 - Do not precompute or persist document match sets.
 - Explore Pretext before locking the long-document layout strategy.
+- Preserve clean copy/paste behavior and leave room for future slice-aware transfer.
 - Do not let a "working" editor shell outrun the proof needed for anchors, matching, persistence, and history replay.

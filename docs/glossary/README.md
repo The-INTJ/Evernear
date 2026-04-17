@@ -10,12 +10,22 @@ Read [FOR_HUMAN_BUSINESS--DOC.md](../../FOR_HUMAN_BUSINESS--DOC.md) and [FOR_HUM
 - [FOR_HUMAN_BUSINESS--DOC.md](../../FOR_HUMAN_BUSINESS--DOC.md)
 - [FOR_HUMAN_CODE--DOC.md](../../FOR_HUMAN_CODE--DOC.md)
 
+## Organization terms
+| Term | Meaning | Notes |
+| --- | --- | --- |
+| `Project` | one local writing workspace | contains organization, prose, entities, and history |
+| `DocumentFolder` | lightweight container that organizes documents in a project tree | organization-only, not a semantic category |
+| `Document` | editable prose unit | stays generic early rather than splitting into behavior-heavy kinds |
+| `DocumentOutlineNode` | anchored navigational marker inside a document | can later represent `book`, `part`, `chapter`, `section`, or custom stops |
+| `ProjectNavNode` | renderer-facing tree item for folder, document, or outline navigation | derived from stored records rather than stored separately |
+
 ## Core terms
 | Term | Meaning | Notes |
 | --- | --- | --- |
 | `Entity` | first-class semantic definition used to detect and resolve references in text | owns a list of matching rules and a slice library; it is not visual |
 | `MatchingRule` | one item in an entity's match list | may be literal, alias-based, or pattern-based |
 | `TextAnchor` | durable selector payload for a range inside a document | shared substrate for slice boundaries and annotations |
+| `TextTransferProvenance` | future payload for copy or move operations that should preserve slice meaning | not required for ordinary clipboard use |
 | `Slice` | reference to a bounded piece of content | can point to part of a document, a whole document, or later a non-text asset |
 | `SliceBoundary` | reusable anchored range inside a document | multiple slices may share one boundary |
 | `Annotation` | low-noise personal note anchored directly to the main document | conceptually a direct anchored span, not a collaborative comment thread |
@@ -47,10 +57,13 @@ Read [FOR_HUMAN_BUSINESS--DOC.md](../../FOR_HUMAN_BUSINESS--DOC.md) and [FOR_HUM
 | `Graph` | future visualization of relationships between entities | not required for MVP |
 
 ## Key principles
+- Organization is orthogonal to entity semantics.
 - Entities define meaning, not visuals.
 - Matches are live-derived, never precomputed as stored document truth.
 - Slices define context, not ownership.
 - Boundaries are reusable, not implicit.
 - Slice boundaries and annotations share the same anchor substrate.
+- Outline nodes should reuse that anchor substrate when they land.
 - Highlights are derived, never stored.
+- Copying text out should not leak editor-only artifacts.
 - Modal and panel are different views over the same underlying data.

@@ -1,6 +1,7 @@
 # FOR_HUMAN_CODE--DOC
 
 ## Last change
+2026-04-17: added folders, generic documents, anchored outline nodes, and a future text-transfer provenance seam to the shared model and roadmap.
 2026-04-17: cleaned the merged planning pass, removed stale editor-choice language, and completed the MVP history architecture around event logs, step logs, checkpoints, and inline projections.
 2026-04-17: clarified entities as rule libraries plus slice libraries, made matching explicitly live and non-persistent, and added Pretext as an exploratory layout option.
 2026-04-17: locked ProseMirror in as the editor foundation after EXP-003 and EXP-004 resolved, and added the event-sourced history subsystem as a first-class architectural concern.
@@ -38,14 +39,18 @@ Evidence for the editor choice lives in [EXP-003](./docs/experiments/resolved/EX
 | Concept | Meaning now | Likely stable fields later |
 | --- | --- | --- |
 | `Project` | local story workspace | id, name, path, preferences, timestamps |
-| `Document` | editable story, lore, or reference unit | id, title, kind, contentFormat, contentJson, plainText, ordering |
+| `DocumentFolder` | lightweight organization-only container inside a project | id, projectId, parentFolderId, title, ordering, timestamps |
+| `Document` | editable prose unit kept generic in the early product | id, title, folderId, kind, contentFormat, contentJson, plainText, ordering |
+| `DocumentOutlineNode` | anchored navigational marker inside one document | id, documentId, role, label, anchor, ordering |
 | `Entity` | semantic definition used to detect and resolve references in text and open related context | id, name, scope, timestamps |
 | `MatchingRule` | literal, alias, or pattern rule used by an entity to match text | id, entityId, ruleType, pattern, normalization |
 | `TextAnchor` | durable selector payload that can re-find a document range after nearby edits | documentId, from, to, quote, prefix, suffix, blockPath, versionSeen |
+| `TextTransferProvenance` | future seam for copy or move operations that should preserve slice meaning across text transfers | sourceDocumentId, sourceAnchor, sliceIds, transferMode, versionSeen |
 | `Slice` | reference to a bounded piece of content or a whole document | id, sourceKind, sourceId, boundaryId, label |
 | `SliceBoundary` | reusable anchored range inside a document | id, documentId, anchor, timestamps |
 | `EntitySlice` | many-to-many association between entities and slices | entityId, sliceId, ordering |
 | `Highlight` | derived visual effect when a matching rule hits text | computed from matching results, never stored |
+| `ProjectNavNode` | renderer-facing union used to show folder, document, or outline navigation in one tree | nodeType, id, parentId, ordering, targetDocumentId |
 | `SliceViewer` | scrollable sequence of slices for one entity | shared by modal and panel surfaces |
 | `Modal` | temporary hover preview surface | shows the slice viewer and disappears on mouse exit |
 | `Panel` | persistent expanded surface opened from a highlight | can host the slice viewer and a deeper document view |
@@ -71,16 +76,20 @@ The current best-fit project shape is a local project directory that contains at
 - optional adjacent asset or export material
 - a first-class export path so the author is never trapped in an opaque container, and that path carries history
 
-The database owns a **log-first model** for working truth. Every mutation is appended to the domain event log or the ProseMirror step log, or both, before projections are updated. MVP history writes are append-then-project inside one SQLite transaction. Current-state tables for documents, entities, matching rules, entity-slice links, slices, slice boundaries, annotations, and layout state are **projections** of those logs plus document checkpoints, and they must be rebuildable from scratch.
+The database owns a **log-first model** for working truth. Every mutation is appended to the domain event log or the ProseMirror step log, or both, before projections are updated. MVP history writes are append-then-project inside one SQLite transaction. Current-state tables for document folders, documents, entities, matching rules, entity-slice links, slices, slice boundaries, annotations, and layout state are **projections** of those logs plus document checkpoints, and they must be rebuildable from scratch.
 
-Document rows keep the shape established by ADR-003:
+Document rows keep the shape established by ADR-003, plus the lightweight organization metadata the writing workspace needs:
 
+- `folderId` links a document into the project tree
+- `ordering` is stable within its folder
+- `kind` stays generic in the first build and must not quietly become a behavior switch
 - `contentFormat` identifies the editor schema family
 - `contentSchemaVersion` identifies the stored snapshot version
 - `contentJson` stores the canonical structured document snapshot
 - `plainText` stores the denormalized text projection used by matching, search, export, and other non-editor helpers
 
 The `documents` row is the head current-state projection for a document. Historical replay bases live in `document_checkpoints`. Opening a document at any version uses the nearest checkpoint plus forward `Step` replay.
+`DocumentFolder` records define a lightweight tree for project organization; the renderer can expose that tree as a `ProjectNavNode` union without mirroring filesystem folders. `DocumentOutlineNode` records land later as anchored metadata inside a document and should reuse `TextAnchor` rather than inventing a second navigation-position system.
 
 Highlights stay derived from document text plus matching results rather than becoming stored records.
 Matches never become stored or precomputed document records.
@@ -90,6 +99,8 @@ Slice boundaries and annotations share the same `TextAnchor` payload shape even 
 Every semantic anchor mutation records the anchor payload together with `documentVersionSeen`. Historical reconstruction starts from the latest anchor event at or before the target version, then maps forward through document steps. If mapping collapses or deletes the range, the current anchor state becomes invalid rather than being silently healed.
 
 Portability is not optional, so export and package behavior must carry logs and checkpoints, not just the current projection.
+Editor-only decorations must never pollute clipboard output or plain-text export. A full-document copy should yield clean prose, not entity markup, slice chrome, or annotation affordances.
+Future slice-aware text transfer can hang off `TextTransferProvenance`, but the normal document snapshot model must not depend on that future feature before it exists.
 
 ## Editor strategy
 - Use ProseMirror as the editor foundation. Do not treat this as provisional.
@@ -97,10 +108,12 @@ Portability is not optional, so export and package behavior must carry logs and 
 - Treat ProseMirror's `Decoration` API as the home for derived highlights and quiet annotation underlines; neither is persisted inside the document.
 - Treat ProseMirror's `Step` and `Mapping` as the document-content primitives for both live anchor migration and the history layer.
 - Let slice boundaries and annotations share one anchor-healing substrate.
+- Let future outline navigation reuse that same anchor substrate rather than inventing a separate heading-position model.
 - Live-calculate matches from visible text when highlighting is enabled rather than precomputing whole-document match sets.
 - Allow authors to disable live matching and highlighting while writing.
 - Explore Pretext before locking the long-document layout and visible-range mapping design, especially for document view or virtualized reading surfaces.
 - Avoid pushing database or IPC details into editor plugins.
+- Keep editor decorations and chrome out of the clipboard path so `Ctrl+A` and `Ctrl+C` remain trustworthy.
 - Prefer a renderer shell where the editor receives domain results and renders them, rather than embedding persistence logic inside editor code.
 - Modal and panel are different views over the same slice-viewer data rather than separate product models.
 - The editor is the source of truth for emitting `DocumentStep` records into the step log, but it does not own how they are persisted.
@@ -110,6 +123,7 @@ Portability is not optional, so export and package behavior must carry logs and 
 - A single-app repo is simpler now, but shared code must stay clean enough that extraction would still be possible later.
 - ProseMirror asks for more upfront schema and plugin discipline, but its transaction mapping, decoration model, and `Step` primitive line up directly with Evernear's anchored-range problems.
 - Full snapshot persistence remains simpler and safer than pure delta-stream storage for current state, and the history layer reuses those snapshots as checkpoints rather than competing with them.
+- A lightweight tree of folders plus generic documents keeps organization useful without pretending to be binder software, but it also means semantic meaning must stay clearly separate from navigation structure.
 - Live visible-range matching keeps the product honest to the desired interaction model, but it makes layout and invalidation strategy as important as raw regex throughput.
 - Persistent panels are part of the core product loop, so layout state belongs in the early architecture even if advanced windowing does not.
 - Event sourcing makes history honest and projections rebuildable, but every mutation path must write log and projection atomically, and projection rebuild logic must be maintained.
@@ -117,7 +131,9 @@ Portability is not optional, so export and package behavior must carry logs and 
 ## Future considerations
 - The exact acceptance thresholds for anchor healing under live edits.
 - Matching normalization rules, visible-range invalidation, and author-controlled highlight toggles.
+- How internal outline nodes are authored, displayed, and reordered once anchored document navigation lands.
 - How `All Slices` mode, overlap visualization, and boundary merge or link should behave.
+- How `TextTransferProvenance` should serialize once slice-aware copy or move is implemented.
 - Whether project export should be plain-text-first, bundle-first, or dual-mode, and how logs and checkpoints serialize in each.
 - The shape of the writer-facing timeline UI once the restore-first MVP surface is proven.
 - Checkpoint cadence beyond every explicit save, and whether writers can name checkpoints directly.
@@ -128,11 +144,15 @@ Portability is not optional, so export and package behavior must carry logs and 
 - Narrow preload API and limited IPC surface.
 - SQLite-first project storage with a mandatory ownership and export story that includes history.
 - React renderer and ProseMirror editor foundation.
+- The first organization model is a lightweight tree of folders plus generic documents.
 - Documents persist as full JSON snapshots plus a plain-text projection.
+- Organization is orthogonal to entity semantics.
+- Document outline nodes are anchored navigation metadata later, not separate documents and not an early document taxonomy.
 - The `documents` row is current state; `document_checkpoints` stores historical replay bases.
 - Entities are semantic definitions, not visual objects.
 - Matches are live-calculated and never stored or precomputed as document truth.
 - Highlights are derived, not stored.
+- Clean copy out must not leak decorations or editor chrome.
 - History is event-sourced. The domain event log and the ProseMirror step log are canonical; current-state tables are projections.
 - MVP history writes append then project inline inside one SQLite transaction.
 - The first writer-visible history surface can be a minimal restore-previous-version action after the truthful MVP.
@@ -140,18 +160,22 @@ Portability is not optional, so export and package behavior must carry logs and 
 
 ## Open
 - Exact project folder and package format, and how logs plus checkpoints serialize on export.
+- Exact first tree interaction model for folders, documents, and later outline nodes.
 - Exact state-management approach inside the renderer.
 - Exact migration tooling and schema evolution conventions, including event payload versioning.
 - Exact `TextAnchor` representation in ProseMirror position space under unusual edits.
+- Exact `TextTransferProvenance` payload shape once slice-aware transfer lands.
 - Whether to use TipTap or raw ProseMirror at the React seam.
 - Checkpoint cadence and named-checkpoint UX.
 - Exact annotation-style preference surface for authors.
 - Whether Pretext belongs only in document view or changes the primary long-document rendering strategy.
 
 ## Deferred
+- Binder-style manuscript tooling beyond the lightweight tree the first workflow needs.
 - Multi-window sophistication beyond what the core workflow requires.
 - Search and analytics features beyond immediate re-entry value.
 - Graph-style relationship visualization beyond what the core workflow requires.
+- Slice-preserving `Move Slice` behavior until anchor, provenance, and history rules are proven.
 - A full scrubbable timeline UI beyond the initial restore-first surface.
 - Visible branching UX.
 - Any collaboration, CRDT, or merge functionality.
