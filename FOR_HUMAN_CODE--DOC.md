@@ -23,7 +23,7 @@ This keeps the repo approachable while still giving clear seams for future extra
 - SQLite: local-first storage with transactional reads and writes, append-only event and step logs, and rich querying for entity-aware workflows
 - Pretext: worth an explicit spike before locking long-document layout and visible-range mapping strategy
 
-Evidence for the editor choice lives in [EXP-003](./docs/experiments/EXP-003-lexical-prototype-walkthrough.md) and [EXP-004](./docs/experiments/EXP-004-prosemirror-prototype-walkthrough.md). The lock-in is recorded as [ADR-005](./docs/adr/ADR-005-editor-foundation-locked-to-prosemirror.md). The history approach is recorded as [ADR-006](./docs/adr/ADR-006-event-sourced-document-and-metadata-history.md), with proof work in [EXP-005](./docs/experiments/EXP-005-event-log-and-checkpoint-replay.md) and [EXP-006](./docs/experiments/EXP-006-pretext-layout-viability.md).
+Evidence for the editor choice lives in [EXP-003](./docs/experiments/resolved/EXP-003-lexical-prototype-walkthrough.md) and [EXP-004](./docs/experiments/resolved/EXP-004-prosemirror-prototype-walkthrough.md). The lock-in is recorded as [ADR-005](./docs/adr/ADR-005-editor-foundation-locked-to-prosemirror.md). The history approach is recorded as [ADR-006](./docs/adr/ADR-006-event-sourced-document-and-metadata-history.md), with proof work in [EXP-005](./docs/experiments/EXP-005-event-log-and-checkpoint-replay.md) and [EXP-006](./docs/experiments/EXP-006-pretext-layout-viability.md).
 
 ## Runtime boundaries
 | Area | Owns | Should stay out of |

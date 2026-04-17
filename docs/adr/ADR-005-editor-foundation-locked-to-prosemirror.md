@@ -10,8 +10,8 @@ Accepted
 - [FOR_HUMAN_CODE--DOC.md](../../FOR_HUMAN_CODE--DOC.md)
 - [ADR-001](./ADR-001-stack-and-shell-baseline.md)
 - [ADR-003](./ADR-003-document-persistence-and-editor-state.md)
-- [EXP-003](../experiments/EXP-003-lexical-prototype-walkthrough.md)
-- [EXP-004](../experiments/EXP-004-prosemirror-prototype-walkthrough.md)
+- [EXP-003](../experiments/resolved/EXP-003-lexical-prototype-walkthrough.md)
+- [EXP-004](../experiments/resolved/EXP-004-prosemirror-prototype-walkthrough.md)
 
 ## Context
 ADR-001 left the editor choice open pending the walkthroughs captured in EXP-003 and EXP-004. Those walkthroughs showed that ProseMirror's transactions, `Mapping`, and `Decoration` model line up directly with Evernear's core problems: anchor healing, derived highlights, boundary editing, and a history layer that can be built on `Step`. Lexical would push the same work into bespoke infrastructure around the editor rather than through primitives inside it.

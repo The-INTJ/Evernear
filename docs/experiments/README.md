@@ -20,17 +20,19 @@ Read [FOR_HUMAN_AND_AI_ROADMAP--DOC.md](../../FOR_HUMAN_AND_AI_ROADMAP--DOC.md) 
 - Final architecture decisions by itself.
 - Routine implementation notes that are not rewrite-risk material.
 
-## Current experiments
-- [EXP-001: Shared Anchor Substrate Under Live Edits](./EXP-001-shared-anchor-substrate.md) - Planned
-- [EXP-002: Matching Normalization and Chapter-Scale Performance](./EXP-002-matching-normalization-and-scale.md) - Planned
-- [EXP-003: Lexical Prototype Walkthrough](./EXP-003-lexical-prototype-walkthrough.md) - Resolved, Lexical not selected
-- [EXP-004: ProseMirror Prototype Walkthrough](./EXP-004-prosemirror-prototype-walkthrough.md) - Resolved, ProseMirror selected
-- [EXP-005: Event Log and Checkpoint Replay](./EXP-005-event-log-and-checkpoint-replay.md) - Planned
-- [EXP-006: Pretext Layout Viability](./EXP-006-pretext-layout-viability.md) - Planned
+## Planned
+- [EXP-001: Shared Anchor Substrate Under Live Edits](./EXP-001-shared-anchor-substrate.md)
+- [EXP-002: Matching Normalization and Chapter-Scale Performance](./EXP-002-matching-normalization-and-scale.md)
+- [EXP-005: Event Log and Checkpoint Replay](./EXP-005-event-log-and-checkpoint-replay.md)
+- [EXP-006: Pretext Layout Viability](./EXP-006-pretext-layout-viability.md)
+
+## Resolved
+- [EXP-003: Lexical Prototype Walkthrough](./resolved/EXP-003-lexical-prototype-walkthrough.md)
+- [EXP-004: ProseMirror Prototype Walkthrough](./resolved/EXP-004-prosemirror-prototype-walkthrough.md)
 
 ## Conventions
 - Each experiment uses `EXP-NNN-<slug>` and a `Status` of `Planned`, `Running`, `Resolved`, or `Abandoned`.
-- Resolved experiments stay here indefinitely. They are the memory of why the project did not pick the other thing.
+- Resolved experiments move into `resolved/`. They are the memory of why the project did not pick the other thing.
 - Experiments that resolve should produce or update an ADR, then link to it.
 
 ## Decided

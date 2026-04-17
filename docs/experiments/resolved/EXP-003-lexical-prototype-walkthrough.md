@@ -7,9 +7,9 @@ Resolved — Lexical not selected
 2026-04-17
 
 ## Parent reads
-- [FOR_HUMAN_CODE--DOC.md](../../FOR_HUMAN_CODE--DOC.md)
-- [FOR_HUMAN_AND_AI_ROADMAP--DOC.md](../../FOR_HUMAN_AND_AI_ROADMAP--DOC.md)
-- [src/renderer/editor/README.md](../../src/renderer/editor/README.md)
+- [FOR_HUMAN_CODE--DOC.md](../../../FOR_HUMAN_CODE--DOC.md)
+- [FOR_HUMAN_AND_AI_ROADMAP--DOC.md](../../../FOR_HUMAN_AND_AI_ROADMAP--DOC.md)
+- [src/renderer/editor/README.md](../../../src/renderer/editor/README.md)
 
 ## Goal
 Pressure-test what it would actually feel like to build Evernear's anchor-heavy workflow on Lexical.
@@ -87,5 +87,5 @@ Lexical is viable, but for Evernear it looks like more accidental platform work 
 Resolved against Lexical. The anchor-healing, decoration, and history needs that make Evernear Evernear all want a transaction-mapping model inside the editor rather than beside it. See [EXP-004](./EXP-004-prosemirror-prototype-walkthrough.md) for the walkthrough on the chosen side.
 
 ## Follow-up
-- [ADR-005](../adr/ADR-005-editor-foundation-locked-to-prosemirror.md) records ProseMirror as the locked-in editor foundation.
+- [ADR-005](../../adr/ADR-005-editor-foundation-locked-to-prosemirror.md) records ProseMirror as the locked-in editor foundation.
 - This file stays as the memory of why Lexical was not chosen. It should not be deleted.
