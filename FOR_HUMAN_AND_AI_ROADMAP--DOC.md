@@ -53,7 +53,7 @@ Validation criteria:
 
 - the repo clearly shows where architecture decisions live
 - the hard problems are named before implementation pressure blurs them
-- no major concept is still trapped inside `Initial_Guide.md`
+- no major concept is still trapped inside `Product_Guide.md`
 - the organization model is clear enough that future code passes do not improvise folders, kinds, and outline behavior differently
 
 ## Phase 1: Load-bearing spikes
