@@ -24,7 +24,7 @@ Read [src/renderer/README.md](../README.md) first. This folder groups user-facin
 - `projects`: opening and managing a project in the UI.
 - `documents`: listing, opening, and organizing writing material.
 - `entities`: creating and using semantic context.
-- `panes`: side context and layout behavior.
+- `panes`: persistent panel, slice-viewer, and document-view behavior.
 - `annotations`: low-noise note capture.
 
 ## Decided

@@ -26,7 +26,7 @@ Read [FOR_HUMAN_BUSINESS--DOC.md](../../../../FOR_HUMAN_BUSINESS--DOC.md) first.
 
 ## Key relationships
 - Anchors to documents and possibly slices.
-- Should coexist quietly with entity overlays and pane workflows.
+- Should coexist quietly with derived highlights and panel workflows.
 
 ## Likely future code here
 - `annotation-glyphs`

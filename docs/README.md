@@ -13,6 +13,7 @@ Start with [FOR_HUMAN_BUSINESS--DOC.md](../FOR_HUMAN_BUSINESS--DOC.md) and [FOR_
 ## Owns
 - Cross-cutting documentation that is not best owned by a source folder.
 - ADRs and other long-lived decision history.
+- The shared glossary for product and architecture language.
 
 ## Does not own
 - Source-folder runtime boundaries.
@@ -20,6 +21,7 @@ Start with [FOR_HUMAN_BUSINESS--DOC.md](../FOR_HUMAN_BUSINESS--DOC.md) and [FOR_
 
 ## Key relationships
 - `adr` stores the most durable architecture decisions.
+- `glossary` stores the canonical terminology that the rest of the repo should reuse directly.
 
 ## Decided
 - Important decisions should be easy to find without hunting through narrative docs.

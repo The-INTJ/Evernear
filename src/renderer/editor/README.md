@@ -13,8 +13,8 @@ Read [src/renderer/README.md](../README.md) first. Then read [src/shared/domain/
 
 ## Owns
 - The Lexical host setup.
-- Rendering and interaction hooks for semantic highlighting and previews.
-- Selection, hover, click, and later slice-aware affordances inside the writing surface.
+- Rendering and interaction hooks for derived highlights.
+- Selection, hover, click, and document-view boundary affordances inside the writing surface.
 
 ## Does not own
 - Canonical entity data.
@@ -22,12 +22,12 @@ Read [src/renderer/README.md](../README.md) first. Then read [src/shared/domain/
 - Project lifecycle logic.
 
 ## Inputs and outputs
-- Inputs: document content, entity matches, category styles, active interaction state.
-- Outputs: edit events, hover/click events, selection anchors, display-ready decorations.
+- Inputs: document content, derived highlight results, active slice boundaries, active interaction state.
+- Outputs: edit events, hover/click events, selection anchors, boundary-edit gestures, display-ready decorations.
 
 ## Key relationships
 - Receives domain results from feature or shared layers.
-- Feeds interaction intents back into pane and feature workflows.
+- Feeds interaction intents back into panel and feature workflows.
 - Must stay separable from persistence and OS concerns.
 
 ## Likely future code here
@@ -35,13 +35,14 @@ Read [src/renderer/README.md](../README.md) first. Then read [src/shared/domain/
 - `decorations`
 - `interaction-handlers`
 - `selection-anchor` helpers
+- `boundary-handle` helpers for document view
 
 ## Decided
 - Lexical is the editor foundation.
 - Semantic behavior should layer onto the editor rather than redefine the whole app around editor internals.
 
 ## Open
-- Whether semantic overlays are pure decorations, plugin state, or a mixed approach.
+- Whether derived highlights are pure decorations, plugin state, or a mixed approach.
 - How far custom node work should go before the core workflow is proven.
 
 ## Deferred

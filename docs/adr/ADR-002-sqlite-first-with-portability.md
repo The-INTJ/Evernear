@@ -11,7 +11,7 @@ Accepted
 - [FOR_HUMAN_BUSINESS--DOC.md](../../FOR_HUMAN_BUSINESS--DOC.md)
 
 ## Context
-Evernear needs structured local storage for documents, entities, alias rules, slices, annotations, and persistent layout state.
+Evernear needs structured local storage for documents, entities, matching rules, slice associations, reusable slice boundaries, annotations, and persistent layout state.
 The core workflow also benefits from reliable querying and transactions.
 At the same time, the product philosophy rejects trapping authors in an opaque or hostile format.
 
@@ -22,7 +22,7 @@ The likely project shape is a local project directory that contains the database
 
 ## Consequences
 - Querying and consistency become simpler than a purely file-first design.
-- Structured concepts such as entities, slices, and layout state fit naturally.
+- Structured concepts such as entities, slices, slice boundaries, and layout state fit naturally.
 - We must design export and package behavior intentionally so author ownership remains real.
 - The database layer now owns part of the product trust story, not just persistence mechanics.
 

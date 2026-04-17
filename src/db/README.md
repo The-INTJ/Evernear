@@ -43,6 +43,7 @@ Read [FOR_HUMAN_CODE--DOC.md](../../FOR_HUMAN_CODE--DOC.md) first, then [FLOW.md
 ## Open
 - The exact local project package shape.
 - Whether export is bundle-first, plain-text-first, or dual-mode.
+- The exact persistence model for reusable slice boundaries under live edits.
 
 ## Deferred
 - Remote sync or network-aware persistence.

@@ -25,11 +25,12 @@ Read [src/db/README.md](../README.md) first, then [src/shared/domain/README.md](
 | --- | --- | --- |
 | project | `project_meta`, `project_preferences` | small, stable metadata |
 | documents | `documents` | exact content storage shape still open |
-| entities | `entities`, `alias_rules`, `entity_targets` | core semantic model |
-| slices | `slices` | anchor strategy still open |
+| entities | `entities`, `matching_rules`, `entity_slices` | core semantic model plus many-to-many slice links |
+| slices | `slices`, `slice_boundaries` | slice references plus reusable bounds |
 | annotations | `annotations` | lower urgency than entities |
-| categories | `semantic_categories` | supports overlays and filtering |
-| workspace | `pane_layouts`, `workspace_state` | local persistence for flow |
+| workspace | `panel_layouts`, `workspace_state` | local persistence for flow |
+
+Highlights are derived from matching results and should not become their own stored table family.
 
 ## Key relationships
 - Schema decisions should preserve clean repository boundaries.
@@ -40,7 +41,7 @@ Read [src/db/README.md](../README.md) first, then [src/shared/domain/README.md](
 
 ## Open
 - Exact document content representation.
-- Exact slice anchor columns and update strategy.
+- Exact slice-boundary columns and update strategy.
 - Exact foreign-key and cascade policy.
 
 ## Deferred

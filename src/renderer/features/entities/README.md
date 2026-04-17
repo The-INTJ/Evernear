@@ -14,38 +14,38 @@ Read [src/renderer/features/README.md](../README.md), then [src/shared/domain/RE
 
 ## Owns
 - Entity creation and editing UI.
-- Showing entity matches inside story text.
-- Hover previews and click-to-open target behavior.
-- Renderer-side filtering or presentation of entity state.
+- Showing derived highlights inside story text.
+- Hover modal requests and click-to-open panel behavior.
+- Renderer-side management of how entities expose their associated slices.
 
 ## Does not own
 - Canonical entity storage.
 - Full editor host behavior.
-- Slice anchoring persistence.
+- Slice-boundary persistence or document-view editing.
 
 ## Inputs and outputs
-- Inputs: entities, alias rules, match results, target metadata, category styles.
-- Outputs: create/edit entity intents, hover preview requests, open-target intents, local presentation state.
+- Inputs: entities, matching rules, slice associations, derived match results, local interaction state.
+- Outputs: create/edit entity intents, modal requests, panel-open intents, local presentation state.
 
 ## Key relationships
 - Depends on `shared/domain` for the canonical model.
 - Works with `editor` to render in-text affordances.
-- Works with `panes` to open persistent context.
+- Works with `panes` to host the persistent panel and slice viewer.
 - Relies on `db` through contracts and repositories for truth.
 
 ## Likely future code here
-- `entity-list`
+- `entity-explorer`
 - `entity-editor`
-- `match-preview`
-- `target-open-controller`
+- `slice-association-editor`
+- `highlight-controller`
 
 ## Decided
 - Entities are a first-class feature area, not a helper for hyperlinks.
-- Hover and click behavior belong in the honest core workflow.
+- Hover modal and persistent panel behavior belong in the honest core workflow.
 
 ## Open
-- How match confidence or ambiguity should be presented when alias rules overlap.
-- How much category styling should ship with the first entity workflow.
+- How match confidence or ambiguity should be presented when matching rules overlap.
+- Whether the first workflow should start with whole-document slices before boundary editing lands.
 
 ## Deferred
 - Advanced matching logic beyond the rules needed to prove the concept.

@@ -19,9 +19,9 @@ Read [README.md](./README.md) first, then [FOR_HUMAN_CODE--DOC.md](../../../FOR_
 
 ## Open questions
 - What highlight density feels informative rather than noisy in a long fantasy chapter?
-- How should alias matching be normalized when capitalization, punctuation, or possessives vary?
-- What slice anchoring model survives normal writing edits without feeling fragile?
-- Which interactions belong directly inside the editor, and which should be handled by surrounding panes or feature controllers?
+- How should matching rules be normalized when capitalization, punctuation, or possessives vary?
+- What slice-boundary model survives normal writing edits without feeling fragile?
+- Which interactions belong directly inside the editor, and which should be handled by surrounding panels or feature controllers?
 
 ## Decided
 - These questions are important enough to track now because the editor can silently shape the whole product.

@@ -90,23 +90,25 @@ Instead, it should treat important story terms as **entities**:
 * phrases
 * etc.
 
-An entity should own:
+An entity should define:
 
 * its name
 * aliases
 * matching rules or patterns
-* category/type
-* color/visual identity
-* where it applies
-* what it links to
+* associated slices
+* where it applies, if scoped matching matters
+
+The entity itself should remain semantic.
+It should not be the thing that owns highlight visuals.
 
 The document should be parsed by the entity system rather than requiring me to manually link every occurrence.
 
 ---
 
-### 4.2 Targets can be slices, not only full documents
+### 4.2 Entities resolve to slices, not only full documents
 
-An entity should be able to point to:
+An entity should be able to resolve to one or more slices.
+Those slices may point to:
 
 * a full document
 * a bounded region inside a document
@@ -123,28 +125,24 @@ I need the 5 relevant lines.
 
 When I encounter an entity in the story, I may want different levels of engagement:
 
-* **Hover**: quick preview / refresher
-* **Click**: open focused view of target content
-* **Drag / open as separate pane/window**: persistent side reference while writing
+* **Hover**: open a temporary modal for quick preview / refresher
+* **Click**: open a persistent panel with richer context
+* **Open deeper / separate panel-window later**: keep side reference visible while writing
 
 The exact UI can evolve, but the principle matters:
 **context access should be multi-resolution**.
 
 ---
 
-### 4.4 Semantic overlay
+### 4.4 Derived highlights and boundary views
 
-The story should be able to visually reveal its structure.
+The story should be able to visually reveal relevant structure, but that visual layer should be derived from matching rules and slice data rather than stored on entities.
 
-I want the ability to toggle on a semantic overlay so that:
+I want the ability to inspect:
 
-* characters may be one color
-* places another
-* enemy entities another
-* concepts another
-* etc.
-
-There should be some kind of legend or clear mapping.
+* derived highlights where entity matches occur
+* the active slice boundary in document view
+* optionally all slice boundaries in a document when overlap matters
 
 This is not decorative.
 It is a re-entry tool.
@@ -207,7 +205,7 @@ Cloud is not part of the core vision.
 
 This makes the most sense as a desktop app because:
 
-* multi-pane workflows matter
+* multi-panel workflows matter
 * multi-monitor workflows matter
 * persistent local files matter
 * serious writing sessions feel desktop-native
@@ -277,12 +275,13 @@ It should be modeled as something like:
 
 * **documents**
 * **entities**
-* **aliases / match rules**
-* **entity targets**
-* **bounded slices**
+* **matching rules**
+* **entity-to-slice associations**
+* **slices**
+* **slice boundaries**
 * **annotations**
-* **views / panes / layout state**
-* **semantic categories**
+* **derived highlights**
+* **modal / panel / document view / layout state**
 * **project metadata**
 
 This is important.
@@ -306,9 +305,9 @@ A piece of editable content. Could be story text, lore, notes, reference materia
 
 ### 9.3 Entity
 
-A first-class object representing a meaningful in-world thing or concept.
+A first-class semantic object representing a meaningful in-world thing or concept.
 
-### 9.4 Alias / matching rule
+### 9.4 Matching rule
 
 How the system recognizes an entity in text:
 
@@ -319,24 +318,28 @@ How the system recognizes an entity in text:
 
 ### 9.5 Slice
 
-A bounded region within a document that can be targeted and previewed.
+A reference to a bounded region within a document, a whole document, or later another asset.
 
-### 9.6 Annotation
+### 9.6 Slice boundary
 
-A lightweight personal thought marker, lower-noise than comments.
+A reusable start/end definition inside a document that one or more slices can share.
 
-### 9.7 Semantic category
+### 9.7 Highlight
 
-The grouping that drives colors, overlay behavior, filtering, and legend display.
+A derived visual effect produced when a matching rule hits text.
 
-### 9.8 View mode
+### 9.8 Panel / document view
 
 Different ways content can be inspected:
 
-* hover preview
-* pane
-* focused doc
+* modal on hover
+* persistent panel on click
+* deeper document view from a slice
 * detached/floating later if appropriate
+
+### 9.9 Annotation
+
+A lightweight personal thought marker, lower-noise than comments.
 
 ---
 
@@ -389,7 +392,7 @@ Good milestones are:
 
 ### 10.4 Preserve optionality
 
-Avoid early decisions that make later entity/slice/overlay behavior hard.
+Avoid early decisions that make later entity/slice/boundary behavior hard.
 
 ---
 
@@ -449,32 +452,33 @@ Prove the central product loop:
 * create/open project
 * create documents
 * create simple entities
+* define matching rules and associate entities with slices
 * match entities in story text
-* visually indicate them
-* hover to preview linked target
-* click to open target in a side pane or focused pane
+* render derived highlights
+* hover to preview related slices in a modal
+* click to open a persistent panel or focused document view
 
 If this works well, the concept is alive.
 
-### Phase 3: Slice awareness
+### Phase 3: Slice boundary awareness
 
-Introduce bounded targets:
+Introduce reusable boundaries:
 
-* entity points to section, not only full doc
+* slices can share the same boundary
 * preview reflects bounded region
 * focused open still indicates the relevant bounded area
+* edits inside the slice can expand bounds cleanly
 
 This is likely one of the most important differentiators.
 
-### Phase 4: Semantic overlay + filtering
+### Phase 4: Boundary inspection + overlap tools
 
 Introduce:
 
-* categories
-* colors
-* legend
-* toggles
-* maybe document-scoped visibility
+* `All Slices` toggle
+* overlap visualization
+* clearer boundary presentation
+* merge/link workflows where useful
 
 This is core to the re-entry experience.
 
@@ -486,7 +490,7 @@ Add subtle personal thought capture.
 
 Only after core flows feel right:
 
-* multi-pane refinement
+* multi-panel refinement
 * detachable windows if justified
 * better layout persistence
 * multi-monitor friendliness
@@ -511,7 +515,7 @@ These questions matter more than polish:
 1. Can entity-aware writing actually feel good in a real editor?
 2. Can we match terms in a way that is powerful without becoming visual spam?
 3. Can slice-based references be implemented in a stable enough way to matter?
-4. Does semantic overlay genuinely help me re-enter old work?
+4. Do derived highlights and boundary views genuinely help me re-enter old work?
 5. Can the data model support the concept without becoming brittle?
 
 If these are not working, surface-level polish is irrelevant.
@@ -650,7 +654,7 @@ Codex should not assume:
 
 ## 19. One-sentence product identity
 
-**A local-first desktop writing environment for story authors, especially fantasy writers, that uses entities, linked context, semantic overlays, and low-friction views to dramatically reduce the pain of returning to complex narrative work.**
+**A local-first desktop writing environment for story authors, especially fantasy writers, that uses entities, slices, derived highlights, and low-friction views to dramatically reduce the pain of returning to complex narrative work.**
 
 ---
 

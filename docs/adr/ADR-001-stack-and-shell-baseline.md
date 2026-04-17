@@ -11,7 +11,7 @@ Accepted
 - [FOR_HUMAN_BUSINESS--DOC.md](../../FOR_HUMAN_BUSINESS--DOC.md)
 
 ## Context
-Evernear is a desktop-first, local-first writing product whose differentiator is semantic context and multi-pane re-entry flow, not cloud collaboration.
+Evernear is a desktop-first, local-first writing product whose differentiator is semantic context and multi-panel re-entry flow, not cloud collaboration.
 The project needs a stack that is practical to build, supports strong local workflows, and gives the editor enough room for custom behavior without turning the shell into the main challenge.
 
 ## Decision

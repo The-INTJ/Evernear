@@ -21,7 +21,7 @@ Read [README.md](./README.md) first, then [FOR_HUMAN_CODE--DOC.md](../../FOR_HUM
 ## Flow
 1. Main receives a project-open intent and resolves the local project path.
 2. The database bootstrap opens or initializes the SQLite store for that project.
-3. Repositories expose typed access to project, document, entity, slice, annotation, and layout data.
+3. Repositories expose typed access to project, document, entity, matching-rule, slice, slice-boundary, annotation, and layout data.
 4. Main and preload expose approved operations to the renderer through shared contracts.
 5. Renderer reads and writes through those contracts rather than touching persistence directly.
 6. Export and package operations can produce author-portable output from the canonical store.

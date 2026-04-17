@@ -25,17 +25,20 @@ Read [FOR_HUMAN_CODE--DOC.md](../../../FOR_HUMAN_CODE--DOC.md) first. This folde
 | --- | --- | --- |
 | `Project` | groups one story workspace | local-first, single-user-first |
 | `Document` | holds editable narrative or reference content | story, lore, notes, reference all fit here |
-| `Entity` | represents a meaningful in-world thing or concept | not just a hyperlink |
-| `AliasRule` | describes how text maps to an entity | literal first, broader patterns later |
-| `EntityTarget` | tells the app where the entity points | document or slice first |
-| `Slice` | identifies a bounded relevant region inside a document | key differentiator, harder than it looks |
+| `Entity` | defines semantic meaning that can be detected in text | owns matching rules and slice associations; it is not visual |
+| `MatchingRule` | describes how text maps to an entity | can be literal, alias-based, or pattern-based |
+| `Slice` | references a bounded relevant region, whole document, or later another asset | does not own content |
+| `SliceBoundary` | captures reusable start and end positions inside a document | multiple slices may share one boundary |
 | `Annotation` | captures low-noise personal notes | not collaborative review comments |
-| `SemanticCategory` | groups meaning for color and filter behavior | powers overlays and legend behavior |
-| `ViewMode` | captures interaction depth | hover, pane, focused |
-| `Pane/LayoutState` | remembers how context stays visible | supports re-entry and flow |
+| `Highlight` | provides the visual effect of a match in text | derived, never stored |
+| `SliceViewer` | shows the slices associated with an entity | shared by modal and panel surfaces |
+| `Modal` | handles temporary hover preview | disappears on mouse exit |
+| `Panel` | handles persistent expanded context | can open a deeper document view |
+| `DocumentView` | shows a full document from a slice within a panel | boundary-aware editing and navigation live here |
+| `Panel/LayoutState` | remembers how context stays visible | supports re-entry and flow |
 
 ## Key relationships
-- `db/schema` should map to these concepts without distorting them.
+- `db/schema` should map to these concepts without distorting the many-to-many `Entity` to `Slice` relationship.
 - `renderer/features` should consume these names directly rather than invent local synonyms.
 
 ## Decided
@@ -43,7 +46,7 @@ Read [FOR_HUMAN_CODE--DOC.md](../../../FOR_HUMAN_CODE--DOC.md) first. This folde
 
 ## Open
 - Exact document-kind taxonomy.
-- Exact alias-rule richness in the first implementation.
+- Exact matching-rule richness in the first implementation.
 
 ## Deferred
-- More exotic target types beyond documents and slices.
+- Graph-style relationship modeling beyond the slices needed for the core workflow.

@@ -19,7 +19,7 @@ Read [src/renderer/features/README.md](../README.md), then [src/shared/domain/RE
 ## Does not own
 - Lexical editor internals.
 - Canonical storage schema.
-- Entity matching rules.
+- Entity matching rules or slice-boundary definitions.
 
 ## Inputs and outputs
 - Inputs: project document metadata, active document content, ordering info.
@@ -28,6 +28,7 @@ Read [src/renderer/features/README.md](../README.md), then [src/shared/domain/RE
 ## Key relationships
 - Works closely with `editor` for content editing.
 - Supplies document context to `entities`, `annotations`, and `panes`.
+- Provides the content over which slices and slice boundaries are resolved.
 - Depends on repositories and contracts for persistence, not raw storage code.
 
 ## Likely future code here

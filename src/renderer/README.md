@@ -13,7 +13,7 @@ Read [src/README.md](../README.md), then [FOR_HUMAN_CODE--DOC.md](../../FOR_HUMA
 
 ## Owns
 - React app shell.
-- Pane orchestration and workspace state at the UI layer.
+- Panel orchestration and workspace state at the UI layer.
 - Editor hosting and feature composition.
 - User-facing interaction flow.
 
@@ -24,7 +24,7 @@ Read [src/README.md](../README.md), then [FOR_HUMAN_CODE--DOC.md](../../FOR_HUMA
 
 ## Inputs and outputs
 - Inputs: typed bridge calls, domain DTOs, persisted workspace state.
-- Outputs: user interactions, feature requests, pane/layout updates, edit intents.
+- Outputs: user interactions, feature requests, panel/layout updates, edit intents.
 
 ## Key relationships
 - Uses `editor` for the writing surface.
@@ -39,7 +39,7 @@ Read [src/README.md](../README.md), then [FOR_HUMAN_CODE--DOC.md](../../FOR_HUMA
 
 ## Decided
 - The renderer should stay UI-focused.
-- Side panes are part of the honest core workflow, not an optional flourish.
+- Persistent panels are part of the honest core workflow, not an optional flourish.
 
 ## Open
 - Exact renderer state-management approach.
