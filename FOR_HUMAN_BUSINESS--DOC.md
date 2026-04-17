@@ -1,6 +1,7 @@
 # FOR_HUMAN_BUSINESS--DOC
 
 ## Last change
+2026-04-17: defined selection-driven Everlink authoring as selection-bootstrapped entity plus slice creation with panel-based target editing and fail-closed anchor repair.
 2026-04-17: defined document organization as folders plus generic documents, reserved anchored outline nodes, and made clean copy/paste plus future slice-preserving text transfer phase-zero concerns.
 2026-04-17: cleaned the merged planning pass, aligned the history promise with the actual MVP architecture, and removed stale editor-choice language.
 2026-04-17: clarified entities as match-rule and slice libraries, made matching explicitly live rather than precomputed, and added Pretext as an exploratory layout spike.
@@ -23,8 +24,10 @@ The first writing workflow must also respect how real projects arrive: paste in 
 - The product is organized around `Project`, `DocumentFolder`, `Document`, `DocumentOutlineNode`, `Entity`, `MatchingRule`, `Slice`, `SliceBoundary`, `TextAnchor`, `Annotation`, and `Panel/LayoutState`.
 - `DocumentFolder` and later `DocumentOutlineNode` exist to organize navigation and re-entry; they do not define meaning.
 - An `Entity` owns a list of things that should match in text plus the library of slices those matches should open.
+- Manual `Everlink it!` authoring is allowed as a bootstrap into entity truth, but it must create or extend the entity and slice model rather than leave stored hyperlink markup behind in the manuscript.
 - Documents stay generic in the first build. `book`, `part`, `chapter`, and `section` belong to outline navigation later, not to a behavior-heavy document taxonomy now.
 - `TextAnchor` is the load-bearing idea behind both reusable slice boundaries and direct document annotations.
+- Slice boundaries are stored as anchored ranges with exact text plus context and an optional coarse jump hint; line or position readouts may help the UI, but they are not the truth that later repair trusts.
 - A future text-transfer seam must be able to preserve slice meaning across move or copy workflows without making ordinary editing or clipboard behavior weird in the meantime.
 - An annotation is a quiet personal note anchored straight to the main document, not a collaborative comment system and not a second-class afterthought.
 - The app is organized around `main`, `preload`, `renderer`, `shared`, and `db` so product ideas map cleanly to runtime boundaries.
@@ -39,8 +42,10 @@ The first writing workflow must also respect how real projects arrive: paste in 
 - Paste in large story or reference text and edit it normally.
 - Copy clean prose back out with ordinary select-all and copy behavior.
 - Create entities with matching rules and associate them with slices.
+- Bootstrap a new entity or extend an existing one from selected story text through `Everlink it!`, without any fuzzy auto-reuse of merely similar entities.
 - Live-calculate entity matches inside visible story text and render derived highlights when highlighting is enabled.
 - Use hover to open a modal with the slice viewer and click to open a persistent panel.
+- Place and edit new slice content inside a panel document view, with empty pending slices auto-filling from the source selection on commit or blur.
 - Persist enough local state that the workflow survives closing and reopening the app.
 - Capture history from day one, even if the first visible surface is only a simple restore-previous-version action after MVP.
 
@@ -48,6 +53,7 @@ The full annotation surface can land after the central loop proves itself, but i
 
 ## Major risks
 - Shared anchor healing under live edits could fail in ways that break both slice boundaries and annotations.
+- Duplicate or heavily revised lore text could make slice repair drift unless ambiguous anchor resolution fails closed.
 - Too much entity highlighting can make the document harder to read.
 - Matching normalization can become either too weak to trust or too aggressive to trust, especially with aliases, capitalization, and possessives.
 - Long-document layout and viewport tracking can become more expensive than the matching itself if the app has to keep asking the DOM where text lives.

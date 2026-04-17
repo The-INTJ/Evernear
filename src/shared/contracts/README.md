@@ -26,6 +26,7 @@ Read [src/shared/README.md](../README.md) first, then [src/main/README.md](../..
 - Project open, create, and close.
 - Document list, load, and save.
 - Entity list, create, update, delete, and matching-rule load.
+- Selection-driven Everlink start, attach-to-existing-entity, target-document placement, commit, and hover-preview resolution.
 - Pane and layout load and save.
 - Annotation load and save later.
 - Export and package operations.
@@ -36,6 +37,7 @@ Read [src/shared/README.md](../README.md) first, then [src/main/README.md](../..
 
 ## Decided
 - IPC should expose verbs and DTOs, not raw implementation detail.
+- Selection-driven authoring flows should cross runtime boundaries through explicit intents rather than generic "save whatever changed" payloads.
 
 ## Open
 - Whether contract versioning needs explicit support from day one.

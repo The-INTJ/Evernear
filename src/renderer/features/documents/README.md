@@ -16,6 +16,7 @@ Read [src/renderer/features/README.md](../README.md), then [src/shared/domain/RE
 - Lightweight organization such as folder assignment, ordering, and move or reorder intents.
 - Document metadata presentation such as title; kinds stay generic at first.
 - Renderer-side handling of active document context.
+- Generic-document creation and open flows that selection-driven Everlink can reuse when the writer chooses `create new doc`.
 
 ## Does not own
 - Editor internals.
@@ -30,6 +31,7 @@ Read [src/renderer/features/README.md](../README.md), then [src/shared/domain/RE
 - Works closely with `editor` for content editing.
 - Works with `projects` to present a usable project tree instead of a flat document bucket.
 - Supplies document context to `entities`, `annotations`, and `panes`.
+- Reopens newly created target documents directly into the pending Everlink panel flow when needed.
 - Provides the content over which slices and slice boundaries are resolved.
 - Should preserve ordinary select, copy, and paste expectations even when semantic overlays are visible.
 - Depends on repositories and contracts for persistence, not raw storage code.

@@ -13,6 +13,7 @@ Start with [FOR_HUMAN_BUSINESS--DOC.md](../FOR_HUMAN_BUSINESS--DOC.md), [FOR_HUM
 
 ## Owns
 - Cross-cutting documentation that is not best owned by a source folder.
+- Durable feature briefs for workflows that would otherwise get reinvented during implementation.
 - ADRs and other long-lived decision history.
 - The shared glossary for product and architecture language.
 - Experiments that are important enough to gate later phases.
@@ -25,6 +26,7 @@ Start with [FOR_HUMAN_BUSINESS--DOC.md](../FOR_HUMAN_BUSINESS--DOC.md), [FOR_HUM
 ## Key relationships
 - `adr` stores the most durable architecture decisions.
 - `experiments` stores the load-bearing proof work.
+- top-level `FB-*` docs capture workflow-specific decisions that are more detailed than the north-star docs but not durable enough to become ADRs
 - `glossary` stores the canonical terminology that the rest of the repo should reuse directly.
 - `templates` stores reusable doc starting points for future passes.
 

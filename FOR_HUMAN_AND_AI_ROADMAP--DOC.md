@@ -1,6 +1,7 @@
 # FOR_HUMAN_AND_AI_ROADMAP--DOC
 
 ## Last change
+2026-04-17: added selection-driven Everlink authoring, panel-based slice placement, and fail-closed anchor-repair work to the phase map.
 2026-04-17: added document-organization phases, large-import and clean-copy proof points, and reserved slice-preserving text transfer as an explicit later concern.
 2026-04-17: aligned the phased plan with the locked ProseMirror decision and added event-log plus checkpoint replay as a Phase 1 proof gate.
 
@@ -20,6 +21,8 @@ It should name proof, sequence, and exit criteria, not pretend a committee exist
   - Folders organize documents now; anchored outline nodes can later navigate a huge document without turning chapters into separate documents by force.
 - `TextAnchor` healing under live edits.
   - This serves both reusable slice boundaries and direct document annotations.
+- Selection-driven Everlink authoring.
+  - It must bootstrap entity truth and slice placement from a selection without turning the manuscript into a manual-link document.
 - Live visible-range matching.
   - Matches are derived on demand from current text, never precomputed as document truth.
 - Matching normalization plus performance while typing and scrolling.
@@ -117,6 +120,7 @@ Prove the central product promise:
 
 - create entities and matching rules
 - associate entities with slices
+- start `Everlink it!` from selected story text, with explicit attach-to-existing-entity behavior and target-document choice
 - derive highlights inside story text
 - hover to preview slices in a modal
 - click to open a persistent panel or focused document view
@@ -125,6 +129,7 @@ Validation criteria:
 
 - the workflow already helps with re-entry on imported real text, not just toy samples
 - entity workflows do not depend on a special document taxonomy
+- net-new selections never silently auto-reuse merely similar entities
 - derived highlights are useful without becoming immediate visual spam
 - modal and panel feel like one continuous workflow rather than two unrelated features
 
@@ -133,6 +138,7 @@ Introduce the shared anchor substrate in earnest:
 
 - reusable slice boundaries
 - boundary-aware document view
+- pending slice placement inside panel document view, including visible temporary rails and auto-fill on commit or blur when the slice is still empty
 - boundary indication and editing affordances
 - direct document annotations using the same anchor model
 - default quiet annotation styling such as a dotted gray underline, with author-tunable styling later
@@ -140,6 +146,7 @@ Introduce the shared anchor substrate in earnest:
 Validation criteria:
 
 - slice boundaries and annotations survive normal edits with acceptable healing
+- mapped anchors repair by exact text plus context when needed, and ambiguous repair fails closed instead of jumping to the wrong lore
 - annotation visuals stay noticeably quieter than entity highlights
 - the shared anchor model feels like one system, not two overlapping hacks
 
@@ -188,6 +195,7 @@ Validation criteria:
 - Keep organization orthogonal to entity meaning.
 - Keep the shared anchor problem load-bearing and explicit.
 - Do not precompute or persist document match sets.
+- Keep regex in entity matching and keep slice repair on exact text plus context.
 - Explore Pretext before locking the long-document layout strategy.
 - Preserve clean copy/paste behavior and leave room for future slice-aware transfer.
 - Do not let a "working" editor shell outrun the proof needed for anchors, matching, persistence, and history replay.

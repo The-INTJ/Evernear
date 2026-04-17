@@ -27,7 +27,7 @@ Read [src/db/README.md](../README.md) first, then [src/shared/domain/README.md](
 | project | `project_meta`, `project_preferences` | small, stable metadata |
 | documents | `document_folders`, `documents`, `document_outline_nodes`, `document_checkpoints`, `document_steps` | folders organize the project tree now; outline nodes join later as anchored navigation metadata |
 | entities | `entities`, `matching_rules`, `entity_slices` | core semantic model plus many-to-many slice links |
-| slices | `slices`, `slice_boundaries` | slice references plus reusable anchored bounds |
+| slices | `slices`, `slice_boundaries` | slice references plus reusable anchored bounds; each boundary stores one range anchor with exact text, context, and optional coarse jump hints |
 | annotations | `annotations` | same anchor payload shape as `slice_boundaries`, quieter UI meaning |
 | history | `events` | typed semantic history for aggregates |
 | workspace | `panel_layouts`, `workspace_state` | local persistence for flow |
@@ -35,11 +35,13 @@ Read [src/db/README.md](../README.md) first, then [src/shared/domain/README.md](
 Highlights are derived from matching results and should not become their own stored table family.
 `ProjectNavNode` is a renderer-facing union over folder, document, and outline records, not a separate persisted table family.
 `TextTransferProvenance` is a reserved future seam for slice-aware copy or move behavior and should serialize through explicit history or transfer records when that feature exists.
+`AnchorResolutionResult` is a read-path outcome, not automatically a persisted table family.
 
 ## Key relationships
 - Schema decisions should preserve clean repository boundaries.
 - Folder and ordering tables should support a lightweight project tree without making filesystem layout load-bearing.
 - Outline-node records should reuse the same anchor substrate as boundaries and annotations once they land.
+- Shared anchor columns should support fail-closed repair by exact text plus context; line numbers may be cached for UI convenience but should not become the selector truth.
 - Tables should support the honest core workflow before chasing secondary analytics.
 - MVP history schema stays minimal: no branch columns, parent pointers, or alternate-stream metadata until a real branching feature exists.
 
@@ -49,7 +51,7 @@ Highlights are derived from matching results and should not become their own sto
 
 ## Open
 - Exact folder and document ordering strategy.
-- Exact anchor payload column split and whether any selector fields should be broken out for indexing.
+- Exact anchor payload column split and whether `exact`, `prefix`, `suffix`, `blockPath`, or `approxPlainTextOffset` should be broken out for indexing.
 - Exact foreign-key and cascade policy.
 
 ## Deferred

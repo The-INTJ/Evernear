@@ -16,6 +16,7 @@ Read [src/renderer/features/README.md](../README.md), then [src/shared/domain/RE
 - Entity creation and editing UI.
 - Editing the list of things an entity should match in text.
 - Editing the slice library an entity should surface when one of those matches is activated.
+- Selection-driven `Everlink it!` entry, chooser flow, and explicit attach-to-existing-entity behavior.
 - Showing derived highlights inside story text.
 - Hover modal requests and click-to-open panel behavior.
 - Renderer-side management of how entities expose their associated slices.
@@ -26,8 +27,8 @@ Read [src/renderer/features/README.md](../README.md), then [src/shared/domain/RE
 - Slice-boundary persistence or document-view editing.
 
 ## Inputs and outputs
-- Inputs: entities, matching rules, slice associations, visible-range derived match results, local interaction state, highlight mode.
-- Outputs: create/edit entity intents, modal requests, panel-open intents, local presentation state.
+- Inputs: entities, matching rules, slice associations, visible-range derived match results, local interaction state, highlight mode, current selection context.
+- Outputs: create/edit entity intents, Everlink chooser intents, modal requests, panel-open intents, local presentation state.
 
 ## Key relationships
 - Depends on `shared/domain` for the canonical model.
@@ -39,11 +40,13 @@ Read [src/renderer/features/README.md](../README.md), then [src/shared/domain/RE
 - `entity-explorer`
 - `entity-editor`
 - `slice-association-editor`
+- `everlink-chooser`
 - `highlight-controller`
 
 ## Decided
 - Entities are a first-class feature area, not a helper for hyperlinks.
 - Entity matches are derived live from current text, not precomputed and stored.
+- Selection-driven Everlink may bootstrap or extend an entity, but it must not auto-reuse merely similar entities without explicit author choice.
 - Hover modal and persistent panel behavior belong in the honest core workflow.
 - Live matching should be disable-able so writing mode can stay visually quiet.
 

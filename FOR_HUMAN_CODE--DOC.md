@@ -1,6 +1,7 @@
 # FOR_HUMAN_CODE--DOC
 
 ## Last change
+2026-04-17: defined selection-driven Everlink authoring, hybrid slice anchors, and fail-closed anchor-resolution states for future implementation passes.
 2026-04-17: added folders, generic documents, anchored outline nodes, and a future text-transfer provenance seam to the shared model and roadmap.
 2026-04-17: cleaned the merged planning pass, removed stale editor-choice language, and completed the MVP history architecture around event logs, step logs, checkpoints, and inline projections.
 2026-04-17: clarified entities as rule libraries plus slice libraries, made matching explicitly live and non-persistent, and added Pretext as an exploratory layout option.
@@ -44,12 +45,14 @@ Evidence for the editor choice lives in [EXP-003](./docs/experiments/resolved/EX
 | `DocumentOutlineNode` | anchored navigational marker inside one document | id, documentId, role, label, anchor, ordering |
 | `Entity` | semantic definition used to detect and resolve references in text and open related context | id, name, scope, timestamps |
 | `MatchingRule` | literal, alias, or pattern rule used by an entity to match text | id, entityId, ruleType, pattern, normalization |
-| `TextAnchor` | durable selector payload that can re-find a document range after nearby edits | documentId, from, to, quote, prefix, suffix, blockPath, versionSeen |
+| `TextAnchor` | durable selector payload that can re-find a document range after nearby edits | documentId, from, to, exact, prefix, suffix, blockPath, approxPlainTextOffset, versionSeen |
 | `TextTransferProvenance` | future seam for copy or move operations that should preserve slice meaning across text transfers | sourceDocumentId, sourceAnchor, sliceIds, transferMode, versionSeen |
 | `Slice` | reference to a bounded piece of content or a whole document | id, sourceKind, sourceId, boundaryId, label |
 | `SliceBoundary` | reusable anchored range inside a document | id, documentId, anchor, timestamps |
 | `EntitySlice` | many-to-many association between entities and slices | entityId, sliceId, ordering |
 | `Highlight` | derived visual effect when a matching rule hits text | computed from matching results, never stored |
+| `PendingEverlinkSession` | renderer-side state for one selection-driven Everlink authoring flow | sourceDocumentId, sourceSelection, selectedEntityId?, targetDocumentId?, pendingAnchor?, colorToken |
+| `AnchorResolutionResult` | explicit result of trying to resolve a stored anchor against current text | state, resolvedRange?, confidence?, repairReason? |
 | `ProjectNavNode` | renderer-facing union used to show folder, document, or outline navigation in one tree | nodeType, id, parentId, ordering, targetDocumentId |
 | `SliceViewer` | scrollable sequence of slices for one entity | shared by modal and panel surfaces |
 | `Modal` | temporary hover preview surface | shows the slice viewer and disappears on mouse exit |
@@ -95,6 +98,8 @@ Highlights stay derived from document text plus matching results rather than bec
 Matches never become stored or precomputed document records.
 Slice boundaries stay reusable records rather than being hidden inside slice blobs.
 Slice boundaries and annotations share the same `TextAnchor` payload shape even if they live in different tables.
+Slice boundaries persist one range anchor each. Truth does not get split into separate line-number start and end markers.
+Regex belongs to entity matching. Slice repair and preview resolution should use exact text plus context, with fail-closed ambiguity handling rather than raw regex replay.
 
 Every semantic anchor mutation records the anchor payload together with `documentVersionSeen`. Historical reconstruction starts from the latest anchor event at or before the target version, then maps forward through document steps. If mapping collapses or deletes the range, the current anchor state becomes invalid rather than being silently healed.
 
@@ -107,6 +112,8 @@ Future slice-aware text transfer can hang off `TextTransferProvenance`, but the 
 - Keep semantic behavior composable: matching, derived highlighting, modal preview, panel open, document view, boundary editing, and annotation rendering stay separable concerns.
 - Treat ProseMirror's `Decoration` API as the home for derived highlights and quiet annotation underlines; neither is persisted inside the document.
 - Treat ProseMirror's `Step` and `Mapping` as the document-content primitives for both live anchor migration and the history layer.
+- Let editor selection affordances bootstrap entity-and-slice authoring through `Everlink it!` without storing hyperlink markup in the manuscript.
+- Keep target-document placement and pending-slice editing inside persistent panel document view rather than hover modals.
 - Let slice boundaries and annotations share one anchor-healing substrate.
 - Let future outline navigation reuse that same anchor substrate rather than inventing a separate heading-position model.
 - Live-calculate matches from visible text when highlighting is enabled rather than precomputing whole-document match sets.
@@ -164,6 +171,7 @@ Future slice-aware text transfer can hang off `TextTransferProvenance`, but the 
 - Exact state-management approach inside the renderer.
 - Exact migration tooling and schema evolution conventions, including event payload versioning.
 - Exact `TextAnchor` representation in ProseMirror position space under unusual edits.
+- Exact repair ranking and UI behavior when `AnchorResolutionResult` is `ambiguous` or `invalid`.
 - Exact `TextTransferProvenance` payload shape once slice-aware transfer lands.
 - Whether to use TipTap or raw ProseMirror at the React seam.
 - Checkpoint cadence and named-checkpoint UX.

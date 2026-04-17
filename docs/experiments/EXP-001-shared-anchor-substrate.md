@@ -24,7 +24,7 @@ The right model is:
 
 - shared `TextAnchor` payloads for both slice boundaries and annotations
 - transaction or change mapping as the first repair step during live editing
-- quote and context re-resolution as the fallback when mapping alone is not enough
+- exact-text plus context re-resolution as the fallback when mapping alone is not enough
 
 ## Proposed anchor shape
 ```ts
@@ -36,6 +36,7 @@ type TextAnchor = {
   prefix: string;
   suffix: string;
   blockPath: number[];
+  approxPlainTextOffset?: number;
   versionSeen: number;
 };
 ```
@@ -48,7 +49,7 @@ function mapAnchorForward(anchor: TextAnchor, changeMap: ChangeMap, nextDoc: Doc
     return {...anchor, from: mapped.from, to: mapped.to};
   }
 
-  const repaired = reResolveByQuoteAndContext(nextDoc, anchor);
+  const repaired = reResolveByExactAndContext(nextDoc, anchor);
   if (repaired) {
     return {...anchor, ...repaired};
   }
