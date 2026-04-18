@@ -8,6 +8,8 @@ Read [CLAUDE.md](CLAUDE.md) first for invariants. This doc is the next layer dow
 
 Living document. Update it when a convention is adopted, retired, or contradicted.
 
+**Last updated 2026-04-18.** The foundation refactor pass landed: god files split, migrations framework, typed event catalog, anchor-math unified between DB and renderer (with off-by-one fix), IPC validation at the trust boundary, Vitest suite covering anchoring + repository integration, ESLint with runtime-boundary enforcement. See CLAUDE.md "Current stage" for the live state and [package.json](package.json) for the current script surface.
+
 ## Parent reads
 
 - [CLAUDE.md](CLAUDE.md) — non-negotiable invariants
@@ -76,7 +78,9 @@ Current `unknown` usage is confined to error-catch sites and one internal JSON u
 
 ## What to change (rough edges that will not scale)
 
-### C1. Decompose [src/renderer/App.tsx](src/renderer/App.tsx) (1,733 lines)
+> **Status update (2026-04-18):** items C1, C2, C3, C4, C7 and most of A1/A2/A3/A4/A5 below have landed. C5 (workbench/workspace naming), C6 (targeted projection reads), and C8 (incremental decoration diffing) remain. Completed items are kept here as a record of the pattern — match them when touching adjacent code.
+
+### C1. Decompose [src/renderer/App.tsx](src/renderer/App.tsx) (1,733 lines) — DONE
 
 A single component now holds 15+ `useState` hooks, Everlink session logic, pending-slice placement, clipboard auditing, workspace dispatch, and layout rendering. This is already slowing iteration and will rot quickly.
 
@@ -88,19 +92,19 @@ A single component now holds 15+ `useState` hooks, Everlink session logic, pendi
 
 **Rule going forward:** no renderer file exceeds ~400 lines without a justification in the PR description. At 600 lines it must be split before merge.
 
-### C2. Split [src/db/workbenchRepository.ts](src/db/workbenchRepository.ts) (2,000 lines) along the already-declared seams
+### C2. Split [src/db/workbenchRepository.ts](src/db/workbenchRepository.ts) (2,000 lines) along the already-declared seams — DONE
 
 [src/db/repositories/README.md:25-32](src/db/repositories/README.md) already names the aggregates: `ProjectRepository`, `DocumentRepository`, `EntityRepository`, `SliceRepository`, `AnnotationRepository`, `HistoryRepository`, `WorkspaceRepository`. Today they all live in one file as one class.
 
 **Plan:** move each aggregate's public methods and private helpers into its own file under [src/db/repositories/](src/db/repositories/). Keep one thin `WorkspaceRepository` that composes the others for cross-aggregate reads (loadWorkspace). Transaction boundaries and event-append discipline stay identical — this is a mechanical extraction.
 
-### C3. Validate at the IPC trust boundary, not before it
+### C3. Validate at the IPC trust boundary, not before it — DONE
 
 [src/preload/index.ts](src/preload/index.ts) forwards whatever the renderer passes. [src/main/index.ts:37-66](src/main/index.ts) trusts the typed input, but at runtime this is just `unknown` JSON crossing a process boundary. A bug in the renderer can corrupt persistent state.
 
 **Plan:** add runtime validation at each `ipcMain.handle` site. Option A: Zod schemas colocated with the input types in `src/shared/domain/workspace.ts` (schema + `z.infer` type). Option B: hand-rolled guards. Either is fine; what matters is that main never calls into a repository with an unvalidated payload. Preload stays dumb — validation is the main process's job because main is the trust boundary.
 
-### C4. Stop magic-stringing event types
+### C4. Stop magic-stringing event types — DONE
 
 Event names like `"projectCreated"`, `"folderCreated"`, `"folderUpdated"` are inline string literals at each [appendEvent](src/db/workbenchRepository.ts:300) call site. Cataloging them is cheap now and very expensive later when we need to replay from logs.
 
@@ -118,7 +122,7 @@ Every mutation ends with `return this.loadWorkspace();` ([workbenchRepository.ts
 
 **Plan:** not urgent, but when it starts to hurt: return a diff (`WorkspaceStateDelta`) from mutations and have the renderer apply it. Keep `loadWorkspace()` as the initial-load and safety-net path. Don't do this until you have a profiler telling you to.
 
-### C7. Schema migrations, not `CREATE TABLE IF NOT EXISTS`
+### C7. Schema migrations, not `CREATE TABLE IF NOT EXISTS` — DONE
 
 [src/db/schema.ts](src/db/schema.ts) is idempotent bootstrap. Good for pre-release, but once a user has a real project file you can't add a column safely.
 
@@ -134,7 +138,7 @@ Every mutation ends with `return this.loadWorkspace();` ([workbenchRepository.ts
 
 ## What to add
 
-### A1. Tests. Any tests.
+### A1. Tests. Any tests. — DONE for anchoring + repository integration; UI tests still open.
 
 The most recent commit message is *"Phase 1.5, refining and furthering tests"* but [package.json](package.json) has no test script and [src/](src) contains no `.test.ts` / `.spec.ts` files. The commit history and the code disagree.
 
@@ -146,7 +150,7 @@ The most recent commit message is *"Phase 1.5, refining and furthering tests"* b
 
 Use Vitest — it runs on Vite's config and keeps tooling count low. Tests live next to source (`foo.test.ts` beside `foo.ts`).
 
-### A2. Lint and format enforcement
+### A2. Lint and format enforcement — DONE
 
 No ESLint. No Prettier. Inconsistencies are already visible across files.
 

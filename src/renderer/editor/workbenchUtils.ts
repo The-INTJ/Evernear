@@ -1,4 +1,3 @@
-import { Node as ProseMirrorNode } from "prosemirror-model";
 import { schema as basicSchema } from "prosemirror-schema-basic";
 
 import type { JsonObject, StoredDocumentSnapshot } from "../../shared/domain/document";
@@ -8,6 +7,7 @@ import type {
   MatchingRuleRecord,
   TextAnchor,
 } from "../../shared/domain/workspace";
+import { buildPlainTextIndex, resolveBlockPath } from "../../shared/anchoring";
 
 export type EditorSelectionInfo = {
   from: number;
@@ -53,36 +53,6 @@ export function buildTextAnchorFromSelection(
     blockPath: resolveBlockPath(doc, selection.from),
     approxPlainTextOffset: index.text.indexOf(exact),
     versionSeen: snapshot.currentVersion,
-  };
-}
-
-export function buildPlainTextIndex(doc: ProseMirrorNode): {
-  text: string;
-  charStarts: number[];
-  charEnds: number[];
-} {
-  const textParts: string[] = [];
-  const charStarts: number[] = [];
-  const charEnds: number[] = [];
-
-  doc.forEach((blockNode, offset, index) => {
-    const blockStartPos = offset + 1;
-    if (index > 0) {
-      const separatorPos = blockStartPos - 1;
-      for (let i = 0; i < 2; i += 1) {
-        textParts.push("\n");
-        charStarts.push(separatorPos);
-        charEnds.push(separatorPos);
-      }
-    }
-
-    walkNodeText(blockNode, blockStartPos, textParts, charStarts, charEnds);
-  });
-
-  return {
-    text: textParts.join(""),
-    charStarts,
-    charEnds,
   };
 }
 
@@ -187,37 +157,6 @@ export function normalizeForMatch(input: string): string {
     .replace(/[\u2019']/g, "'")
     .replace(/\s+/g, " ")
     .toLocaleLowerCase();
-}
-
-function resolveBlockPath(doc: ProseMirrorNode, position: number): number[] {
-  const resolved = doc.resolve(position);
-  const indices: number[] = [];
-  for (let depth = 0; depth <= resolved.depth; depth += 1) {
-    indices.push(resolved.index(depth));
-  }
-  return indices;
-}
-
-function walkNodeText(
-  node: ProseMirrorNode,
-  absolutePos: number,
-  textParts: string[],
-  charStarts: number[],
-  charEnds: number[],
-): void {
-  if (node.isText) {
-    const text = node.text ?? "";
-    for (let index = 0; index < text.length; index += 1) {
-      textParts.push(text[index] ?? "");
-      charStarts.push(absolutePos + index);
-      charEnds.push(absolutePos + index + 1);
-    }
-    return;
-  }
-
-  node.forEach((child, offset) => {
-    walkNodeText(child, absolutePos + offset + 1, textParts, charStarts, charEnds);
-  });
 }
 
 function dedupeMatchHits(hits: EntityMatchHit[]): EntityMatchHit[] {

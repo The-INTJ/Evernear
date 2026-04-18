@@ -3,7 +3,7 @@ import path from "node:path";
 
 import Database from "better-sqlite3";
 
-import { createSchema } from "./schema";
+import { runMigrations } from "./migrations";
 
 export class SqliteHarness {
   private constructor(
@@ -23,7 +23,7 @@ export class SqliteHarness {
     database.pragma(`synchronous = ${synchronousMode}`);
     database.pragma("foreign_keys = ON");
 
-    createSchema(database);
+    runMigrations(database);
 
     return new SqliteHarness(database, filePath, synchronousMode);
   }
