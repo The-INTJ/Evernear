@@ -2,11 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Current stage: Phase 0, documentation spine only
+## Current stage: Phase 1.5 MVP (~5.5k LOC)
 
-This repo is pre-code. There is no `package.json`, no build system, no tests, no lint config, and no runnable app yet. The `src/` tree is README-only scaffolding that pre-declares runtime boundaries before implementation lands (see [FOR_HUMAN_AND_AI_ROADMAP--DOC.md](FOR_HUMAN_AND_AI_ROADMAP--DOC.md) "Phase 0: Documentation spine").
+The repo has a runnable Electron app with [package.json](package.json) (v0.3.0), a ProseMirror-based editor, SQLite persistence with event-sourced history, and a typed IPC contract. There is **no test framework and no lint/format tooling yet** — do not invent `npm test` commands; check [package.json](package.json) scripts first. Working commands: `npm run dev`, `npm run typecheck`, `npm run check` (typecheck + build), `npm run build`.
 
-Do not invent build, test, or install commands. If the user asks to run something, check whether the tooling actually exists first — if it doesn't, say so rather than fabricating a `npm test` that will fail.
+The `src/` folder READMEs pre-declare more structure than the code currently occupies (e.g. [src/db/repositories/README.md](src/db/repositories/README.md) names seven repositories, but today everything lives in one [src/db/workbenchRepository.ts](src/db/workbenchRepository.ts)). The declared structure is the target, not aspiration — see the extraction rules below.
 
 ## Doc hierarchy and contradiction rule
 
@@ -18,6 +18,8 @@ Read in this order when you land cold:
 4. [FOR_HUMAN_AND_AI_ROADMAP--DOC.md](FOR_HUMAN_AND_AI_ROADMAP--DOC.md) — phased execution plan and load-bearing spikes.
 
 Durable decisions: [docs/adr/](docs/adr/). Workflow-level decisions more specific than the north-star docs but not durable enough to be ADRs: top-level `FB-*` docs (e.g. [docs/FB-001-selection-driven-everlink.md](docs/FB-001-selection-driven-everlink.md)). Proof work: [docs/experiments/](docs/experiments/).
+
+Coding conventions and the rules that keep the code maintainable as it scales live in [refineCode.md](refineCode.md) (the full convention layer) and [AGENT.md](AGENT.md) (a shorter hard-rules checklist an agent must pass before finishing a task). **If you are an AI agent working on code in this repo, read [AGENT.md](AGENT.md) now — it is short and the rules are enforceable.**
 
 ## Load-bearing architectural invariants
 
@@ -49,6 +51,16 @@ When a future pass writes code, it must land inside these boundaries. Don't crea
 ## Folder README convention
 
 Every folder under `src/` and `docs/` has a README following a consistent shape: **Status / If you landed here first / Parent reads / Owns / Does not own / Key relationships / Decided / Open / Deferred** (plus occasionally Inputs and outputs, Likely future code here, Current ADRs, etc.). When you add a new folder, follow this shape — it's the repo's chain-up rule for keeping docs discoverable.
+
+## File-size and decomposition rules
+
+These are how we keep god files from re-forming. Full rationale and file-by-file targets live in [refineCode.md](refineCode.md); AI enforcement checklist lives in [AGENT.md](AGENT.md).
+
+- **Soft limits:** React component 300 lines, custom hook 150, repository module 400, IPC/preload 150. Data-only shared type modules may exceed.
+- **Hard limits (split before merge):** React component 500, custom hook 250, repository module 700, IPC/preload 250.
+- **Over-budget files carry an `EXTRACTION ROADMAP` block comment at the top** naming the target destinations. Current ones: [src/renderer/App.tsx](src/renderer/App.tsx) and [src/db/workbenchRepository.ts](src/db/workbenchRepository.ts). When you touch code near an `EXTRACT →` marker, the safest change is to extract that section first, then modify it in its new home.
+- **Do not add new features to a file flagged for extraction.** If a feature lands in App.tsx or workbenchRepository.ts before the extraction, you are making the refactor harder for the next person and the file will never shrink. Populate the declared destination folder instead. The [src/renderer/features/*](src/renderer/features/) READMEs and [src/db/repositories/README.md](src/db/repositories/README.md) already describe where the new code should go.
+- **Extraction is a no-behavior-change move.** One PR per section, verified by `npm run check`. Don't refactor and add a feature in the same commit.
 
 ## Writing new docs
 

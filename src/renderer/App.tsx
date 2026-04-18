@@ -34,6 +34,64 @@ import {
   type SerializedTransactionBundle,
 } from "./editor/workbenchUtils";
 
+/*
+ * EXTRACTION ROADMAP — see refineCode.md §C1.
+ *
+ * This file is currently a god component (~1,730 lines). Every new feature
+ * added here makes the refactor harder. New work should populate the folders
+ * below, not append here. The `src/renderer/features/*` READMEs are already
+ * written; only the code is missing.
+ *
+ * Target layout (each "EXTRACT" marker below points to one of these):
+ *
+ *   Hooks (src/renderer/hooks/ — create folder)
+ *     useWorkspace          — workspace state + persistence queue + mutation runner
+ *     useEverlinkSession    — everlink chooser flow (session state + commit)
+ *     usePendingPlacement   — pending slice placement + blur-to-commit
+ *     useRunLog             — run-log append + trim
+ *     useEditorSelections   — main/panel selection tracking
+ *     useWorkspaceLookups   — entitiesById / slicesById / boundariesBySliceId / documentsById maps
+ *     useVisibleBoundaries  — main + panel boundary filter memos
+ *     useHoverPreview       — hover state + positioning
+ *
+ *   Feature components (src/renderer/features/)
+ *     projects/TopBar.tsx             — top-bar project <select> + new/show-panel
+ *     projects/ProjectActions.tsx     — nav-panel project name + folder/doc create forms
+ *     documents/NavPanel.tsx          — composes ProjectActions + DocumentTree
+ *     documents/DocumentTree.tsx      — folder/document tree in nav panel
+ *     documents/EditorPane.tsx        — editor toolbar + statusbar + main editor host
+ *     entities/EntityList.tsx         — side-panel entity list + create
+ *     entities/EntityDetail.tsx       — entity rename + delete
+ *     entities/MatchingRuleEditor.tsx — rule form + rule list for selected entity
+ *     entities/EverlinkPanel.tsx      — create-or-attach chooser UI
+ *     panes/SidePanel.tsx             — composes the panel-stack sub-panels
+ *     panes/SlicePlacementPanel.tsx   — pending-placement sidebar UI
+ *     panes/SliceViewer.tsx           — slices linked to the selected entity
+ *     panes/PanelDocumentView.tsx     — second editor instance
+ *     panes/HoverPreview.tsx          — hover tooltip positioning + contents
+ *     history/RunLog.tsx              — workspace event log display
+ *
+ *   Utilities (src/renderer/utils/ — create folder)
+ *     formatting.ts — truncate, formatCount, formatBoundaryReason, stringifyError
+ *     workspace.ts  — getActiveProject, findProject, getSelectedEntity,
+ *                     selectedSlicesForEntity, groupDocumentsByFolder
+ *
+ *   This file after extraction: under 300 lines. Composes the above;
+ *   owns only top-level layout (<mvp-shell>, <mvp-topbar>, <main>).
+ *
+ * Rules for a safe extraction step:
+ *   1. Move the state (useState/useRef) into the hook or component that owns it.
+ *   2. Pass only what's strictly needed via props — don't leak the whole workspace.
+ *   3. Keep handlers colocated with the UI that fires them; if a handler is used
+ *      by two UIs, lift it to a hook, not to another component.
+ *   4. Move local types (EverlinkSession, PendingSlicePlacement) into the hook
+ *      file that owns them — avoids import loops back to App.tsx.
+ *   5. Do not change behavior in an extraction PR. One commit per move.
+ *
+ * Do not add new features inside this file. Extract the relevant section first,
+ * then modify it in its new home.
+ */
+
 type RunLogTone = "info" | "success" | "warn";
 
 type RunLogEntry = {
@@ -114,9 +172,12 @@ export function App() {
   const [pendingPlacement, setPendingPlacement] = useState<PendingSlicePlacement | null>(null);
   const [hoverPreview, setHoverPreview] = useState<HoverPreview | null>(null);
 
+  // ── EXTRACT → hooks/useWorkspace.ts (init effect) ──
   useEffect(() => {
     void initializeWorkspace();
   }, []);
+
+  // ── EXTRACT → hooks/useEditorDrafts.ts (title/name sync effects below) ──
 
   useEffect(() => {
     const activeProject = getActiveProject(workspace);
@@ -137,6 +198,10 @@ export function App() {
   const panelDocument = workspace?.panelDocument ?? null;
   const selectedEntity = getSelectedEntity(workspace);
 
+  // ── EXTRACT → hooks/useWorkspaceLookups.ts ──
+  // All four id-keyed maps below (entitiesById, slicesById, boundariesBySliceId,
+  // documentsById) move together — they recompute from the same workspace slice
+  // and are the base layer for every downstream memo in this component.
   const entitiesById = useMemo(() => {
     const next = new Map<string, EntityRecord>();
     workspace?.entities.forEach((entity) => next.set(entity.id, entity));
@@ -161,6 +226,7 @@ export function App() {
     return next;
   }, [workspace?.documents]);
 
+  // ── EXTRACT → hooks/useEditorRules.ts (or keep in useWorkspaceLookups) ──
   const editorRules = useMemo<EditorMatchingRule[]>(() => {
     if (!workspace) {
       return [];
@@ -172,6 +238,7 @@ export function App() {
     }));
   }, [workspace, entitiesById]);
 
+  // ── EXTRACT → hooks/useEverlinkSession.ts (selection-aware entity lookup) ──
   const exactSelectionEntityIds = useMemo(() => {
     if (!workspace || mainSelection.empty) {
       return [];
@@ -190,6 +257,7 @@ export function App() {
     );
   }, [workspace, mainSelection]);
 
+  // ── EXTRACT → hooks/useEntitySlices.ts (feeds features/entities/EntityDetail + features/panes/SliceViewer) ──
   const selectedEntitySlices = useMemo(() => {
     if (!workspace || !selectedEntity) {
       return [] as Array<{
@@ -215,6 +283,9 @@ export function App() {
       });
   }, [workspace, selectedEntity, slicesById, boundariesBySliceId, documentsById]);
 
+  // ── EXTRACT → hooks/useVisibleBoundaries.ts ──
+  // Both main + panel boundary memos below move together; they share the
+  // "selected entity + pending placement" filter logic.
   const mainVisibleBoundaries = useMemo(() => {
     if (!workspace || !activeDocument) {
       return [] as SliceBoundaryRecord[];
@@ -254,6 +325,9 @@ export function App() {
       && (selectedSliceIds.size === 0 || selectedSliceIds.has(boundary.sliceId)));
   }, [workspace, panelDocument, selectedEntity]);
 
+  // ── EXTRACT → hooks/usePendingPlacement.ts ──
+  // Both main + panel pending-range memos below move together, along with the
+  // pendingPlacement state/ref and the handle*Placement handlers further down.
   const mainPendingRange = useMemo<PendingSliceRange | null>(() => {
     if (!pendingPlacement || pendingPlacement.surface !== "main") {
       return null;
@@ -282,11 +356,20 @@ export function App() {
     return { from: start, to: end, awaitingPlacement: start === end };
   }, [pendingPlacement]);
 
+  // ── EXTRACT → hooks/useHoverPreview.ts ──
+  // Pair with features/panes/HoverPreview.tsx (the JSX sibling further below).
   const hoverEntity = hoverPreview ? entitiesById.get(hoverPreview.entityId) ?? null : null;
   const hoverSlices = hoverPreview && hoverEntity
     ? selectedSlicesForEntity(hoverPreview.entityId, workspace, slicesById, boundariesBySliceId, documentsById)
     : [];
 
+  // ── EXTRACT → hooks/useWorkspace.ts ──
+  // The block below — initializeWorkspace, applyWorkspace, syncDocumentVersions,
+  // appendLog, flushPersistence, runWorkspaceMutation, patchWorkspaceDocument,
+  // queueDocumentPersistence — is the entire persistence coordinator. It moves
+  // as one unit. The returned hook shape should expose: status, workspace,
+  // pendingWrites, isBusy, runLog, appendLog, runMutation, queuePersistence,
+  // flushPersistence. Everything else in this component consumes that hook.
   async function initializeWorkspace(): Promise<void> {
     setIsBusy(true);
 
@@ -410,6 +493,9 @@ export function App() {
       });
   }
 
+  // ── EXTRACT → hooks/useEditorSelections.ts + hooks/useWorkspace.ts ──
+  // Snapshot handlers forward to queueDocumentPersistence (useWorkspace);
+  // selection handlers update mainSelection/panelSelection (useEditorSelections).
   function handleMainSnapshotChange(
     snapshot: HarnessEditorSnapshot,
     transaction: SerializedTransactionBundle | null,
@@ -455,6 +541,11 @@ export function App() {
     });
   }
 
+  // ── EXTRACT → features/projects/ + features/documents/ handlers ──
+  // Project + folder + document CRUD handlers below move into their feature
+  // components (or a small use*Mutations hook if a handler is shared). They
+  // all call runWorkspaceMutation from useWorkspace — the hook is the only
+  // dependency the feature modules need.
   async function handleProjectSwitch(projectId: string): Promise<void> {
     if (!projectId || projectId === workspace?.layout.activeProjectId) {
       return;
@@ -614,6 +705,9 @@ export function App() {
     );
   }
 
+  // ── EXTRACT → features/entities/ handlers ──
+  // Entity + rule + slice CRUD handlers below pair with the feature components
+  // EntityList / EntityDetail / MatchingRuleEditor / SliceViewer.
   async function handleSelectEntity(entityId: string): Promise<void> {
     await runWorkspaceMutation(
       () => window.evernear.updateLayout({
@@ -716,6 +810,12 @@ export function App() {
     );
   }
 
+  // ── EXTRACT → hooks/useEverlinkSession.ts + hooks/usePendingPlacement.ts ──
+  // The everlink flow (openEverlinkChooser → handleBeginPlacement →
+  // handleCreateTargetDocumentFromChooser → handleCommitPendingSlice →
+  // handleCancelPlacement) is the most self-contained handler group in this
+  // file — extract it first. Pair with features/entities/EverlinkPanel.tsx
+  // and features/panes/SlicePlacementPanel.tsx.
   async function openEverlinkChooser(): Promise<void> {
     if (!activeDocument || mainSelection.empty || mainSelection.text.trim().length === 0) {
       appendLog("Select some story text before starting Everlink it!.", "warn");
@@ -953,6 +1053,10 @@ export function App() {
     }
   }
 
+  // ── EXTRACT → features/panes/ handlers + hooks/useHoverPreview.ts ──
+  // Hover / click / blur handlers below belong with the panel + hover-preview
+  // feature components. handlePanelBlur / handleMainBlur are pending-placement
+  // concerns — move them alongside usePendingPlacement.
   async function handleOpenSliceInPanel(documentId: string, entityId: string): Promise<void> {
     const nextWorkspace = await window.evernear.openDocument({ documentId, surface: "panel" });
     applyWorkspace(nextWorkspace, "Opened the slice document in the persistent panel.");
@@ -1020,8 +1124,11 @@ export function App() {
   const everlinkLabel = exactSelectionEntityIds.length > 0 ? "Edit Everlink" : "Everlink it!";
   const emptySnapshot = createEmptyHarnessSnapshot();
 
+  // ── JSX BELOW: each <section>/<aside> is marked with its extraction target.
+  // After extraction this render should be ~30 lines: composition only.
   return (
     <div className="mvp-shell">
+      {/* EXTRACT → features/projects/TopBar.tsx */}
       <header className="mvp-topbar">
         <div className="brand-block">
           <span className="eyebrow">Evernear MVP</span>
@@ -1053,6 +1160,8 @@ export function App() {
       </header>
 
       <main className={workspace?.layout.panelOpen ? "mvp-grid" : "mvp-grid mvp-grid--panel-closed"}>
+        {/* EXTRACT → features/documents/NavPanel.tsx
+            (which composes features/projects/ProjectActions + features/documents/DocumentTree) */}
         <aside className="nav-panel">
           <section className="panel-section">
             <p className="section-kicker">Project</p>
@@ -1158,6 +1267,8 @@ export function App() {
           </section>
         </aside>
 
+        {/* EXTRACT → features/documents/EditorPane.tsx
+            (editor toolbar + statusbar + main HarnessEditor host) */}
         <section className="editor-panel">
           <div className="editor-toolbar">
             <div className="field-stack field-stack--grow">
@@ -1239,8 +1350,13 @@ export function App() {
           </div>
         </section>
 
+        {/* EXTRACT → features/panes/SidePanel.tsx
+            (composes Everlink / Placement / Entity / Slice / RunLog sub-panels
+            based on workspace state; owns the mutually-exclusive rendering
+            between everlinkSession, pendingPlacement, and the default view) */}
         {workspace?.layout.panelOpen ? (
           <aside className="panel-stack">
+            {/* EXTRACT → features/entities/EverlinkPanel.tsx */}
             {everlinkSession ? (
               <section className="panel-section">
                 <p className="section-kicker">Everlink it!</p>
@@ -1334,6 +1450,7 @@ export function App() {
               </section>
             ) : null}
 
+            {/* EXTRACT → features/panes/SlicePlacementPanel.tsx */}
             {pendingPlacement ? (
               <section className="panel-section panel-section--grow">
                 <p className="section-kicker">Slice Placement</p>
@@ -1387,6 +1504,7 @@ export function App() {
 
             {!everlinkSession && !pendingPlacement ? (
               <>
+                {/* EXTRACT → features/entities/EntityList.tsx */}
                 <section className="panel-section">
                   <p className="section-kicker">Entities</p>
                   <h2>Entity Library</h2>
@@ -1420,6 +1538,7 @@ export function App() {
 
                 {selectedEntity ? (
                   <>
+                    {/* EXTRACT → features/entities/EntityDetail.tsx */}
                     <section className="panel-section">
                       <p className="section-kicker">Entity Detail</p>
                       <input
@@ -1435,6 +1554,7 @@ export function App() {
                       </div>
                     </section>
 
+                    {/* EXTRACT → features/entities/MatchingRuleEditor.tsx */}
                     <section className="panel-section">
                       <p className="section-kicker">Matching Rules</p>
                       <div className="form-grid form-grid--stack">
@@ -1506,6 +1626,7 @@ export function App() {
                       </div>
                     </section>
 
+                    {/* EXTRACT → features/panes/SliceViewer.tsx */}
                     <section className="panel-section panel-section--grow">
                       <p className="section-kicker">Slices</p>
                       <h2>Slice Viewer</h2>
@@ -1539,6 +1660,7 @@ export function App() {
                       </div>
                     </section>
 
+                    {/* EXTRACT → features/panes/PanelDocumentView.tsx */}
                     {panelDocument ? (
                       <section className="panel-section panel-section--grow">
                         <p className="section-kicker">Panel Document View</p>
@@ -1568,6 +1690,7 @@ export function App() {
               </>
             ) : null}
 
+            {/* EXTRACT → features/history/RunLog.tsx */}
             <section className="panel-section">
               <p className="section-kicker">Run Log</p>
               <div className="run-log">
@@ -1590,6 +1713,7 @@ export function App() {
         ) : null}
       </main>
 
+      {/* EXTRACT → features/panes/HoverPreview.tsx */}
       {hoverPreview && hoverEntity ? (
         <div className="hover-preview" style={{ left: hoverPreview.x + 18, top: hoverPreview.y + 18 }}>
           <p className="section-kicker">Preview</p>
@@ -1616,6 +1740,14 @@ export function App() {
   );
 }
 
+// ── EXTRACT → src/renderer/utils/workspace.ts + src/renderer/utils/formatting.ts ──
+// The module-level helpers below are pure; they move into utils/ and get imported
+// by the hook/component that needs them. No hook dependencies, no React.
+// Split approximately: workspace.ts (getActiveProject, findProject,
+// getSelectedEntity, selectedSlicesForEntity, groupDocumentsByFolder),
+// formatting.ts (truncate, formatCount, formatBoundaryReason, countForLabel,
+// stringifyError, uniqueStrings). MetricCard is currently unused here — move
+// it alongside its caller when one emerges, or delete it.
 function getActiveProject(workspace: WorkspaceState | null): ReturnType<typeof findProject> {
   if (!workspace) {
     return null;
