@@ -2,11 +2,28 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Current stage: Phase 1.5 MVP (~5.5k LOC)
+## Current stage: Phase 1.5 MVP, foundation hardened
 
-The repo has a runnable Electron app with [package.json](package.json) (v0.3.0), a ProseMirror-based editor, SQLite persistence with event-sourced history, and a typed IPC contract. There is **no test framework and no lint/format tooling yet** — do not invent `npm test` commands; check [package.json](package.json) scripts first. Working commands: `npm run dev`, `npm run typecheck`, `npm run check` (typecheck + build), `npm run build`.
+The repo has a runnable Electron app (v0.3.0): ProseMirror editor, SQLite persistence with event-sourced history, typed IPC contract with runtime validation, migration framework, and a Vitest suite covering the anchor-math + repository path.
 
-The `src/` folder READMEs pre-declare more structure than the code currently occupies (e.g. [src/db/repositories/README.md](src/db/repositories/README.md) names seven repositories, but today everything lives in one [src/db/workbenchRepository.ts](src/db/workbenchRepository.ts)). The declared structure is the target, not aspiration — see the extraction rules below.
+The two god files that earlier versions of this doc flagged — renderer `App.tsx` (~1,700 lines) and `workbenchRepository.ts` (~2,000 lines) — have been split:
+
+- DB layer split along the aggregates pre-declared in [src/db/repositories/README.md](src/db/repositories/README.md). Each aggregate owns its own repository; [WorkspaceRepository](src/db/repositories/WorkspaceRepository.ts) is a thin composition facade. Pure ProseMirror anchor math lives in [src/shared/anchoring.ts](src/shared/anchoring.ts) (used by both DB and renderer).
+- Renderer split into hooks under [src/renderer/state/](src/renderer/state/) and feature components under [src/renderer/features/](src/renderer/features/). `App.tsx` is now a composition shell; no new features should go there.
+
+Working commands:
+
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Electron + Vite + tsup watcher |
+| `npm run typecheck` | strict `tsc --noEmit` |
+| `npm run lint` | ESLint with runtime-boundary rules |
+| `npm run test` | Vitest. Rebuilds the better-sqlite3 native binding for Node, runs the suite, rebuilds for Electron. ~30s. |
+| `npm run test:only` | Vitest without the ABI dance (use only after you know the binding is on Node). |
+| `npm run format` / `format:check` | Prettier |
+| `npm run check` | typecheck → lint → test → build (the canonical gate) |
+
+Before inventing a new command, read [package.json](package.json).
 
 ## Doc hierarchy and contradiction rule
 
@@ -58,9 +75,9 @@ These are how we keep god files from re-forming. Full rationale and file-by-file
 
 - **Soft limits:** React component 300 lines, custom hook 150, repository module 400, IPC/preload 150. Data-only shared type modules may exceed.
 - **Hard limits (split before merge):** React component 500, custom hook 250, repository module 700, IPC/preload 250.
-- **Over-budget files carry an `EXTRACTION ROADMAP` block comment at the top** naming the target destinations. Current ones: [src/renderer/App.tsx](src/renderer/App.tsx) and [src/db/workbenchRepository.ts](src/db/workbenchRepository.ts). When you touch code near an `EXTRACT →` marker, the safest change is to extract that section first, then modify it in its new home.
-- **Do not add new features to a file flagged for extraction.** If a feature lands in App.tsx or workbenchRepository.ts before the extraction, you are making the refactor harder for the next person and the file will never shrink. Populate the declared destination folder instead. The [src/renderer/features/*](src/renderer/features/) READMEs and [src/db/repositories/README.md](src/db/repositories/README.md) already describe where the new code should go.
+- **No new features in a file at or above its soft limit without first extracting.** If your change grows [src/renderer/App.tsx](src/renderer/App.tsx), [src/renderer/state/useEverlinkPlacement.ts](src/renderer/state/useEverlinkPlacement.ts), or any aggregate repository under [src/db/repositories/](src/db/repositories/) past its soft limit, extract first then modify the extracted home. Populate the folder the feature belongs in — [src/renderer/features/*](src/renderer/features/) or [src/db/repositories/](src/db/repositories/) — rather than appending to an existing large file.
 - **Extraction is a no-behavior-change move.** One PR per section, verified by `npm run check`. Don't refactor and add a feature in the same commit.
+- **ESLint enforces the runtime boundaries automatically** via `no-restricted-imports` in [eslint.config.mjs](eslint.config.mjs). If the linter blocks an import you wanted, the right fix is to move the code, not to silence the rule.
 
 ## Writing new docs
 

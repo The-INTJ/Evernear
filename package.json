@@ -14,8 +14,16 @@
     "build:electron": "tsup src/main/index.ts src/preload/index.ts --format cjs --out-dir dist-electron --external electron",
     "start": "electron dist-electron/main/index.js",
     "typecheck": "tsc --noEmit",
-    "check": "npm run typecheck && npm run build",
+    "test": "npm run rebuild:node && vitest run && npm run rebuild:native",
+    "test:only": "vitest run",
+    "test:watch": "npm run rebuild:node && vitest",
+    "test:ui": "npm run rebuild:node && vitest --ui",
+    "lint": "eslint src",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx}\"",
+    "check": "npm run typecheck && npm run lint && npm run test && npm run build",
     "rebuild:native": "electron-rebuild -f -w better-sqlite3",
+    "rebuild:node": "npm rebuild better-sqlite3 --no-save",
     "postinstall": "npm run rebuild:native"
   },
   "dependencies": {
@@ -33,19 +41,26 @@
     "prosemirror-view": "1.41.8",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "vite": "8.0.8"
+    "vite": "8.0.8",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@electron/rebuild": "4.0.3",
+    "@eslint/js": "^10.0.1",
     "@types/better-sqlite3": "7.6.13",
     "@types/node": "25.6.0",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
+    "@vitest/ui": "^4.1.4",
     "concurrently": "9.2.1",
     "cross-env": "10.1.0",
+    "eslint": "^10.2.1",
+    "prettier": "^3.8.3",
     "tsup": "8.5.1",
     "tsx": "4.21.0",
     "typescript": "6.0.3",
+    "typescript-eslint": "^8.58.2",
+    "vitest": "^4.1.4",
     "wait-on": "9.0.5"
   }
 }

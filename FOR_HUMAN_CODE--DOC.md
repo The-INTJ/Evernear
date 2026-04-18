@@ -1,6 +1,7 @@
 # FOR_HUMAN_CODE--DOC
 
 ## Last change
+2026-04-18: Phase 1.5 foundation hardening — DB layer split into per-aggregate repositories, renderer split into hooks + feature components, anchor math unified in `src/shared/anchoring.ts` (fixing an off-by-one bug in `walkNodeText`), typed event catalog, schema migration framework, Zod validation at IPC boundary, Vitest suite, ESLint with runtime-boundary enforcement. Added the "Current implementation map" section below.
 2026-04-17: defined selection-driven Everlink authoring, hybrid slice anchors, and fail-closed anchor-resolution states for future implementation passes.
 2026-04-17: added folders, generic documents, anchored outline nodes, and a future text-transfer provenance seam to the shared model and roadmap.
 2026-04-17: cleaned the merged planning pass, removed stale editor-choice language, and completed the MVP history architecture around event logs, step logs, checkpoints, and inline projections.
@@ -70,6 +71,50 @@ Evidence for the editor choice lives in [EXP-003](./docs/experiments/resolved/EX
 | `DocumentCheckpoint` | full document snapshot at a given version | stored in `document_checkpoints` as a replay base |
 | `Projection` | current-state table materialized from logs and checkpoints | convenience for queries, never the truth |
 | `Timeline` | unified chronological view of events and document steps | long-term writer-facing narrative of what changed when |
+
+## Current implementation map
+
+Where the domain concepts live in the code right now. Update this section whenever a concept moves or a new aggregate gets its own file.
+
+| Concept | File(s) |
+| --- | --- |
+| Canonical domain types | [src/shared/domain/workspace.ts](src/shared/domain/workspace.ts), [src/shared/domain/document.ts](src/shared/domain/document.ts) |
+| Anchor math (ProseMirror-facing) | [src/shared/anchoring.ts](src/shared/anchoring.ts) |
+| IPC channel constants + `HarnessBridge` | [src/shared/contracts/harnessApi.ts](src/shared/contracts/harnessApi.ts) |
+| Runtime input validation (Zod schemas) | [src/shared/contracts/harnessSchemas.ts](src/shared/contracts/harnessSchemas.ts) |
+| Event type catalog | [src/db/events.ts](src/db/events.ts) |
+| SQLite bootstrap + transaction API | [src/db/sqliteHarness.ts](src/db/sqliteHarness.ts) |
+| Schema migrations (`user_version`-driven) | [src/db/migrations.ts](src/db/migrations.ts) |
+| Row-shape decoders | [src/db/rowTypes.ts](src/db/rowTypes.ts), [src/db/rowMappers.ts](src/db/rowMappers.ts) |
+| DB utility helpers | [src/db/utils.ts](src/db/utils.ts) |
+| Project aggregate | [src/db/repositories/ProjectRepository.ts](src/db/repositories/ProjectRepository.ts) |
+| Folder aggregate | [src/db/repositories/FolderRepository.ts](src/db/repositories/FolderRepository.ts) |
+| Document aggregate | [src/db/repositories/DocumentRepository.ts](src/db/repositories/DocumentRepository.ts) |
+| Entity + MatchingRule aggregate | [src/db/repositories/EntityRepository.ts](src/db/repositories/EntityRepository.ts) |
+| Slice + SliceBoundary + EntitySlice | [src/db/repositories/SliceRepository.ts](src/db/repositories/SliceRepository.ts) |
+| History (events, step log, checkpoints, replay) | [src/db/repositories/HistoryRepository.ts](src/db/repositories/HistoryRepository.ts) |
+| Workspace layout projection | [src/db/repositories/LayoutRepository.ts](src/db/repositories/LayoutRepository.ts) |
+| Composition facade + cross-aggregate transactions | [src/db/repositories/WorkspaceRepository.ts](src/db/repositories/WorkspaceRepository.ts) |
+| IPC handler registration | [src/main/index.ts](src/main/index.ts) |
+| Preload forwarders (context bridge) | [src/preload/index.ts](src/preload/index.ts) |
+| Editor host (ProseMirror view) | [src/renderer/editor/HarnessEditor.tsx](src/renderer/editor/HarnessEditor.tsx) |
+| Renderer-side anchor + match utilities | [src/renderer/editor/workbenchUtils.ts](src/renderer/editor/workbenchUtils.ts) |
+| Workspace persistence coordinator | [src/renderer/state/useWorkspace.ts](src/renderer/state/useWorkspace.ts) |
+| Mutation handlers hook | [src/renderer/state/useWorkspaceActions.ts](src/renderer/state/useWorkspaceActions.ts) |
+| Everlink + pending-placement flow | [src/renderer/state/useEverlinkPlacement.ts](src/renderer/state/useEverlinkPlacement.ts) |
+| Memoized id-indexed workspace lookups | [src/renderer/state/useWorkspaceLookups.ts](src/renderer/state/useWorkspaceLookups.ts) |
+| Editor selection state | [src/renderer/state/useEditorSelections.ts](src/renderer/state/useEditorSelections.ts) |
+| Short-lived UI session types (EverlinkSession, RuleFormState, HoverPreview, etc.) | [src/renderer/state/sessionTypes.ts](src/renderer/state/sessionTypes.ts) |
+| Feature: project top-bar switcher | [src/renderer/features/projects/TopBar.tsx](src/renderer/features/projects/TopBar.tsx) |
+| Feature: document tree + project actions | [src/renderer/features/documents/NavPanel.tsx](src/renderer/features/documents/NavPanel.tsx) |
+| Feature: main editor pane | [src/renderer/features/documents/EditorPane.tsx](src/renderer/features/documents/EditorPane.tsx) |
+| Feature: entity library / detail / rules | [src/renderer/features/entities/EntityList.tsx](src/renderer/features/entities/EntityList.tsx), [src/renderer/features/entities/EntityDetail.tsx](src/renderer/features/entities/EntityDetail.tsx), [src/renderer/features/entities/MatchingRuleEditor.tsx](src/renderer/features/entities/MatchingRuleEditor.tsx) |
+| Feature: Everlink chooser UI | [src/renderer/features/entities/EverlinkPanel.tsx](src/renderer/features/entities/EverlinkPanel.tsx) |
+| Feature: pending slice placement panel | [src/renderer/features/panes/SlicePlacementPanel.tsx](src/renderer/features/panes/SlicePlacementPanel.tsx) |
+| Feature: slice viewer, panel-document view, hover preview | [src/renderer/features/panes/SliceViewer.tsx](src/renderer/features/panes/SliceViewer.tsx), [src/renderer/features/panes/PanelDocumentView.tsx](src/renderer/features/panes/PanelDocumentView.tsx), [src/renderer/features/panes/HoverPreview.tsx](src/renderer/features/panes/HoverPreview.tsx) |
+| Feature: run log | [src/renderer/features/history/RunLog.tsx](src/renderer/features/history/RunLog.tsx) |
+| App shell (composition only) | [src/renderer/App.tsx](src/renderer/App.tsx) |
+| Tests | [src/shared/anchoring.test.ts](src/shared/anchoring.test.ts), [src/db/repositories/WorkspaceRepository.test.ts](src/db/repositories/WorkspaceRepository.test.ts) |
 
 ## Data and storage stance
 SQLite is the canonical runtime store.

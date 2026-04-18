@@ -12,19 +12,20 @@ Other docs give the *why*. This doc gives the *check*.
 
 ## The rule that this doc exists to enforce
 
-**Do not grow [src/renderer/App.tsx](src/renderer/App.tsx) or [src/db/workbenchRepository.ts](src/db/workbenchRepository.ts).**
+**Do not grow god files.** Both historical god files have been split:
 
-Both files carry an `EXTRACTION ROADMAP` block comment at the top and `EXTRACT →` markers at every internal section. They got to 1,700 and 2,000 lines because the easy path is to append. The easy path is now closed.
+- `src/db/workbenchRepository.ts` (2,000 lines) is gone — see [src/db/repositories/](src/db/repositories/) for the per-aggregate owners.
+- `src/renderer/App.tsx` (1,700 lines → 354 lines) is now a composition shell. Hooks live in [src/renderer/state/](src/renderer/state/); components live in [src/renderer/features/](src/renderer/features/).
 
-If your change needs to touch logic inside either file:
+The ongoing rule: **no new features in a file that's already at or above its soft limit.** Features belong in the folder declared for their concern:
 
-1. **Find the nearest `EXTRACT →` marker** above your target section.
-2. **Move that section** to the file the marker names, as a no-behavior-change commit.
-3. **Make your actual change** in its new home, as a separate commit.
+- UI feature → `src/renderer/features/<feature>/`
+- Hook → `src/renderer/state/use<Thing>.ts`
+- DB aggregate mutation → `src/db/repositories/<Aggregate>Repository.ts`
+- New event type → add to `src/db/events.ts` and reference via `history.appendEvent(type, ..., payload)`.
+- New IPC method → update `HARNESS_CHANNELS`, `HarnessBridge`, preload forwarder, main handler, and add a Zod schema in `src/shared/contracts/harnessSchemas.ts` (see R3).
 
-If your change would add a new section to either file, stop. Populate the marker's destination folder instead. The folder's README already exists.
-
-This is non-negotiable. A PR that lengthens either file without extracting first will be rejected.
+ESLint's `no-restricted-imports` enforces runtime boundaries automatically. If the linter blocks an import you wanted, the right fix is to move the code, not silence the rule.
 
 ---
 
@@ -80,8 +81,8 @@ Adding a new IPC operation touches *exactly* these locations, in this order:
 1. Add the channel key to `HARNESS_CHANNELS` in [src/shared/contracts/harnessApi.ts](src/shared/contracts/harnessApi.ts).
 2. Add the method signature to the `HarnessBridge` interface (same file).
 3. Add the forwarder in [src/preload/index.ts](src/preload/index.ts) (one line).
-4. Add the `ipcMain.handle(...)` registration in [src/main/index.ts](src/main/index.ts).
-5. (Future) Validate input in the main handler before calling the repository.
+4. Add a Zod schema for the input in [src/shared/contracts/harnessSchemas.ts](src/shared/contracts/harnessSchemas.ts).
+5. Add the `ipcMain.handle(...)` registration in [src/main/index.ts](src/main/index.ts), wrapping the payload in `parseInput(schema, input, channel)` before calling the repository.
 
 If you find yourself threading a new concept through App.tsx and five utilities instead, you are bending the contract — stop and add a proper channel.
 
@@ -112,14 +113,13 @@ Use the terms from the vocabulary table in [FOR_HUMAN_CODE--DOC.md](FOR_HUMAN_CO
 
 If an edit pushes a file past its soft limit, flag it in the PR description. Past the hard limit, split first.
 
-### R7. Do not add to god files
+### R7. Do not re-create god files
 
-Specific to the files currently over-budget:
+The historical god files were split in April 2026. The same discipline that prevented them from growing now prevents them from reappearing:
 
-- [src/renderer/App.tsx](src/renderer/App.tsx) (>1,700 lines) — **no new features**. Extract the relevant `EXTRACT →` section into the target feature folder first, then add your feature there.
-- [src/db/workbenchRepository.ts](src/db/workbenchRepository.ts) (>2,000 lines) — **no new mutations**. Create the target repository in [src/db/repositories/](src/db/repositories/), wire main to instantiate it, then add your mutation there.
-
-The `EXTRACTION ROADMAP` block at the top of each file names every target destination.
+- A new UI feature belongs in a new file under [src/renderer/features/<feature>/](src/renderer/features/). Don't grow App.tsx.
+- A new DB aggregate belongs in a new repository under [src/db/repositories/](src/db/repositories/). Don't grow WorkspaceRepository — it is a composition facade, not a bucket for new mutations.
+- A hook that grows past 250 lines splits. Today [useEverlinkPlacement](src/renderer/state/useEverlinkPlacement.ts) is the largest hook in the repo at ~380 lines; it is the cap, not a pattern to copy. If you touch that file for anything but bug fixes, break off the next logical sub-flow first.
 
 ### R8. Comment discipline
 
@@ -148,7 +148,7 @@ Run through this before saying "done":
 - [ ] IPC additions touch exactly the four files listed in R3.
 - [ ] No file exceeded its hard limit (R6); no growth in the two flagged god files (R7).
 - [ ] New folder → new README (R9).
-- [ ] `npm run check` passes (typecheck + build). There is no test runner yet.
+- [ ] `npm run check` passes (typecheck → lint → test → build).
 - [ ] If you touched behavior near an `EXTRACT →` marker, you either extracted first or recorded in the PR description why you deferred.
 - [ ] No emoji in code or docs unless the user explicitly asked for it.
 - [ ] Commit message focuses on *why*, not *what*.
