@@ -181,8 +181,8 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
         {props.showLegend !== false ? (
           <div className="editor-legend">
             <span className="legend-chip legend-chip--highlight">Visible-range match</span>
-            <span className="legend-chip legend-chip--boundary">Boundary probe</span>
-            <span className="legend-chip legend-chip--annotation">Annotation probe</span>
+            <span className="legend-chip legend-chip--boundary">Slice boundary</span>
+            <span className="legend-chip legend-chip--annotation">Link</span>
           </div>
         ) : null}
         <div className="editor-surface" ref={surfaceRef}>

@@ -513,41 +513,47 @@ export class WorkbenchRepository {
       "Northbound lanterns drifted over the marsh road.",
       "Aurelia Vale copied White Harbor twice to test duplicates.",
     ]);
-    const anchor = buildAnchorFromRange(source, 1, 20, HARNESS_DOCUMENT_ID, 0);
+    const repairedAnchor = buildAnchorFromRange(source, 12, 29, HARNESS_DOCUMENT_ID, 0);
+    const ambiguousAnchor = {
+      ...buildAnchorFromRange(source, 12, 29, HARNESS_DOCUMENT_ID, 0),
+      prefix: "",
+      suffix: "",
+      approxPlainTextOffset: undefined,
+    };
     const duplicateDoc = buildDocFromParagraphs([
       "Northbound lanterns drifted over the marsh road.",
-      "Northbound lanterns drifted over the marsh road.",
+      "Watchfires dimmed while lanterns drifted over the marsh road.",
     ]);
-    const duplicateResolution = resolveAnchorWithFallback(anchor, duplicateDoc, "range collapsed");
+    const duplicateResolution = resolveAnchorWithFallback(ambiguousAnchor, duplicateDoc, "duplicate range candidates remained");
     const editedDoc = buildDocFromParagraphs([
-      "Northbound paper lanterns drifted over the marsh road.",
+      "Quietly, Northbound lanterns drifted over the marsh road.",
       "Aurelia Vale copied White Harbor twice to test duplicates.",
     ]);
-    const repairedResolution = resolveAnchorWithFallback(anchor, editedDoc, "text shifted");
+    const repairedResolution = resolveAnchorWithFallback(repairedAnchor, editedDoc, "nearby text shifted");
     const removedDoc = buildDocFromParagraphs([
       "Lantern hooks remained but the text was removed.",
       "Aurelia Vale copied White Harbor twice to test duplicates.",
     ]);
-    const invalidResolution = resolveAnchorWithFallback(anchor, removedDoc, "text deleted");
+    const invalidResolution = resolveAnchorWithFallback(repairedAnchor, removedDoc, "linked text deleted");
 
     return {
       ranAt: isoNow(),
       cases: [
         {
           id: "anchor-repair",
-          label: "Exact text with nearby edit repairs cleanly",
+          label: "Nearby edit repairs a slice boundary cleanly",
           status: repairedResolution.status,
           reason: repairedResolution.reason,
         },
         {
           id: "anchor-ambiguous",
-          label: "Duplicate text fails closed as ambiguous",
+          label: "Duplicate link text fails closed as ambiguous",
           status: duplicateResolution.status,
           reason: duplicateResolution.reason,
         },
         {
           id: "anchor-invalid",
-          label: "Deleted text becomes invalid",
+          label: "Deleted linked text becomes invalid",
           status: invalidResolution.status,
           reason: invalidResolution.reason,
         },
@@ -559,7 +565,7 @@ export class WorkbenchRepository {
     const cases = [
       {
         id: "literal-whole-word",
-        label: "Whole-word literal ignores embedded substrings",
+        label: "Whole-word literal catches the real term and ignores embedded substrings",
         text: "White Harbor sat beside the tidewhiteharbor marker.",
         rules: [
           {
@@ -1387,7 +1393,10 @@ function collectRuleMatches(
         foundAt + normalizedRule.length + 2,
       );
       const wholeWordOkay = !rule.wholeWord || (!isWordCharacter(before) && !isWordCharacter(after));
-      const possessiveOkay = !rule.allowPossessive || possessiveSuffix === "'s" || possessiveSuffix === "";
+      const possessiveOkay = !rule.allowPossessive
+        || possessiveSuffix === "'s"
+        || possessiveSuffix === ""
+        || !isWordCharacter(after);
 
       if (wholeWordOkay && possessiveOkay) {
         hits.push({ label: rule.label });

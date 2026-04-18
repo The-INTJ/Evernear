@@ -90,6 +90,7 @@ export function App() {
   const [importRevision, setImportRevision] = useState(0);
   const [importSeed, setImportSeed] = useState<JsonObject>(emptyDocumentJson);
   const [importSnapshot, setImportSnapshot] = useState<HarnessEditorSnapshot>(initialImportSnapshot);
+  const [showImportSlot, setShowImportSlot] = useState(false);
   const [mainSelection, setMainSelection] = useState<EditorSelectionInfo>({
     from: 0,
     to: 0,
@@ -147,6 +148,9 @@ export function App() {
     setDocumentSeed(snapshot?.contentJson ?? emptyDocumentJson);
     setDocumentRevision((current) => current + 1);
     setLiveSnapshot(snapshot ? snapshotToEditorSnapshot(snapshot) : null);
+    if (!snapshot || snapshot.plainText.trim().length === 0) {
+      setShowImportSlot(true);
+    }
     appendLog(message, "success");
   }
 
@@ -274,6 +278,7 @@ export function App() {
       applyHydratedState(nextState, "Loaded the small deterministic fixture for edge-case probing.");
       setImportSeed(nextState.snapshot?.contentJson ?? emptyDocumentJson);
       setImportRevision((current) => current + 1);
+      setShowImportSlot(false);
       focusMainEditorSoon();
     } catch (error) {
       appendLog(`Fixture load failed: ${stringifyError(error)}`, "warn");
@@ -317,7 +322,8 @@ export function App() {
         source: "import-slot",
       });
 
-      applyHydratedState(nextState, `Imported ${formatCount(snapshot.metrics.wordCount)} words from the manuscript slot.`);
+      applyHydratedState(nextState, `Imported ${formatCount(snapshot.metrics.wordCount)} words from the manuscript replace slot.`);
+      setShowImportSlot(false);
       focusMainEditorSoon();
     } catch (error) {
       appendLog(`Import replacement failed: ${stringifyError(error)}`, "warn");
@@ -330,7 +336,8 @@ export function App() {
     setImportSeed(emptyDocumentJson);
     setImportRevision((current) => current + 1);
     setImportSnapshot(initialImportSnapshot);
-    appendLog("Cleared the manuscript import slot.", "info");
+    setShowImportSlot(true);
+    appendLog("Cleared the manuscript replace slot.", "info");
   }
 
   function handleMirrorHeadIntoImportSlot(): void {
@@ -342,7 +349,8 @@ export function App() {
     setImportSeed(currentHead.contentJson);
     setImportRevision((current) => current + 1);
     setImportSnapshot(snapshotToEditorSnapshot(currentHead));
-    appendLog("Copied the persisted head into the import slot for comparison.", "info");
+    setShowImportSlot(true);
+    appendLog("Copied the persisted head into the manuscript replace slot for comparison.", "info");
   }
 
   async function handleVerifyClipboard(): Promise<void> {
@@ -407,12 +415,12 @@ export function App() {
 
       const refreshedSnapshot = refreshedState.snapshot;
       if (!refreshedSnapshot) {
-        throw new Error("No persisted document head was available for anchoring.");
+        throw new Error("No persisted document head was available for slice/link tracking.");
       }
 
       const anchor = buildTextAnchorFromSelection(refreshedSnapshot, selection);
       if (!anchor) {
-        appendLog("Select a non-empty range before creating an anchor probe.", "warn");
+        appendLog("Select a non-empty range before creating a slice boundary or link.", "warn");
         return;
       }
 
@@ -428,12 +436,12 @@ export function App() {
       }));
       setAnchorLabel("");
       appendLog(
-        `Created ${kind} probe on "${truncate(selection.text || anchor.exact, 42)}".`,
+        `Created ${displayAnchorKind(kind)} on "${truncate(selection.text || anchor.exact, 42)}".`,
         "success",
       );
       focusMainEditorSoon();
     } catch (error) {
-      appendLog(`Anchor creation failed: ${stringifyError(error)}`, "warn");
+      appendLog(`Slice/link creation failed: ${stringifyError(error)}`, "warn");
     } finally {
       setIsBusy(false);
     }
@@ -448,10 +456,10 @@ export function App() {
         ...current,
         anchorProbes: probes,
       }));
-      appendLog("Removed an anchor probe from the workbench.", "info");
+      appendLog("Removed a slice/link tracker from the workbench.", "info");
       focusMainEditorSoon();
     } catch (error) {
-      appendLog(`Anchor deletion failed: ${stringifyError(error)}`, "warn");
+      appendLog(`Slice/link deletion failed: ${stringifyError(error)}`, "warn");
     } finally {
       setIsBusy(false);
     }
@@ -529,9 +537,9 @@ export function App() {
     try {
       const result = await window.evernear.runAnchorScenarios();
       setAnchorScenario(result);
-      appendLog("Ran the anchor repair / ambiguity / invalidation scenarios.", "success");
+      appendLog("Ran the slice/link repair, ambiguity, and invalidation scenarios.", "success");
     } catch (error) {
-      appendLog(`Anchor scenarios failed: ${stringifyError(error)}`, "warn");
+      appendLog(`Slice/link scenarios failed: ${stringifyError(error)}`, "warn");
     } finally {
       setIsBusy(false);
     }
@@ -704,11 +712,11 @@ export function App() {
       <header className="hero-panel workbench-hero">
         <div>
           <p className="eyebrow">Phase 1 Proof Workbench</p>
-          <h1>Import real prose, probe anchors, measure matching, and pressure-test history before MVP.</h1>
+          <h1>Import real prose, test slices and links, measure matching, and pressure-test history before MVP.</h1>
           <p className="hero-copy">
             This shell is intentionally not the product. It is the local-only proof bench for the
             remaining Phase 1 questions: better-sqlite3 durability, real-manuscript intake,
-            shared TextAnchor healing, visible-range matching, event-log replay, and Pretext viability.
+            shared slice/link range healing, visible-range matching, event-log replay, and Pretext viability.
           </p>
         </div>
         <div className="hero-meta">
@@ -788,7 +796,7 @@ export function App() {
       <nav className="tab-strip" aria-label="Workbench views">
         {([
           ["document", "Document"],
-          ["anchors", "Anchors"],
+          ["anchors", "Slices / Links"],
           ["matching", "Matching"],
           ["history", "History"],
           ["layout", "Layout"],
@@ -837,37 +845,55 @@ export function App() {
           {activeTab === "document" ? (
             <>
               <section className="sidebar-section">
-                <p className="section-kicker">Import Slot</p>
-                <h2>Paste the real manuscript here</h2>
+                <p className="section-kicker">Manuscript Replace</p>
+                <h2>One-time paste and replace</h2>
                 <p className="section-copy">
-                  This is the canonical Phase 1 ingest path. Paste directly from Google Docs into
-                  the import slot, then replace the persisted head from it. The manuscript stays local and untracked.
+                  You only need this when replacing the whole manuscript from Google Docs. Normal
+                  editing happens in the main document. Paste here, then promote it into the live head.
                 </p>
                 <div className="toolbar-actions">
+                  <button
+                    className="secondary-button"
+                    onClick={() => setShowImportSlot((current) => !current)}
+                    type="button"
+                  >
+                    {showImportSlot ? "Hide Replace Slot" : "Open Replace Slot"}
+                  </button>
                   <button className="secondary-button" onClick={handleMirrorHeadIntoImportSlot} type="button">
                     Mirror Current Head
                   </button>
-                  <button className="secondary-button" onClick={handleClearImportSlot} type="button">
-                    Clear Slot
-                  </button>
-                  <button className="primary-button" onClick={() => void handleReplaceHeadFromImport()} disabled={isBusy} type="button">
-                    Replace Head From Import
-                  </button>
+                  {showImportSlot ? (
+                    <button className="secondary-button" onClick={handleClearImportSlot} type="button">
+                      Clear Slot
+                    </button>
+                  ) : null}
                 </div>
-                <div className="import-note-grid">
-                  <MetricCard label="Import Words" value={formatCount(importSnapshot.metrics.wordCount)} compact />
-                  <MetricCard label="Import Paragraphs" value={formatCount(importSnapshot.metrics.paragraphCount)} compact />
-                  <MetricCard label="Import Characters" value={formatCount(importSnapshot.metrics.characterCount)} compact />
-                </div>
-                <HarnessEditor
-                  key={importRevision}
-                  ref={importEditorRef}
-                  initialDocumentJson={importSeed}
-                  decorationsEnabled={false}
-                  showLegend={false}
-                  onDocumentSnapshotChange={handleImportEditorSnapshotChange}
-                  onSelectionChange={() => undefined}
-                />
+                {showImportSlot ? (
+                  <>
+                    <div className="import-note-grid">
+                      <MetricCard label="Import Words" value={formatCount(importSnapshot.metrics.wordCount)} compact />
+                      <MetricCard label="Import Paragraphs" value={formatCount(importSnapshot.metrics.paragraphCount)} compact />
+                      <MetricCard label="Import Characters" value={formatCount(importSnapshot.metrics.characterCount)} compact />
+                    </div>
+                    <HarnessEditor
+                      key={importRevision}
+                      ref={importEditorRef}
+                      initialDocumentJson={importSeed}
+                      decorationsEnabled={false}
+                      showLegend={false}
+                      onDocumentSnapshotChange={handleImportEditorSnapshotChange}
+                      onSelectionChange={() => undefined}
+                    />
+                    <button className="primary-button" onClick={() => void handleReplaceHeadFromImport()} disabled={isBusy} type="button">
+                      Replace Head From Slot
+                    </button>
+                  </>
+                ) : (
+                  <div className="selection-card">
+                    <span>Replace slot hidden</span>
+                    <span>Open it only when you want to paste a new manuscript</span>
+                  </div>
+                )}
               </section>
 
               <section className="sidebar-section">
@@ -916,12 +942,17 @@ export function App() {
             <>
               <section className="sidebar-section">
                 <p className="section-kicker">Selection</p>
-                <h2>Anchor capture</h2>
+                <h2>Slice and link tracking</h2>
                 <p className="section-copy">
-                  Select a live range in the main editor, then capture it as either a boundary probe
-                  or an annotation probe. The workbench stores one shared TextAnchor payload and
-                  lets the repository remap or re-resolve it over time.
+                  Select a live range in the main editor, then capture it as either a slice boundary
+                  or a link. In this proof build, those markers only test whether a tracked range
+                  survives edits. With overlays on, slice boundaries render as teal rails and links
+                  render as gold underlines in the main editor.
                 </p>
+                <div className="selection-card">
+                  <span>Slice boundary: reusable tracked slice span</span>
+                  <span>Link: directly tracked linked text span</span>
+                </div>
                 <div className="selection-card">
                   <span>From {mainSelection.from} to {mainSelection.to}</span>
                   <span>{mainSelection.empty ? "No active selection" : `${mainSelection.text.length} selected chars`}</span>
@@ -936,41 +967,41 @@ export function App() {
                   className="text-input"
                   value={anchorLabel}
                   onChange={(event) => setAnchorLabel(event.target.value)}
-                  placeholder="Optional probe label"
+                  placeholder="Optional slice/link label"
                 />
                 <div className="toolbar-actions">
                   <button className="secondary-button" onClick={() => void handleCreateAnchorProbe("boundary")} disabled={isBusy} type="button">
-                    Add Boundary Probe
+                    Add Slice Boundary
                   </button>
                   <button className="secondary-button" onClick={() => void handleCreateAnchorProbe("annotation")} disabled={isBusy} type="button">
-                    Add Annotation Probe
+                    Add Link
                   </button>
                   <button className="primary-button" onClick={() => void handleRunAnchorScenarios()} disabled={isBusy} type="button">
-                    Run Anchor Scenarios
+                    Run Slice/Link Scenarios
                   </button>
                 </div>
               </section>
 
               <section className="sidebar-section">
-                <p className="section-kicker">Live Probes</p>
-                <h2>Resolution state</h2>
+                <p className="section-kicker">Live Markers</p>
+                <h2>Tracking state</h2>
                 <div className="stack-list">
                   {anchorProbes.length === 0 ? (
-                    <p className="empty-state">No anchor probes yet. Capture a real selection to start pressure-testing mapping and repair.</p>
+                    <p className="empty-state">No slice boundaries or links yet. Capture a real selection to start pressure-testing range tracking.</p>
                   ) : (
                     anchorProbes.map((probe) => (
                       <article key={probe.id} className={`stack-card stack-card--${probe.resolution.status}`}>
                         <div className="stack-card__meta">
                           <strong>{probe.label}</strong>
-                          <span>{probe.kind}</span>
+                          <span>{displayAnchorKind(probe.kind)}</span>
                         </div>
                         <p className="stack-card__copy">
                           {probe.resolution.status} at {probe.resolution.anchor.from}-{probe.resolution.anchor.to}
                         </p>
-                        <p className="stack-card__copy">{probe.resolution.reason}</p>
+                        <p className="stack-card__copy">{formatResolutionReason(probe.resolution.reason)}</p>
                         <p className="stack-card__copy">{truncate(probe.anchor.exact, 96)}</p>
                         <button className="ghost-button" onClick={() => void handleDeleteAnchorProbe(probe.id)} type="button">
-                          Delete probe
+                          Delete marker
                         </button>
                       </article>
                     ))
@@ -980,7 +1011,7 @@ export function App() {
 
               <section className="sidebar-section">
                 <p className="section-kicker">Scenario Output</p>
-                <h2>Anchor proof runner</h2>
+                <h2>Slice/link tracking checks</h2>
                 <div className="stack-list">
                   {anchorScenario?.cases.length ? (
                     anchorScenario.cases.map((scenario) => (
@@ -989,11 +1020,11 @@ export function App() {
                           <strong>{scenario.label}</strong>
                           <span>{scenario.status}</span>
                         </div>
-                        <p className="stack-card__copy">{scenario.reason}</p>
+                        <p className="stack-card__copy">{formatResolutionReason(scenario.reason)}</p>
                       </article>
                     ))
                   ) : (
-                    <p className="empty-state">Run the scenario set to verify repaired, ambiguous, and invalid anchor outcomes.</p>
+                    <p className="empty-state">Run the scenario set to verify repaired, ambiguous, and invalid slice/link outcomes.</p>
                   )}
                 </div>
               </section>
@@ -1069,7 +1100,7 @@ export function App() {
 
               <section className="sidebar-section">
                 <p className="section-kicker">Rules</p>
-                <h2>Current compiled probes</h2>
+                <h2>Current compiled rules</h2>
                 <div className="stack-list">
                   {matchingRules.length === 0 ? (
                     <p className="empty-state">Add a few literal, alias, or regex rules to see visible-range matching light up.</p>
@@ -1126,7 +1157,7 @@ export function App() {
                       </article>
                     ))
                   ) : (
-                    <p className="empty-state">Run the matching scenarios to validate normalization, possessives, and regex probes.</p>
+                    <p className="empty-state">Run the matching scenarios to validate normalization, possessives, and regex rules.</p>
                   )}
                 </div>
               </section>
@@ -1190,13 +1221,13 @@ export function App() {
                       <article key={probe.id} className={`stack-card stack-card--${probe.resolution.status}`}>
                         <div className="stack-card__meta">
                           <strong>{probe.label}</strong>
-                          <span>{probe.resolution.status}</span>
+                          <span>{displayAnchorKind(probe.kind)}</span>
                         </div>
-                        <p className="stack-card__copy">{probe.resolution.reason}</p>
+                        <p className="stack-card__copy">{formatResolutionReason(probe.resolution.reason)}</p>
                       </article>
                     ))
                   ) : (
-                    <p className="empty-state">Replay a version to inspect historical anchor resolution states.</p>
+                    <p className="empty-state">Replay a version to inspect historical slice/link tracking states.</p>
                   )}
                 </div>
               </section>
@@ -1450,6 +1481,38 @@ function auditPillClassName(audit: ClipboardAuditResult): string {
     : "verification-pill verification-pill--warn";
 }
 
+function displayAnchorKind(kind: AnchorProbeKind): string {
+  return kind === "boundary" ? "slice boundary" : "link";
+}
+
+function formatResolutionReason(reason: string): string {
+  if (reason === "captured from current selection") {
+    return "started from the range you selected";
+  }
+
+  if (reason === "mapped forward through document steps") {
+    return "followed your edits cleanly";
+  }
+
+  if (reason.includes("exact text plus context repaired the range")) {
+    return "the text moved, and the tracker repaired the range using exact text plus nearby context";
+  }
+
+  if (reason.includes("multiple plausible matches remained")) {
+    return "the tracker failed closed because multiple plausible matches remained";
+  }
+
+  if (reason.includes("exact text no longer exists")) {
+    return "the tracked text no longer exists in the current document state";
+  }
+
+  if (reason.includes("could not map repaired text back to document positions")) {
+    return "the text was found, but the tracker could not place the repaired range safely";
+  }
+
+  return reason;
+}
+
 function booleanWord(value: boolean): string {
   return value ? "yes" : "no";
 }
@@ -1462,7 +1525,7 @@ function truncate(value: string, maxLength: number): string {
 }
 
 function defaultAnchorLabel(kind: AnchorProbeKind, index: number): string {
-  return `${kind === "boundary" ? "Boundary" : "Annotation"} probe ${index}`;
+  return `${kind === "boundary" ? "Slice boundary" : "Link"} ${index}`;
 }
 
 function stringifyError(error: unknown): string {
