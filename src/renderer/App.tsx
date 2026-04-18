@@ -1494,6 +1494,18 @@ function formatResolutionReason(reason: string): string {
     return "followed your edits cleanly";
   }
 
+  if (reason === "slice boundary mapped forward through document steps") {
+    return "the slice boundary followed your edits cleanly";
+  }
+
+  if (reason === "slice boundary absorbed edits inside the tracked range") {
+    return "the slice boundary stayed intact and absorbed edits made inside the slice";
+  }
+
+  if (reason === "linked text mapped forward through document steps") {
+    return "the linked text followed your edits cleanly";
+  }
+
   if (reason.includes("exact text plus context repaired the range")) {
     return "the text moved, and the tracker repaired the range using exact text plus nearby context";
   }

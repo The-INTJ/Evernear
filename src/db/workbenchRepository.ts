@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import type BetterSqlite3 from "better-sqlite3";
 import { Node as ProseMirrorNode } from "prosemirror-model";
 import { schema as basicSchema } from "prosemirror-schema-basic";
-import { Mapping, Step } from "prosemirror-transform";
+import { Mapping, Step, StepMap } from "prosemirror-transform";
 
 import {
   HARNESS_CONTENT_FORMAT,
@@ -520,30 +520,48 @@ export class WorkbenchRepository {
       suffix: "",
       approxPlainTextOffset: undefined,
     };
+    const boundaryEditedDoc = buildDocFromParagraphs([
+      "Northbound lanterns slowly drifted over the marsh road.",
+      "Aurelia Vale copied White Harbor twice to test duplicates.",
+    ]);
+    const boundaryMapping = new Mapping();
+    boundaryMapping.appendMap(new StepMap([21, 0, 7]));
+    const boundaryResolution = mapAnchorForward(
+      repairedAnchor,
+      "boundary",
+      boundaryMapping,
+      boundaryEditedDoc,
+      1,
+    );
     const duplicateDoc = buildDocFromParagraphs([
       "Northbound lanterns drifted over the marsh road.",
       "Watchfires dimmed while lanterns drifted over the marsh road.",
     ]);
-    const duplicateResolution = resolveAnchorWithFallback(ambiguousAnchor, duplicateDoc, "duplicate range candidates remained");
-    const editedDoc = buildDocFromParagraphs([
-      "Quietly, Northbound lanterns drifted over the marsh road.",
-      "Aurelia Vale copied White Harbor twice to test duplicates.",
-    ]);
-    const repairedResolution = resolveAnchorWithFallback(repairedAnchor, editedDoc, "nearby text shifted");
+    const duplicateResolution = resolveAnchorWithFallback(
+      ambiguousAnchor,
+      duplicateDoc,
+      "duplicate range candidates remained",
+      1,
+    );
     const removedDoc = buildDocFromParagraphs([
       "Lantern hooks remained but the text was removed.",
       "Aurelia Vale copied White Harbor twice to test duplicates.",
     ]);
-    const invalidResolution = resolveAnchorWithFallback(repairedAnchor, removedDoc, "linked text deleted");
+    const invalidResolution = resolveAnchorWithFallback(
+      repairedAnchor,
+      removedDoc,
+      "linked text deleted",
+      1,
+    );
 
     return {
       ranAt: isoNow(),
       cases: [
         {
           id: "anchor-repair",
-          label: "Nearby edit repairs a slice boundary cleanly",
-          status: repairedResolution.status,
-          reason: repairedResolution.reason,
+          label: "Editing inside a slice boundary keeps it tracked",
+          status: boundaryResolution.status,
+          reason: boundaryResolution.reason,
         },
         {
           id: "anchor-ambiguous",
@@ -814,7 +832,13 @@ export class WorkbenchRepository {
     const updatedAt = isoNow();
 
     for (const probe of probes) {
-      const nextResolution = mapAnchorForward(probe.anchor, mapping, nextDoc);
+      const nextResolution = mapAnchorForward(
+        probe.anchor,
+        probe.kind,
+        mapping,
+        nextDoc,
+        snapshot.currentVersion,
+      );
       const changed =
         nextResolution.status !== probe.resolution.status
         || nextResolution.reason !== probe.resolution.reason
@@ -960,7 +984,13 @@ export class WorkbenchRepository {
         payload.anchor.versionSeen,
         targetVersion,
       );
-      const resolution = mapAnchorForward(payload.anchor, createMappingFromSteps(steps), targetDoc);
+      const resolution = mapAnchorForward(
+        payload.anchor,
+        payload.kind as AnchorProbeRecord["kind"],
+        createMappingFromSteps(steps),
+        targetDoc,
+        targetVersion,
+      );
 
       return [{
         id: latestBeforeTarget.aggregateId,
@@ -1055,34 +1085,45 @@ function createMappingFromSteps(serializedSteps: JsonObject[]): Mapping {
 
 function mapAnchorForward(
   anchor: TextAnchor,
+  kind: AnchorProbeRecord["kind"],
   mapping: Mapping,
   nextDoc: ProseMirrorNode,
+  nextVersion: number,
 ): AnchorResolutionResult {
   const mappedFrom = mapping.map(anchor.from, 1);
   const mappedTo = mapping.map(anchor.to, -1);
 
   if (mappedFrom < mappedTo) {
     const mappedExact = nextDoc.textBetween(mappedFrom, mappedTo, "\n\n");
+    const nextAnchor = buildAnchorFromRange(nextDoc, mappedFrom, mappedTo, anchor.documentId, nextVersion);
+
+    if (kind === "boundary") {
+      return {
+        status: "resolved",
+        reason: mappedExact === anchor.exact
+          ? "slice boundary mapped forward through document steps"
+          : "slice boundary absorbed edits inside the tracked range",
+        anchor: nextAnchor,
+      };
+    }
+
     if (mappedExact === anchor.exact) {
       return {
         status: "resolved",
-        reason: "mapped forward through document steps",
-        anchor: {
-          ...anchor,
-          from: mappedFrom,
-          to: mappedTo,
-        },
+        reason: "linked text mapped forward through document steps",
+        anchor: nextAnchor,
       };
     }
   }
 
-  return resolveAnchorWithFallback(anchor, nextDoc, "mapping no longer matched exact text");
+  return resolveAnchorWithFallback(anchor, nextDoc, "mapping no longer matched exact text", nextVersion);
 }
 
 function resolveAnchorWithFallback(
   anchor: TextAnchor,
   nextDoc: ProseMirrorNode,
   fallbackReason: string,
+  nextVersion: number,
 ): AnchorResolutionResult {
   const index = buildPlainTextIndex(nextDoc);
   const exact = anchor.exact;
@@ -1146,11 +1187,7 @@ function resolveAnchorWithFallback(
   return {
     status: "repaired",
     reason: `${fallbackReason}; exact text plus context repaired the range`,
-    anchor: {
-      ...anchor,
-      from,
-      to,
-    },
+    anchor: buildAnchorFromRange(nextDoc, from, to, anchor.documentId, nextVersion),
   };
 }
 
