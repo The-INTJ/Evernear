@@ -1,7 +1,7 @@
 # EXP-005: Event Log and Checkpoint Replay
 
 ## Status
-Planned
+In progress
 
 ## Date
 2026-04-17
@@ -124,3 +124,14 @@ function resolveAnchorAtVersion(anchorEvents: AnchorEvent[], targetVersion: numb
 - If checkpoints must land much more often than every explicit save plus roughly 200 steps to keep open fast, record that so ADR-006's cadence question can close.
 - If projection rebuild drifts from live tables even once, treat it as a correctness bug and fix the log path before shipping.
 - EXP-001 anchor healing and this experiment share the same mapping substrate; failures in either are signals for the other.
+
+## Current workbench implementation
+- The workbench now persists `documents`, `document_steps`, `document_checkpoints`, `events`, `anchor_probes`, `matching_rules`, and benchmark records in one local SQLite database.
+- Document mutations append ProseMirror steps and update the head in the same synchronous path.
+- Explicit checkpoint writes and periodic checkpointing at roughly every 200 steps are implemented.
+- Replay-to-version and projection-rebuild parity checks are exposed directly in the UI.
+- Historical anchor replay is implemented by loading the latest anchor event at or before the target version and mapping forward through the subsequent steps.
+
+## Still to learn
+- How the current synchronous path behaves under a much longer real writing session.
+- Whether checkpoint cadence needs to move once the real manuscript and heavier edit sessions are exercised.

@@ -1,7 +1,7 @@
 # Initial MVP for Phase 1
 
 ## Status
-Planned
+Implemented, then expanded into the active proof workbench
 
 ## Date
 2026-04-17
@@ -14,45 +14,52 @@ Planned
 - [ADR-006: Event-Sourced Document and Metadata History](./adr/ADR-006-event-sourced-document-and-metadata-history.md)
 
 ## Why this exists
-Phase 1 has several load-bearing spikes, but the first executable deliverable should be smaller than "do all of Phase 1."
-We need one buildable artifact that proves a real architectural claim and gives later spikes a stable place to stand.
+Phase 1 has several load-bearing spikes, but the first executable deliverable needed to be smaller than "do all of Phase 1."
+This document originally scoped a narrow round-trip harness. That harness now exists, and it has been intentionally widened into the active **Phase 1 proof workbench** so the remaining spikes can share one executable surface instead of starting over from scratch.
 
 Note: The AI will never directly manage or execute over prose. The amount of text would destroy context windows and consume usage quotas.
 
 Use small text amounts for any testing the AI does; delegate to the human to place and paste in the 50k+ word fixture that proves real-world behavior.
 
-## Proposed deliverable
-Build a **single-document round-trip harness**:
+## Implemented deliverable
+Build and keep evolving one **Phase 1 proof workbench**:
 
 - one local desktop harness window
 - one ProseMirror editor surface
-- one SQLite-backed document row
-- one realistic long-form manuscript fixture at 50k+ words
-  - DO NOT generate this; tell the human where to place the 50k after. Consuming document text will anhhilate tokens.
-- one save and reload path using snapshot plus plain-text projection
-- one decoration toggle that simulates derived highlights and slice-boundary chrome without storing them in document truth
-- one clean-copy verification flow using ordinary `Ctrl+A` and `Ctrl+C`
+- one explicit import slot for a real manuscript pasted from Google Docs
+- one `better-sqlite3`-backed local database using WAL mode and `synchronous=FULL`
+- one current-state document head projection plus step log, checkpoints, events, anchor probes, matching rules, and benchmark records
+- one save-checkpoint and reload-head path
+- one decoration toggle that simulates derived highlights and anchor chrome without storing them in document truth
+- one clipboard audit flow for persisted plain text plus HTML leak inspection
+- one anchor probe surface
+- one matching-rule workbench
+- one replay and projection-rebuild surface
+- one Pretext comparison surface
 
 This is intentionally not the truthful MVP and not the foundational shell.
-It is a narrow proof build meant to answer whether Evernear's document seam is honest under realistic prose size and realistic clipboard behavior.
+It is still a proof build, but it now carries more of the remaining Phase 1 questions in one place.
 
-## Proof question
-Can Evernear store a large ProseMirror document as a SQLite snapshot plus plain-text projection, reload it cleanly, and still let writers copy clean prose out even when renderer-only decorations are visible?
+## Current proof questions
+- Can Evernear store a real ProseMirror document as a SQLite head projection plus step history, reload it cleanly, and keep copy-out honest while renderer-only decorations are visible?
+- Can one shared `TextAnchor` substrate survive live edits well enough for both boundary probes and annotations?
+- Can visible-range matching stay explainable and cheap enough while typing and scrolling?
+- Can checkpoints plus replay rebuild projections without drift?
+- Does Pretext look promising enough for document-view layout work?
 
-## What this should prove
+## What this now proves or explores
 - The document persistence seam from [ADR-003](./adr/ADR-003-document-persistence-and-editor-state.md) is workable in practice, not just on paper.
-- A 50k+ word manuscript can paste in, save, reload, and remain editable without obvious degradation.
-- Renderer-only highlights or boundary chrome do not contaminate clipboard output.
+- A real manuscript can paste into an in-app import slot, replace the persisted head, reload, and remain editable.
+- Renderer-only highlights or anchor chrome can be audited against both plain-text parity and HTML leak checks.
 - `plainText` is trustworthy enough to act as the non-editor projection for export and verification helpers.
-- Future history work can reuse this harness rather than starting from an abstract schema discussion.
+- Shared `TextAnchor` capture, visible-range matching, replay, and Pretext measurement now have one live workbench instead of paper-only plans.
 
 ## Non-goals
 - Multi-document or folder workflows.
-- Entity creation, matching-rule authoring, or real Everlink behavior.
-- Shared anchor healing for slices or annotations.
-- Event-log plus step-log replay.
+- Real Everlink behavior.
 - Panel, modal, or layout polish.
 - Settling the final app shell architecture.
+- Declaring MVP readiness before the remaining Phase 1 findings are recorded.
 
 ## Scope
 ### In scope

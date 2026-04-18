@@ -1,7 +1,7 @@
 # EXP-006: Pretext Layout Viability
 
 ## Status
-Planned
+In progress
 
 ## Date
 2026-04-17
@@ -72,3 +72,15 @@ function deriveVisibleLines(prepared: PreparedTextWithSegments, viewport: Viewpo
 ## Notes for later pass
 - A positive result does not automatically mean replacing the primary editor host.
 - The key question is whether it improves layout and visible-range bookkeeping enough to change the long-document design.
+
+## Current workbench implementation
+- The workbench now includes a layout tab that compares the live editor surface against a Pretext `pre-wrap` measurement pass using the editor's computed font and width.
+- The current probe records DOM height, DOM visible block count, Pretext height, Pretext visible line count, and both computation times.
+- Each measurement ends with one explicit decision state:
+  - adopt for document view only
+  - keep as a future option
+  - reject for now
+
+## Still to learn
+- How close Pretext stays to the imported manuscript once the document gets longer and more varied.
+- Whether the current probe is good enough to trust for document-view experiments or needs a richer line or block model first.

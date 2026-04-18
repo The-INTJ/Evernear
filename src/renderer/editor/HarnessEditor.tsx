@@ -9,7 +9,7 @@ import { baseKeymap, toggleMark } from "prosemirror-commands";
 import { history, redo, undo } from "prosemirror-history";
 import { keymap } from "prosemirror-keymap";
 import { schema as basicSchema } from "prosemirror-schema-basic";
-import { AllSelection, EditorState } from "prosemirror-state";
+import { AllSelection, EditorState, type Transaction } from "prosemirror-state";
 import type { MarkType, Node as ProseMirrorNode, Slice } from "prosemirror-model";
 import { Decoration, DecorationSet, EditorView, type DecorationSource } from "prosemirror-view";
 
@@ -18,6 +18,17 @@ import {
   type JsonObject,
   collectDocumentMetrics,
 } from "../../shared/domain/document";
+import type {
+  AnchorProbeRecord,
+  MatchingBenchmark,
+  MatchingRuleRecord,
+} from "../../shared/domain/workbench";
+import {
+  type EditorSelectionInfo,
+  type SerializedTransactionBundle,
+  collectMatchesForVisibleBlocks,
+  type VisibleBlockRange,
+} from "./workbenchUtils";
 
 export type HarnessEditorSnapshot = {
   contentJson: JsonObject;
@@ -27,6 +38,7 @@ export type HarnessEditorSnapshot = {
 
 export type HarnessEditorHandle = {
   getSnapshot(): HarnessEditorSnapshot;
+  getSelection(): EditorSelectionInfo;
   focus(): void;
   selectAll(): void;
   toggleBold(): void;
@@ -36,25 +48,33 @@ export type HarnessEditorHandle = {
 type HarnessEditorProps = {
   initialDocumentJson: JsonObject;
   decorationsEnabled: boolean;
-  onDocumentChange(nextSnapshot: HarnessEditorSnapshot): void;
+  matchingRules?: MatchingRuleRecord[];
+  anchorProbes?: AnchorProbeRecord[];
+  showLegend?: boolean;
+  onDocumentSnapshotChange(nextSnapshot: HarnessEditorSnapshot, transaction: SerializedTransactionBundle | null): void;
+  onSelectionChange(selection: EditorSelectionInfo): void;
+  onMatchingBenchmark?(benchmark: MatchingBenchmark): void;
 };
-
-const highlightTerms = [
-  "Aurelia Vale",
-  "Captain Elian Rook",
-  "White Harbor",
-  "Ashmere",
-  "Glass Archive",
-  "Larkspur Gate",
-];
 
 export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>(
   function HarnessEditor(props, ref) {
     const containerRef = useRef<HTMLDivElement | null>(null);
+    const surfaceRef = useRef<HTMLDivElement | null>(null);
     const viewRef = useRef<EditorView | null>(null);
-    const onDocumentChangeRef = useRef(props.onDocumentChange);
+    const onDocumentSnapshotChangeRef = useRef(props.onDocumentSnapshotChange);
+    const onSelectionChangeRef = useRef(props.onSelectionChange);
+    const onMatchingBenchmarkRef = useRef(props.onMatchingBenchmark);
+    const currentDecorationsRef = useRef<DecorationSet>(DecorationSet.empty);
+    const rulesRef = useRef(props.matchingRules ?? []);
+    const probesRef = useRef(props.anchorProbes ?? []);
+    const decorationsEnabledRef = useRef(props.decorationsEnabled);
 
-    onDocumentChangeRef.current = props.onDocumentChange;
+    onDocumentSnapshotChangeRef.current = props.onDocumentSnapshotChange;
+    onSelectionChangeRef.current = props.onSelectionChange;
+    onMatchingBenchmarkRef.current = props.onMatchingBenchmark;
+    rulesRef.current = props.matchingRules ?? [];
+    probesRef.current = props.anchorProbes ?? [];
+    decorationsEnabledRef.current = props.decorationsEnabled;
 
     useEffect(() => {
       if (!containerRef.current || viewRef.current) {
@@ -71,22 +91,44 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
 
           const nextState = currentView.state.apply(transaction);
           currentView.updateState(nextState);
+          recomputeDecorations(currentView, surfaceRef.current, currentDecorationsRef, rulesRef.current, probesRef.current, decorationsEnabledRef.current, onMatchingBenchmarkRef.current);
 
-          if (transaction.docChanged) {
-            onDocumentChangeRef.current(serializeEditorSnapshot(nextState.doc));
-          }
+          const snapshot = serializeEditorSnapshot(nextState.doc);
+          const selection = getSelectionInfo(nextState);
+          onSelectionChangeRef.current(selection);
+
+          onDocumentSnapshotChangeRef.current(
+            snapshot,
+            transaction.docChanged ? serializeTransaction(transaction) : null,
+          );
         },
         attributes: {
           class: "editor-prosemirror",
         },
         clipboardTextSerializer: serializeSlicePlainText,
-        decorations: createDecorationSource(props.decorationsEnabled),
+        decorations: decorationSource(currentDecorationsRef),
       });
 
       viewRef.current = view;
-      onDocumentChangeRef.current(serializeEditorSnapshot(view.state.doc));
+      recomputeDecorations(view, surfaceRef.current, currentDecorationsRef, rulesRef.current, probesRef.current, decorationsEnabledRef.current, onMatchingBenchmarkRef.current);
+      onSelectionChangeRef.current(getSelectionInfo(view.state));
+      onDocumentSnapshotChangeRef.current(serializeEditorSnapshot(view.state.doc), null);
+
+      const handleScroll = () => {
+        const currentView = viewRef.current;
+        if (!currentView) {
+          return;
+        }
+        recomputeDecorations(currentView, surfaceRef.current, currentDecorationsRef, rulesRef.current, probesRef.current, decorationsEnabledRef.current, onMatchingBenchmarkRef.current);
+      };
+
+      const currentSurface = surfaceRef.current;
+      currentSurface?.addEventListener("scroll", handleScroll);
+      window.addEventListener("resize", handleScroll);
 
       return () => {
+        currentSurface?.removeEventListener("scroll", handleScroll);
+        window.removeEventListener("resize", handleScroll);
         view.destroy();
         viewRef.current = null;
       };
@@ -98,10 +140,8 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
         return;
       }
 
-      view.setProps({
-        decorations: createDecorationSource(props.decorationsEnabled),
-      });
-    }, [props.decorationsEnabled]);
+      recomputeDecorations(view, surfaceRef.current, currentDecorationsRef, rulesRef.current, probesRef.current, decorationsEnabledRef.current, onMatchingBenchmarkRef.current);
+    }, [props.decorationsEnabled, props.matchingRules, props.anchorProbes]);
 
     useImperativeHandle(ref, () => ({
       getSnapshot() {
@@ -111,6 +151,10 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
         }
 
         return serializeEditorSnapshot(view.state.doc);
+      },
+      getSelection() {
+        const view = viewRef.current;
+        return view ? getSelectionInfo(view.state) : { from: 0, to: 0, empty: true, text: "" };
       },
       focus() {
         viewRef.current?.focus();
@@ -134,19 +178,22 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
 
     return (
       <div className="editor-frame">
-        <div className="editor-legend">
-          <span className="legend-chip legend-chip--highlight">Derived highlight</span>
-          <span className="legend-chip legend-chip--boundary">Boundary rail</span>
+        {props.showLegend !== false ? (
+          <div className="editor-legend">
+            <span className="legend-chip legend-chip--highlight">Visible-range match</span>
+            <span className="legend-chip legend-chip--boundary">Boundary probe</span>
+            <span className="legend-chip legend-chip--annotation">Annotation probe</span>
+          </div>
+        ) : null}
+        <div className="editor-surface" ref={surfaceRef}>
+          <div ref={containerRef} />
         </div>
-        <div className="editor-surface" ref={containerRef} />
       </div>
     );
   },
 );
 
-function createEditorState(
-  documentJson: JsonObject,
-): EditorState {
+function createEditorState(documentJson: JsonObject): EditorState {
   return EditorState.create({
     schema: basicSchema,
     doc: basicSchema.nodeFromJSON(documentJson),
@@ -164,61 +211,110 @@ function createEditorState(
   });
 }
 
-function createDecorationSource(
+function recomputeDecorations(
+  view: EditorView,
+  surface: HTMLDivElement | null,
+  decorationRef: React.MutableRefObject<DecorationSet>,
+  matchingRules: MatchingRuleRecord[],
+  anchorProbes: AnchorProbeRecord[],
   decorationsEnabled: boolean,
-): ((state: EditorState) => DecorationSource | null) | undefined {
-  if (!decorationsEnabled) {
-    return undefined;
+  onMatchingBenchmark: ((benchmark: MatchingBenchmark) => void) | undefined,
+): void {
+  if (!decorationsEnabled || !surface) {
+    decorationRef.current = DecorationSet.empty;
+    refreshDecorations(view, decorationRef);
+    return;
   }
 
-  return (state) => buildDecorations(state.doc);
+  const startedAt = performance.now();
+  const visibleBlocks = collectVisibleBlocks(view, surface);
+  const matchHits = collectMatchesForVisibleBlocks(matchingRules, visibleBlocks);
+  const decorations: Decoration[] = [];
+
+  for (const hit of matchHits) {
+    decorations.push(
+      Decoration.inline(hit.from, hit.to, {
+        class: "pm-match-highlight",
+      }),
+    );
+  }
+
+  for (const probe of anchorProbes) {
+    const { from, to } = probe.resolution.anchor;
+    if (from >= to || probe.resolution.status === "invalid") {
+      continue;
+    }
+
+    const className = probe.kind === "boundary"
+      ? `pm-anchor-boundary pm-anchor-${probe.resolution.status}`
+      : `pm-anchor-annotation pm-anchor-${probe.resolution.status}`;
+
+    decorations.push(
+      Decoration.inline(from, to, { class: className }),
+    );
+  }
+
+  decorationRef.current = DecorationSet.create(view.state.doc, decorations);
+  refreshDecorations(view, decorationRef);
+
+  const visibleFrom = visibleBlocks.length > 0 ? Math.min(...visibleBlocks.map((block) => block.from)) : 0;
+  const visibleTo = visibleBlocks.length > 0 ? Math.max(...visibleBlocks.map((block) => block.to)) : 0;
+  const visibleCharacterCount = visibleBlocks.reduce((total, block) => total + block.text.length, 0);
+
+  onMatchingBenchmark?.({
+    visibleFrom,
+    visibleTo,
+    visibleCharacterCount,
+    matchCount: matchHits.length,
+    recomputeMs: performance.now() - startedAt,
+    ruleCount: matchingRules.filter((rule) => rule.enabled).length,
+    highlightingEnabled: decorationsEnabled,
+    createdAt: new Date().toISOString(),
+  });
 }
 
-function buildDecorations(doc: ProseMirrorNode): DecorationSet {
-  const decorations: Decoration[] = [];
-  let paragraphIndex = 0;
+function refreshDecorations(
+  view: EditorView,
+  decorationRef: React.MutableRefObject<DecorationSet>,
+): void {
+  view.setProps({
+    decorations: decorationSource(decorationRef),
+  });
+  view.updateState(view.state);
+}
 
-  doc.descendants((node, position) => {
-    if (node.isText) {
-      const text = node.text ?? "";
+function decorationSource(
+  decorationRef: React.MutableRefObject<DecorationSet>,
+): ((state: EditorState) => DecorationSource | null) | undefined {
+  return () => decorationRef.current;
+}
 
-      for (const term of highlightTerms) {
-        let searchStart = 0;
+function collectVisibleBlocks(
+  view: EditorView,
+  surface: HTMLDivElement,
+): VisibleBlockRange[] {
+  const bounds = surface.getBoundingClientRect();
+  const visibleBlocks: VisibleBlockRange[] = [];
 
-        while (searchStart < text.length) {
-          const index = text.indexOf(term, searchStart);
-          if (index === -1) {
-            break;
-          }
-
-          decorations.push(
-            Decoration.inline(position + index, position + index + term.length, {
-              class: "pm-highlight-derived",
-            }),
-          );
-          searchStart = index + term.length;
-        }
-      }
-
-      return false;
+  view.state.doc.forEach((block, offset) => {
+    const nodeDom = view.nodeDOM(offset) as HTMLElement | null;
+    if (!nodeDom) {
+      return;
     }
 
-    if (node.type.name === "paragraph") {
-      if (paragraphIndex % 14 === 5 || paragraphIndex % 14 === 11) {
-        decorations.push(
-          Decoration.node(position, position + node.nodeSize, {
-            class: "pm-simulated-boundary",
-          }),
-        );
-      }
-
-      paragraphIndex += 1;
+    const rect = nodeDom.getBoundingClientRect();
+    if (rect.bottom < bounds.top || rect.top > bounds.bottom) {
+      return;
     }
 
-    return true;
+    visibleBlocks.push({
+      from: offset + 1,
+      to: offset + block.nodeSize - 1,
+      text: block.textBetween(0, block.content.size, "\n\n"),
+    });
   });
 
-  return DecorationSet.create(doc, decorations);
+  return visibleBlocks;
 }
 
 function serializeEditorSnapshot(doc: ProseMirrorNode): HarnessEditorSnapshot {
@@ -227,6 +323,24 @@ function serializeEditorSnapshot(doc: ProseMirrorNode): HarnessEditorSnapshot {
     contentJson: doc.toJSON() as JsonObject,
     plainText,
     metrics: collectDocumentMetrics(plainText),
+  };
+}
+
+function getSelectionInfo(state: EditorState): EditorSelectionInfo {
+  const { from, to, empty } = state.selection;
+  return {
+    from,
+    to,
+    empty,
+    text: empty ? "" : state.doc.textBetween(from, to, "\n\n"),
+  };
+}
+
+function serializeTransaction(transaction: Transaction): SerializedTransactionBundle {
+  const docs = (transaction as Transaction & { docs: ProseMirrorNode[] }).docs;
+  return {
+    steps: transaction.steps.map((step) => step.toJSON() as JsonObject),
+    inverseSteps: transaction.steps.map((step, index) => step.invert(docs[index]!).toJSON() as JsonObject),
   };
 }
 

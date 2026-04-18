@@ -43,7 +43,9 @@ body {
 }
 
 button,
-textarea {
+textarea,
+input,
+select {
   font: inherit;
 }
 
@@ -188,6 +190,45 @@ textarea {
   color: var(--text);
 }
 
+.ghost-button {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.tab-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tab-button {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-soft);
+  cursor: pointer;
+  transition:
+    transform 140ms ease,
+    background 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
+}
+
+.tab-button:hover {
+  transform: translateY(-1px);
+}
+
+.tab-button--active {
+  color: #102129;
+  background: linear-gradient(135deg, #f5b971, #f0d7b4);
+  border-color: rgba(245, 185, 113, 0.4);
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -206,6 +247,14 @@ textarea {
 .metric-value {
   font-size: 1.55rem;
   font-weight: 600;
+}
+
+.metric-card--compact {
+  padding: 14px 16px;
+}
+
+.metric-card--compact .metric-value {
+  font-size: 1.15rem;
 }
 
 .workspace-grid {
@@ -232,6 +281,11 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.editor-host {
+  flex: 1;
+  min-height: 0;
 }
 
 .card-header {
@@ -293,14 +347,13 @@ textarea {
   letter-spacing: 0.03em;
 }
 
-.pm-highlight-derived {
+.pm-match-highlight {
   background: var(--highlight);
   border-radius: 0.28em;
   box-shadow: inset 0 -0.3em 0 rgba(245, 185, 113, 0.14);
 }
 
-.pm-simulated-boundary {
-  position: relative;
+.pm-anchor-boundary {
   border-left: 4px solid rgba(47, 143, 131, 0.92);
   border-right: 4px solid rgba(47, 143, 131, 0.32);
   padding-left: 18px;
@@ -308,10 +361,135 @@ textarea {
   background: linear-gradient(90deg, rgba(47, 143, 131, 0.09), transparent 22%);
 }
 
+.pm-anchor-annotation {
+  border-bottom: 2px dashed rgba(245, 185, 113, 0.86);
+  box-shadow: inset 0 -0.22em 0 rgba(245, 185, 113, 0.12);
+}
+
+.pm-anchor-resolved {
+  opacity: 1;
+}
+
+.pm-anchor-repaired {
+  background-color: rgba(119, 214, 179, 0.18);
+}
+
+.pm-anchor-ambiguous {
+  background-color: rgba(245, 185, 113, 0.22);
+}
+
+.pm-anchor-invalid {
+  background-color: rgba(245, 150, 123, 0.18);
+  text-decoration: line-through;
+  text-decoration-color: rgba(245, 150, 123, 0.75);
+}
+
 .sidebar-section {
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.selection-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-soft);
+}
+
+.text-input {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: rgba(7, 18, 24, 0.62);
+  color: var(--text);
+}
+
+.text-input--version {
+  max-width: 120px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 180px;
+  gap: 10px;
+}
+
+.form-grid__wide {
+  grid-column: 1 / -1;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-soft);
+}
+
+.checkbox-row input {
+  accent-color: var(--accent);
+}
+
+.import-note-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.stack-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stack-card {
+  border-radius: 18px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stack-card__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.stack-card__copy {
+  margin: 0;
+  color: var(--text-soft);
+}
+
+.stack-card--neutral {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.stack-card--resolved {
+  border-color: rgba(119, 214, 179, 0.3);
+}
+
+.stack-card--repaired {
+  border-color: rgba(119, 214, 179, 0.22);
+}
+
+.stack-card--ambiguous {
+  border-color: rgba(245, 185, 113, 0.3);
+}
+
+.stack-card--invalid {
+  border-color: rgba(245, 150, 123, 0.35);
+}
+
+.warning-inline {
+  margin: 0;
+  color: #ffd7c8;
 }
 
 .verification-pill--success {
@@ -379,6 +557,11 @@ textarea {
   }
 
   .workspace-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid,
+  .import-note-grid {
     grid-template-columns: 1fr;
   }
 

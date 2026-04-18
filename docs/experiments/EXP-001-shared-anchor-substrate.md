@@ -1,7 +1,7 @@
 # EXP-001: Shared Anchor Substrate Under Live Edits
 
 ## Status
-Planned
+In progress
 
 ## Date
 2026-04-17
@@ -86,3 +86,13 @@ function applyDocumentEdit(nextDoc: Doc, changeMap: ChangeMap, boundaries: TextA
 
 ## Notes for later pass
 - If this only works cleanly in ProseMirror because of transaction mapping, that is an editor-fit signal, not an implementation detail to ignore.
+
+## Current workbench implementation
+- The proof workbench now stores one shared `TextAnchor` payload for boundary and annotation probes.
+- Live probe updates map forward through ProseMirror `Mapping` first, then fall back to exact-text plus context re-resolution.
+- The workbench surfaces `resolved`, `repaired`, `ambiguous`, and `invalid` states directly in the UI.
+- A small scenario runner is implemented for repaired, ambiguous, and invalid outcomes.
+
+## Still to learn
+- How this behaves against a real 53k manuscript under repeated structural edits.
+- Whether duplicate-text ambiguity remains acceptable once the prose gets much less synthetic.

@@ -16,6 +16,7 @@ export type StoredDocumentSnapshot = {
   contentSchemaVersion: number;
   contentJson: JsonObject;
   plainText: string;
+  currentVersion: number;
   updatedAt: string;
 };
 
@@ -29,6 +30,11 @@ export type SaveHarnessDocumentInput = {
 export type SeedFixtureResult = {
   snapshot: StoredDocumentSnapshot;
   wordCount: number;
+};
+
+export type PersistedDocumentSelection = {
+  from: number;
+  to: number;
 };
 
 export type DocumentMetrics = {
@@ -51,4 +57,3 @@ export function collectDocumentMetrics(plainText: string): DocumentMetrics {
     paragraphCount: paragraphs.length,
   };
 }
-

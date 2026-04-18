@@ -1,7 +1,7 @@
 # EXP-002: Live Visible-Range Matching and Rule Normalization
 
 ## Status
-Planned
+In progress
 
 ## Date
 2026-04-17
@@ -97,3 +97,14 @@ function deriveVisibleMatches(state: ViewState) {
 ## Notes for later pass
 - If the fast path is good enough, stop there.
 - Do not build precomputed document match tables just because whole-corpus indexing sounds impressive.
+
+## Current workbench implementation
+- The workbench now supports literal, alias, and bounded-regex rules in the UI.
+- Matching normalizes both rules and visible text with NFKC, apostrophe normalization, whitespace collapse, and lowercase.
+- Matching only runs over the current visible block range when overlays are enabled.
+- The editor emits visible-range recompute timing so the workbench can record benchmark rows.
+- A small scenario runner is implemented for whole-word behavior, possessives, and regex matching.
+
+## Still to learn
+- How the visible-range matcher behaves on the real imported manuscript while typing and scrolling.
+- Whether short aliases stay trustworthy enough without a more explicit rule compiler.
