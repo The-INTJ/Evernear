@@ -56,6 +56,89 @@ import {
 } from "../shared/domain/workspace";
 import { SqliteHarness } from "./sqliteHarness";
 
+/*
+ * EXTRACTION ROADMAP — see refineCode.md §C2 and src/db/repositories/README.md.
+ *
+ * This file is a single ~2,000-line class that owns every aggregate's
+ * persistence. The destination layout is already declared in
+ * src/db/repositories/README.md. Until the split lands, every new mutation
+ * makes the file harder to navigate. New mutations should go into the target
+ * repository file below (create it if needed), not append here.
+ *
+ * Target layout:
+ *
+ *   src/db/repositories/
+ *     ProjectRepository.ts   createProject, updateProject, openProject,
+ *                             loadProjects, setActiveProjectId,
+ *                             loadActiveProjectId, requireActiveProjectId
+ *     FolderRepository.ts    createFolder, updateFolder, deleteFolder,
+ *                             insertFolder, nextFolderOrdering, loadFolders,
+ *                             loadDocumentRowsForFolder
+ *     DocumentRepository.ts  createDocument, updateDocumentMeta,
+ *                             deleteDocument, reorderDocument, openDocument,
+ *                             insertDocument, nextDocumentOrdering,
+ *                             loadDocumentSummaries, loadDocumentSnapshot,
+ *                             requireDocumentSnapshot, requireDocumentSummary,
+ *                             requireDocumentRow
+ *     EntityRepository.ts    createEntity, updateEntity, deleteEntity,
+ *                             upsertMatchingRule, deleteMatchingRule,
+ *                             loadEntities, loadMatchingRulesForProject
+ *     SliceRepository.ts     createSlice, deleteSlice, deleteSliceInternal,
+ *                             loadSlices, loadEntitySlices,
+ *                             loadSliceBoundariesForProject,
+ *                             loadSliceBoundariesForDocument,
+ *                             nextEntitySliceOrdering,
+ *                             updateSliceBoundariesForDocument
+ *     HistoryRepository.ts   applyDocumentTransaction (step path),
+ *                             writeCheckpoint, replayDocumentToVersion,
+ *                             loadHistorySummary, ensureCheckpoint,
+ *                             appendEvent, replaySnapshotToVersion,
+ *                             createMappingFromSteps
+ *     LayoutRepository.ts    updateLayout, loadLayoutState, saveLayoutState
+ *     WorkspaceRepository.ts loadWorkspace, ensureWorkspaceState,
+ *                             ensureSeedState;
+ *                             composes the others for cross-aggregate reads
+ *
+ *   src/db/anchoring.ts      pure functions over ProseMirror docs:
+ *                             mapBoundaryForward, resolveAnchorWithFallback,
+ *                             buildPlainTextIndex, walkNodeText,
+ *                             offsetToPosition, buildAnchorFromRange,
+ *                             resolveBlockPath, serializeNodePlainText
+ *
+ *   src/db/rowMappers.ts     mapDocumentSummary, mapDocumentRow,
+ *                             mapSliceBoundaryRecord, buildEmptyDocumentJson
+ *                             (or colocate each with the owning repository)
+ *
+ *   src/db/utils.ts          stableStringify, boolToInt, intToBool, isoNow,
+ *                             truncate, uniqueStrings, safeParseStringArray
+ *
+ * Invariants that must survive the split:
+ *
+ *   1. Every public method runs inside sqliteHarness.runInTransaction(...).
+ *      Each repository class takes SqliteHarness in its constructor.
+ *   2. Every mutation appends a domain event before the method returns.
+ *      appendEvent is called only inside a transaction.
+ *   3. RawXxxRow types never leave the DB module — they're internal decoders.
+ *   4. Repositories access the database through sqliteHarness.getConnection();
+ *      they don't receive a raw Database handle from outside.
+ *   5. Cross-aggregate reads (loadWorkspace) live on WorkspaceRepository and
+ *      call the other repositories' read-only methods. Cross-aggregate writes
+ *      stay in a single outer runInTransaction to preserve atomicity.
+ *
+ * How to split safely (one aggregate at a time):
+ *
+ *   1. Create the new repository file with the public method signatures.
+ *   2. Move the public methods and their private helpers verbatim; keep
+ *      event-append lines in place.
+ *   3. Replace the moved methods here with thin delegating calls so
+ *      main/index.ts keeps compiling during the transition.
+ *   4. Once all aggregates are moved, delete this file; update main/index.ts
+ *      to instantiate each repository individually (or a composed
+ *      WorkspaceRepository that holds them).
+ *
+ * Do not add new mutations to this file. Add them to the target repository.
+ */
+
 const CHECKPOINT_INTERVAL = 200;
 
 type RawProjectRow = {
@@ -252,6 +335,10 @@ export class WorkspaceRepository {
     };
   }
 
+  // ══════════════════════════════════════════════════════════════════════
+  // BELOW → ProjectRepository.ts
+  // createProject, updateProject, openProject
+  // ══════════════════════════════════════════════════════════════════════
   createProject(input: CreateProjectInput): WorkspaceState {
     return this.sqliteHarness.runInTransaction(() => {
       const now = isoNow();
@@ -325,6 +412,10 @@ export class WorkspaceRepository {
     });
   }
 
+  // ══════════════════════════════════════════════════════════════════════
+  // BELOW → FolderRepository.ts
+  // createFolder, updateFolder, deleteFolder
+  // ══════════════════════════════════════════════════════════════════════
   createFolder(input: CreateFolderInput): WorkspaceState {
     return this.sqliteHarness.runInTransaction(() => {
       const now = isoNow();
@@ -395,6 +486,16 @@ export class WorkspaceRepository {
     });
   }
 
+  // ══════════════════════════════════════════════════════════════════════
+  // BELOW → DocumentRepository.ts
+  // createDocument, updateDocumentMeta, deleteDocument, reorderDocument,
+  // openDocument
+  //
+  // deleteDocument cascades to slices + boundaries (cross-aggregate write);
+  // keep that cascade inside the outer transaction when splitting — either
+  // have DocumentRepository call SliceRepository.deleteSlicesForDocument(),
+  // or let WorkspaceRepository compose both under one runInTransaction.
+  // ══════════════════════════════════════════════════════════════════════
   createDocument(input: CreateDocumentInput): WorkspaceState {
     return this.sqliteHarness.runInTransaction(() => {
       const documentId = randomUUID();
@@ -539,6 +640,11 @@ export class WorkspaceRepository {
     });
   }
 
+  // ══════════════════════════════════════════════════════════════════════
+  // BELOW → LayoutRepository.ts
+  // updateLayout (paired with loadLayoutState / saveLayoutState private
+  // helpers further down in this file)
+  // ══════════════════════════════════════════════════════════════════════
   updateLayout(input: UpdateLayoutInput): WorkspaceState {
     return this.sqliteHarness.runInTransaction(() => {
       const activeProjectId = input.activeProjectId ?? this.requireActiveProjectId();
@@ -557,6 +663,20 @@ export class WorkspaceRepository {
     });
   }
 
+  // ══════════════════════════════════════════════════════════════════════
+  // BELOW → HistoryRepository.ts (step + checkpoint path)
+  // applyDocumentTransaction — the hottest mutation in the system.
+  // It writes document_steps, updates the documents projection, calls
+  // updateSliceBoundariesForDocument (SliceRepository), and periodically
+  // triggers ensureCheckpoint. When splitting:
+  //   - The step log write + document projection update belong to
+  //     HistoryRepository / DocumentRepository.
+  //   - The slice boundary re-anchor call is cross-aggregate; prefer
+  //     SliceRepository.rewriteBoundariesAfterSteps(snapshot, serializedSteps)
+  //     to keep the transform logic owned by Slice, with History holding
+  //     only the trigger.
+  //   - Keep the whole thing inside one runInTransaction — no split commits.
+  // ══════════════════════════════════════════════════════════════════════
   applyDocumentTransaction(input: ApplyDocumentTransactionInput): ApplyDocumentTransactionResult {
     return this.sqliteHarness.runInTransaction(() => {
       const snapshot = this.requireDocumentSnapshot(input.documentId);
@@ -623,6 +743,15 @@ export class WorkspaceRepository {
     });
   }
 
+  // ══════════════════════════════════════════════════════════════════════
+  // BELOW → EntityRepository.ts
+  // createEntity, updateEntity, deleteEntity, upsertMatchingRule,
+  // deleteMatchingRule
+  //
+  // deleteEntity cascades through matching_rules, entity_slices, slices,
+  // and slice_boundaries — same cross-aggregate transaction rule as
+  // deleteDocument applies.
+  // ══════════════════════════════════════════════════════════════════════
   createEntity(input: CreateEntityInput): WorkspaceState {
     return this.sqliteHarness.runInTransaction(() => {
       const now = isoNow();
@@ -765,6 +894,14 @@ export class WorkspaceRepository {
     });
   }
 
+  // ══════════════════════════════════════════════════════════════════════
+  // BELOW → SliceRepository.ts
+  // createSlice, deleteSlice
+  //
+  // createSlice reads a document snapshot and builds a TextAnchor via
+  // buildAnchorFromRange (src/db/anchoring.ts after split). Split keeps
+  // the anchor-construction call here; the math lives in anchoring.ts.
+  // ══════════════════════════════════════════════════════════════════════
   createSlice(input: CreateSliceInput): WorkspaceState {
     return this.sqliteHarness.runInTransaction(() => {
       const now = isoNow();
@@ -857,6 +994,10 @@ export class WorkspaceRepository {
     });
   }
 
+  // ══════════════════════════════════════════════════════════════════════
+  // BELOW → HistoryRepository.ts (continued)
+  // writeCheckpoint, replayDocumentToVersion, loadHistorySummary
+  // ══════════════════════════════════════════════════════════════════════
   writeCheckpoint(documentId: string, label: string | null): void {
     this.sqliteHarness.runInTransaction(() => {
       this.ensureCheckpoint(this.requireDocumentSnapshot(documentId), label);
@@ -899,6 +1040,11 @@ export class WorkspaceRepository {
     };
   }
 
+  // ══════════════════════════════════════════════════════════════════════
+  // BELOW → WorkspaceRepository.ts (private seed bootstrap) + per-aggregate
+  // loaders. Each loadXxx() method moves to the repository that owns its
+  // aggregate; WorkspaceRepository.loadWorkspace() composes the results.
+  // ══════════════════════════════════════════════════════════════════════
   private ensureSeedState(): void {
     const database = this.sqliteHarness.getConnection();
     const now = isoNow();
@@ -1230,6 +1376,8 @@ export class WorkspaceRepository {
     return row;
   }
 
+  // ── BELOW → LayoutRepository.ts (private helpers) ──
+  // loadLayoutState, saveLayoutState
   private loadLayoutState(
     projectId: string,
     documents: DocumentSummary[],
@@ -1339,6 +1487,8 @@ export class WorkspaceRepository {
     );
   }
 
+  // ── BELOW → ProjectRepository.ts (private helpers) ──
+  // requireActiveProjectId, loadActiveProjectId, setActiveProjectId
   private requireActiveProjectId(): string {
     return this.loadActiveProjectId() ?? DEFAULT_PROJECT_ID;
   }
@@ -1370,6 +1520,9 @@ export class WorkspaceRepository {
     `).run(JSON.stringify({ projectId }));
   }
 
+  // ── BELOW → FolderRepository.ts + DocumentRepository.ts (insert helpers) ──
+  // insertFolder belongs with FolderRepository; insertDocument belongs with
+  // DocumentRepository. nextFolderOrdering / nextDocumentOrdering likewise.
   private insertFolder(input: {
     id: string;
     projectId: string;
@@ -1443,6 +1596,7 @@ export class WorkspaceRepository {
     );
   }
 
+  // ── BELOW → HistoryRepository.ts (checkpoint helper) ──
   private ensureCheckpoint(snapshot: StoredDocumentSnapshot, label: string | null): void {
     this.sqliteHarness.getConnection().prepare(`
       INSERT OR REPLACE INTO document_checkpoints (
@@ -1487,6 +1641,10 @@ export class WorkspaceRepository {
     return row.ordering + 1;
   }
 
+  // ── BELOW → SliceRepository.ts (private helpers) ──
+  // nextEntitySliceOrdering, loadDocumentRowsForFolder (note: last one is
+  // used only by deleteFolder cascade — move with FolderRepository instead),
+  // deleteSliceInternal, updateSliceBoundariesForDocument.
   private nextEntitySliceOrdering(entityId: string): number {
     const row = this.sqliteHarness.getConnection().prepare(`
       SELECT COALESCE(MAX(ordering), -1) AS ordering
@@ -1581,6 +1739,11 @@ export class WorkspaceRepository {
     return this.loadSliceBoundariesForDocument(snapshot.id);
   }
 
+  // ── BELOW → HistoryRepository.ts (event-log primitive) ──
+  // appendEvent is called from every mutation in every aggregate. After the
+  // split, each repository takes a HistoryRepository reference and calls
+  // history.appendEvent(...). It stays a single write path so event sequence
+  // numbering is consistent across aggregates.
   private appendEvent(
     aggregateType: string,
     aggregateId: string,
@@ -1633,6 +1796,10 @@ export class WorkspaceRepository {
   }
 }
 
+// ══════════════════════════════════════════════════════════════════════════
+// BELOW → src/db/rowMappers.ts (or colocate each with its owning repository)
+// Pure row-to-domain decoders. No DB access, no mutation.
+// ══════════════════════════════════════════════════════════════════════════
 function mapDocumentSummary(row: RawDocumentRow): DocumentSummary {
   const metrics = collectDocumentMetrics(row.plain_text);
   return {
@@ -1685,6 +1852,12 @@ function buildEmptyDocumentJson(): JsonObject {
   };
 }
 
+// ══════════════════════════════════════════════════════════════════════════
+// BELOW → HistoryRepository.ts (replay path, free-function form)
+// replaySnapshotToVersion, createMappingFromSteps. These take a Database
+// handle as first arg today; after split they become private methods on
+// HistoryRepository that use this.sqliteHarness.getConnection().
+// ══════════════════════════════════════════════════════════════════════════
 function replaySnapshotToVersion(
   database: BetterSqlite3.Database,
   documentId: string,
@@ -1757,6 +1930,16 @@ function createMappingFromSteps(serializedSteps: JsonObject[]): Mapping {
   return mapping;
 }
 
+// ══════════════════════════════════════════════════════════════════════════
+// BELOW → src/db/anchoring.ts
+// Pure functions over ProseMirror documents. No DB access.
+// This is load-bearing algorithmic code — extract it and add unit tests
+// (see refineCode.md §A1 priority 2) before anything else changes here.
+//
+// Moves: mapBoundaryForward, resolveAnchorWithFallback, buildPlainTextIndex,
+// walkNodeText, offsetToPosition, buildAnchorFromRange, resolveBlockPath,
+// serializeNodePlainText.
+// ══════════════════════════════════════════════════════════════════════════
 function mapBoundaryForward(
   anchor: TextAnchor,
   mapping: Mapping,
@@ -1956,6 +2139,11 @@ function serializeNodePlainText(doc: ProseMirrorNode): string {
   return doc.textBetween(0, doc.content.size, "\n\n");
 }
 
+// ══════════════════════════════════════════════════════════════════════════
+// BELOW → src/db/utils.ts
+// Pure utilities — no DB, no domain knowledge. stableStringify is used by
+// event payload hashing / equality checks; the rest are small helpers.
+// ══════════════════════════════════════════════════════════════════════════
 function stableStringify(value: unknown): string {
   return JSON.stringify(value, (_key, nestedValue) => {
     if (nestedValue && typeof nestedValue === "object" && !Array.isArray(nestedValue)) {
