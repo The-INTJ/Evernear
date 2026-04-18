@@ -1,0 +1,46 @@
+{
+  "name": "evernear-phase-1-harness",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Phase 1 round-trip harness for Evernear.",
+  "main": "dist-electron/main/index.js",
+  "scripts": {
+    "dev": "concurrently -k \"npm:dev:renderer\" \"npm:dev:electron\" \"npm:dev:app\"",
+    "dev:renderer": "vite",
+    "dev:electron": "tsup src/main/index.ts src/preload/index.ts --format cjs --out-dir dist-electron --watch --external electron",
+    "dev:app": "wait-on tcp:5173 file:dist-electron/main/index.js file:dist-electron/preload/index.js && cross-env EVERNEAR_RENDERER_URL=http://127.0.0.1:5173 electron dist-electron/main/index.js",
+    "build": "npm run build:renderer && npm run build:electron",
+    "build:renderer": "vite build",
+    "build:electron": "tsup src/main/index.ts src/preload/index.ts --format cjs --out-dir dist-electron --external electron",
+    "start": "electron dist-electron/main/index.js",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm run build"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "^6.0.1",
+    "electron": "^41.2.1",
+    "prosemirror-commands": "^1.7.1",
+    "prosemirror-history": "^1.5.0",
+    "prosemirror-keymap": "^1.2.3",
+    "prosemirror-model": "^1.25.4",
+    "prosemirror-schema-basic": "^1.2.4",
+    "prosemirror-state": "^1.4.4",
+    "prosemirror-view": "^1.41.8",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "sql.js": "^1.14.1",
+    "vite": "^8.0.8"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@types/sql.js": "^1.4.11",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "tsup": "^8.5.1",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3",
+    "wait-on": "^9.0.5"
+  }
+}
