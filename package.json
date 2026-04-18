@@ -1,8 +1,8 @@
 {
-  "name": "evernear-phase-1-workbench",
-  "version": "0.2.0",
+  "name": "evernear",
+  "version": "0.3.0",
   "private": true,
-  "description": "Phase 1 proof workbench for Evernear.",
+  "description": "Local-first writing workspace for Evernear.",
   "main": "dist-electron/main/index.js",
   "scripts": {
     "dev": "concurrently -k \"npm:dev:renderer\" \"npm:dev:electron\" \"npm:dev:app\"",

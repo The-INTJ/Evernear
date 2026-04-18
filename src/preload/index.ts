@@ -9,23 +9,56 @@ const bridge: HarnessBridge = {
   async getStatus() {
     return ipcRenderer.invoke(HARNESS_CHANNELS.getStatus);
   },
-  async loadState() {
-    return ipcRenderer.invoke(HARNESS_CHANNELS.loadState);
+  async loadWorkspace() {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.loadWorkspace);
   },
-  async replaceDocumentHead(input) {
-    return ipcRenderer.invoke(HARNESS_CHANNELS.replaceDocumentHead, input);
+  async createProject(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.createProject, input);
+  },
+  async updateProject(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.updateProject, input);
+  },
+  async openProject(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.openProject, input);
+  },
+  async createFolder(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.createFolder, input);
+  },
+  async updateFolder(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.updateFolder, input);
+  },
+  async deleteFolder(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.deleteFolder, input);
+  },
+  async createDocument(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.createDocument, input);
+  },
+  async updateDocumentMeta(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.updateDocumentMeta, input);
+  },
+  async deleteDocument(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.deleteDocument, input);
+  },
+  async reorderDocument(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.reorderDocument, input);
+  },
+  async openDocument(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.openDocument, input);
+  },
+  async updateLayout(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.updateLayout, input);
   },
   async applyDocumentTransaction(input) {
     return ipcRenderer.invoke(HARNESS_CHANNELS.applyDocumentTransaction, input);
   },
-  async writeCheckpoint(label) {
-    await ipcRenderer.invoke(HARNESS_CHANNELS.writeCheckpoint, label);
+  async createEntity(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.createEntity, input);
   },
-  async createAnchorProbe(input) {
-    return ipcRenderer.invoke(HARNESS_CHANNELS.createAnchorProbe, input);
+  async updateEntity(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.updateEntity, input);
   },
-  async deleteAnchorProbe(input) {
-    return ipcRenderer.invoke(HARNESS_CHANNELS.deleteAnchorProbe, input);
+  async deleteEntity(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.deleteEntity, input);
   },
   async upsertMatchingRule(input) {
     return ipcRenderer.invoke(HARNESS_CHANNELS.upsertMatchingRule, input);
@@ -33,26 +66,17 @@ const bridge: HarnessBridge = {
   async deleteMatchingRule(input) {
     return ipcRenderer.invoke(HARNESS_CHANNELS.deleteMatchingRule, input);
   },
-  async replayDocumentToVersion(targetVersion) {
-    return ipcRenderer.invoke(HARNESS_CHANNELS.replayDocumentToVersion, targetVersion);
+  async createSlice(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.createSlice, input);
   },
-  async rebuildProjectionsFromHistory() {
-    return ipcRenderer.invoke(HARNESS_CHANNELS.rebuildProjectionsFromHistory);
+  async deleteSlice(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.deleteSlice, input);
   },
-  async recordBenchmark(category, payload) {
-    return ipcRenderer.invoke(HARNESS_CHANNELS.recordBenchmark, category, payload);
+  async writeCheckpoint(documentId, label) {
+    await ipcRenderer.invoke(HARNESS_CHANNELS.writeCheckpoint, documentId, label);
   },
-  async loadSmallFixture() {
-    return ipcRenderer.invoke(HARNESS_CHANNELS.loadSmallFixture);
-  },
-  async runAnchorScenarios() {
-    return ipcRenderer.invoke(HARNESS_CHANNELS.runAnchorScenarios);
-  },
-  async runMatchingScenarios() {
-    return ipcRenderer.invoke(HARNESS_CHANNELS.runMatchingScenarios);
-  },
-  async runHistoryScenario() {
-    return ipcRenderer.invoke(HARNESS_CHANNELS.runHistoryScenario);
+  async replayDocumentToVersion(documentId, targetVersion) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.replayDocumentToVersion, documentId, targetVersion);
   },
   async readClipboardText() {
     return ipcRenderer.invoke(HARNESS_CHANNELS.readClipboardText);

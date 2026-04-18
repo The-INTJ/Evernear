@@ -2,35 +2,28 @@ import path from "node:path";
 
 import { app, BrowserWindow, clipboard, ipcMain } from "electron";
 
-import { WorkbenchRepository } from "../db/workbenchRepository";
+import { WorkspaceRepository } from "../db/workbenchRepository";
 import { SqliteHarness } from "../db/sqliteHarness";
-import {
-  HARNESS_CONTENT_FORMAT,
-  HARNESS_CONTENT_SCHEMA_VERSION,
-  HARNESS_DOCUMENT_ID,
-} from "../shared/domain/document";
-import {
-  HARNESS_CHANNELS,
-} from "../shared/contracts/harnessApi";
-import type { WorkbenchStatus } from "../shared/domain/workbench";
+import { HARNESS_CONTENT_FORMAT, HARNESS_CONTENT_SCHEMA_VERSION } from "../shared/domain/document";
+import { HARNESS_CHANNELS } from "../shared/contracts/harnessApi";
+import type { WorkspaceStatus } from "../shared/domain/workspace";
 
 const rendererUrl = process.env.EVERNEAR_RENDERER_URL;
 
 let mainWindow: BrowserWindow | null = null;
-let repository: WorkbenchRepository;
-let harnessStatus: WorkbenchStatus;
+let repository: WorkspaceRepository;
+let workspaceStatus: WorkspaceStatus;
 
 async function bootstrapPersistence(): Promise<void> {
   const runtimeRoot = process.cwd();
   const dbPath = path.join(runtimeRoot, ".local", "phase-1-harness.sqlite");
   const sqliteHarness = SqliteHarness.open(dbPath, "FULL");
 
-  repository = new WorkbenchRepository(sqliteHarness);
-  repository.ensureWorkbenchState();
+  repository = new WorkspaceRepository(sqliteHarness);
+  repository.ensureWorkspaceState();
 
-  harnessStatus = {
+  workspaceStatus = {
     dbPath,
-    documentId: HARNESS_DOCUMENT_ID,
     contentFormat: HARNESS_CONTENT_FORMAT,
     contentSchemaVersion: HARNESS_CONTENT_SCHEMA_VERSION,
     synchronousMode: sqliteHarness.synchronousMode,
@@ -39,24 +32,33 @@ async function bootstrapPersistence(): Promise<void> {
 }
 
 function registerIpcHandlers(): void {
-  ipcMain.handle(HARNESS_CHANNELS.getStatus, () => harnessStatus);
-  ipcMain.handle(HARNESS_CHANNELS.loadState, () => repository.loadWorkbenchState());
-  ipcMain.handle(HARNESS_CHANNELS.replaceDocumentHead, (_event, input) => repository.replaceDocumentHead(input));
+  ipcMain.handle(HARNESS_CHANNELS.getStatus, () => workspaceStatus);
+  ipcMain.handle(HARNESS_CHANNELS.loadWorkspace, () => repository.loadWorkspace());
+  ipcMain.handle(HARNESS_CHANNELS.createProject, (_event, input) => repository.createProject(input));
+  ipcMain.handle(HARNESS_CHANNELS.updateProject, (_event, input) => repository.updateProject(input));
+  ipcMain.handle(HARNESS_CHANNELS.openProject, (_event, input) => repository.openProject(input));
+  ipcMain.handle(HARNESS_CHANNELS.createFolder, (_event, input) => repository.createFolder(input));
+  ipcMain.handle(HARNESS_CHANNELS.updateFolder, (_event, input) => repository.updateFolder(input));
+  ipcMain.handle(HARNESS_CHANNELS.deleteFolder, (_event, input) => repository.deleteFolder(input));
+  ipcMain.handle(HARNESS_CHANNELS.createDocument, (_event, input) => repository.createDocument(input));
+  ipcMain.handle(HARNESS_CHANNELS.updateDocumentMeta, (_event, input) => repository.updateDocumentMeta(input));
+  ipcMain.handle(HARNESS_CHANNELS.deleteDocument, (_event, input) => repository.deleteDocument(input));
+  ipcMain.handle(HARNESS_CHANNELS.reorderDocument, (_event, input) => repository.reorderDocument(input));
+  ipcMain.handle(HARNESS_CHANNELS.openDocument, (_event, input) => repository.openDocument(input));
+  ipcMain.handle(HARNESS_CHANNELS.updateLayout, (_event, input) => repository.updateLayout(input));
   ipcMain.handle(HARNESS_CHANNELS.applyDocumentTransaction, (_event, input) => repository.applyDocumentTransaction(input));
-  ipcMain.handle(HARNESS_CHANNELS.writeCheckpoint, (_event, label) => {
-    repository.writeCheckpoint(label);
-  });
-  ipcMain.handle(HARNESS_CHANNELS.createAnchorProbe, (_event, input) => repository.createAnchorProbe(input));
-  ipcMain.handle(HARNESS_CHANNELS.deleteAnchorProbe, (_event, input) => repository.deleteAnchorProbe(input));
+  ipcMain.handle(HARNESS_CHANNELS.createEntity, (_event, input) => repository.createEntity(input));
+  ipcMain.handle(HARNESS_CHANNELS.updateEntity, (_event, input) => repository.updateEntity(input));
+  ipcMain.handle(HARNESS_CHANNELS.deleteEntity, (_event, input) => repository.deleteEntity(input));
   ipcMain.handle(HARNESS_CHANNELS.upsertMatchingRule, (_event, input) => repository.upsertMatchingRule(input));
   ipcMain.handle(HARNESS_CHANNELS.deleteMatchingRule, (_event, input) => repository.deleteMatchingRule(input));
-  ipcMain.handle(HARNESS_CHANNELS.replayDocumentToVersion, (_event, targetVersion) => repository.replayDocumentToVersion(targetVersion));
-  ipcMain.handle(HARNESS_CHANNELS.rebuildProjectionsFromHistory, () => repository.rebuildProjectionsFromHistory());
-  ipcMain.handle(HARNESS_CHANNELS.recordBenchmark, (_event, category, payload) => repository.recordBenchmark(category, payload));
-  ipcMain.handle(HARNESS_CHANNELS.loadSmallFixture, () => repository.loadSmallFixture());
-  ipcMain.handle(HARNESS_CHANNELS.runAnchorScenarios, () => repository.runAnchorScenarios());
-  ipcMain.handle(HARNESS_CHANNELS.runMatchingScenarios, () => repository.runMatchingScenarios());
-  ipcMain.handle(HARNESS_CHANNELS.runHistoryScenario, () => repository.runHistoryScenario());
+  ipcMain.handle(HARNESS_CHANNELS.createSlice, (_event, input) => repository.createSlice(input));
+  ipcMain.handle(HARNESS_CHANNELS.deleteSlice, (_event, input) => repository.deleteSlice(input));
+  ipcMain.handle(HARNESS_CHANNELS.writeCheckpoint, (_event, documentId, label) => {
+    repository.writeCheckpoint(documentId, label);
+  });
+  ipcMain.handle(HARNESS_CHANNELS.replayDocumentToVersion, (_event, documentId, targetVersion) =>
+    repository.replayDocumentToVersion(documentId, targetVersion));
   ipcMain.handle(HARNESS_CHANNELS.readClipboardText, () => clipboard.readText());
   ipcMain.handle(HARNESS_CHANNELS.readClipboardHtml, () => clipboard.readHTML());
   ipcMain.handle(HARNESS_CHANNELS.clearClipboard, () => {
@@ -66,12 +68,12 @@ function registerIpcHandlers(): void {
 
 function createMainWindow(): void {
   mainWindow = new BrowserWindow({
-    width: 1500,
+    width: 1520,
     height: 980,
-    minWidth: 1180,
+    minWidth: 1240,
     minHeight: 760,
     backgroundColor: "#0e1820",
-    title: "Evernear Phase 1 Harness",
+    title: "Evernear",
     webPreferences: {
       preload: path.join(__dirname, "../preload/index.js"),
       contextIsolation: true,
@@ -101,7 +103,7 @@ void app.whenReady()
     });
   })
   .catch((error: unknown) => {
-    console.error("Failed to start Evernear Phase 1 Harness.", error);
+    console.error("Failed to start Evernear.", error);
     app.quit();
   });
 

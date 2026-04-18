@@ -1,48 +1,39 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
-  layout,
-  measureLineStats,
-  prepareWithSegments,
-  walkLineRanges,
-} from "@chenglou/pretext";
-
-import {
-  HARNESS_DOCUMENT_ID,
-  HARNESS_DOCUMENT_TITLE,
   type JsonObject,
   type StoredDocumentSnapshot,
   collectDocumentMetrics,
 } from "../shared/domain/document";
 import type {
-  AnchorProbeKind,
-  AnchorScenarioRun,
-  ClipboardAuditResult,
-  HistoryReplayResult,
-  HistoryScenarioResult,
-  LayoutDecision,
-  LayoutProbeResult,
-  MatchingBenchmark,
+  ApplyDocumentTransactionResult,
+  DocumentFolderRecord,
+  DocumentSummary,
+  EntityRecord,
+  EntitySliceRecord,
   MatchingRuleKind,
   MatchingRuleRecord,
-  MatchingScenarioResult,
-  WorkbenchState,
-  WorkbenchStatus,
-} from "../shared/domain/workbench";
+  PanelMode,
+  SliceBoundaryRecord,
+  SliceRecord,
+  WorkspaceState,
+  WorkspaceStatus,
+} from "../shared/domain/workspace";
 import { createEmptyHarnessSnapshot } from "../shared/domain/harnessFixture";
 import {
   HarnessEditor,
   type HarnessEditorHandle,
   type HarnessEditorSnapshot,
+  type PendingSliceRange,
 } from "./editor/HarnessEditor";
 import {
-  buildClipboardAudit,
   buildTextAnchorFromSelection,
+  normalizeForMatch,
+  type EditorMatchingRule,
   type EditorSelectionInfo,
   type SerializedTransactionBundle,
 } from "./editor/workbenchUtils";
 
-type TabId = "document" | "anchors" | "matching" | "history" | "layout";
 type RunLogTone = "info" | "success" | "warn";
 
 type RunLogEntry = {
@@ -52,21 +43,47 @@ type RunLogEntry = {
   createdAt: string;
 };
 
-type MatchingFormState = {
+type RuleFormState = {
   label: string;
-  kind: MatchingRuleKind;
   pattern: string;
+  kind: MatchingRuleKind;
   wholeWord: boolean;
   allowPossessive: boolean;
   enabled: boolean;
 };
 
-const emptyDocumentJson: JsonObject = createEmptyHarnessSnapshot().contentJson;
-const initialImportSnapshot = snapshotToEditorSnapshot(createEmptyHarnessSnapshot());
-const initialMatchingForm: MatchingFormState = {
+type EverlinkSession = {
+  sourceDocumentId: string;
+  sourceSelection: EditorSelectionInfo;
+  sourceText: string;
+  selectedEntityId: string | null;
+  entityNameDraft: string;
+  targetDocumentId: string | null;
+  newTargetDocumentTitle: string;
+  ruleKind: MatchingRuleKind;
+  mode: "create" | "attach" | "edit";
+};
+
+type PendingSlicePlacement = {
+  entityId: string;
+  sourceDocumentId: string;
+  sourceText: string;
+  targetDocumentId: string;
+  surface: "main" | "panel";
+  start: number | null;
+  end: number | null;
+};
+
+type HoverPreview = {
+  entityId: string;
+  x: number;
+  y: number;
+};
+
+const initialRuleForm: RuleFormState = {
   label: "",
-  kind: "literal",
   pattern: "",
+  kind: "literal",
   wholeWord: true,
   allowPossessive: true,
   enabled: true,
@@ -74,151 +91,316 @@ const initialMatchingForm: MatchingFormState = {
 
 export function App() {
   const mainEditorRef = useRef<HarnessEditorHandle | null>(null);
-  const importEditorRef = useRef<HarnessEditorHandle | null>(null);
-  const mainEditorHostRef = useRef<HTMLDivElement | null>(null);
-  const transactionQueueRef = useRef<Promise<void>>(Promise.resolve());
-  const persistenceEpochRef = useRef(0);
-  const persistedVersionRef = useRef(0);
-  const workbenchStateRef = useRef<WorkbenchState | null>(null);
+  const panelEditorRef = useRef<HarnessEditorHandle | null>(null);
+  const workspaceRef = useRef<WorkspaceState | null>(null);
+  const persistenceQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const documentVersionsRef = useRef(new Map<string, number>());
+  const commitInFlightRef = useRef(false);
 
-  const [status, setStatus] = useState<WorkbenchStatus | null>(null);
-  const [workbenchState, setWorkbenchState] = useState<WorkbenchState | null>(null);
-  const [activeTab, setActiveTab] = useState<TabId>("document");
-  const [documentRevision, setDocumentRevision] = useState(0);
-  const [documentSeed, setDocumentSeed] = useState<JsonObject>(emptyDocumentJson);
-  const [liveSnapshot, setLiveSnapshot] = useState<HarnessEditorSnapshot | null>(null);
-  const [importRevision, setImportRevision] = useState(0);
-  const [importSeed, setImportSeed] = useState<JsonObject>(emptyDocumentJson);
-  const [importSnapshot, setImportSnapshot] = useState<HarnessEditorSnapshot>(initialImportSnapshot);
-  const [showImportSlot, setShowImportSlot] = useState(false);
-  const [mainSelection, setMainSelection] = useState<EditorSelectionInfo>({
-    from: 0,
-    to: 0,
-    empty: true,
-    text: "",
-  });
-  const [matchingForm, setMatchingForm] = useState<MatchingFormState>(initialMatchingForm);
-  const [anchorLabel, setAnchorLabel] = useState("");
-  const [decorationsEnabled, setDecorationsEnabled] = useState(true);
-  const [isBusy, setIsBusy] = useState(false);
+  const [status, setStatus] = useState<WorkspaceStatus | null>(null);
+  const [workspace, setWorkspace] = useState<WorkspaceState | null>(null);
   const [pendingWrites, setPendingWrites] = useState(0);
-  const [clipboardAudit, setClipboardAudit] = useState<ClipboardAuditResult | null>(null);
-  const [replayVersion, setReplayVersion] = useState("");
-  const [replayResult, setReplayResult] = useState<HistoryReplayResult | null>(null);
-  const [anchorScenario, setAnchorScenario] = useState<AnchorScenarioRun | null>(null);
-  const [matchingScenario, setMatchingScenario] = useState<MatchingScenarioResult | null>(null);
-  const [historyScenario, setHistoryScenario] = useState<HistoryScenarioResult | null>(null);
-  const [layoutProbe, setLayoutProbe] = useState<LayoutProbeResult | null>(null);
-  const [lastMatchingBenchmark, setLastMatchingBenchmark] = useState<MatchingBenchmark | null>(null);
+  const [isBusy, setIsBusy] = useState(false);
   const [runLog, setRunLog] = useState<RunLogEntry[]>([]);
+  const [mainSelection, setMainSelection] = useState<EditorSelectionInfo>({ from: 0, to: 0, empty: true, text: "" });
+  const [panelSelection, setPanelSelection] = useState<EditorSelectionInfo>({ from: 0, to: 0, empty: true, text: "" });
+  const [projectNameDraft, setProjectNameDraft] = useState("");
+  const [documentTitleDraft, setDocumentTitleDraft] = useState("");
+  const [newFolderTitle, setNewFolderTitle] = useState("");
+  const [newDocumentTitle, setNewDocumentTitle] = useState("");
+  const [ruleForm, setRuleForm] = useState<RuleFormState>(initialRuleForm);
+  const [entityNameDraft, setEntityNameDraft] = useState("");
+  const [everlinkSession, setEverlinkSession] = useState<EverlinkSession | null>(null);
+  const [pendingPlacement, setPendingPlacement] = useState<PendingSlicePlacement | null>(null);
+  const [hoverPreview, setHoverPreview] = useState<HoverPreview | null>(null);
 
   useEffect(() => {
-    void initializeWorkbench();
+    void initializeWorkspace();
   }, []);
 
-  async function initializeWorkbench(): Promise<void> {
+  useEffect(() => {
+    const activeProject = getActiveProject(workspace);
+    setProjectNameDraft(activeProject?.name ?? "");
+  }, [workspace?.layout.activeProjectId, workspace?.projects]);
+
+  useEffect(() => {
+    setDocumentTitleDraft(workspace?.activeDocument?.title ?? "");
+  }, [workspace?.activeDocument?.id, workspace?.activeDocument?.title]);
+
+  useEffect(() => {
+    const selectedEntity = getSelectedEntity(workspace);
+    setEntityNameDraft(selectedEntity?.name ?? "");
+  }, [workspace?.layout.selectedEntityId, workspace?.entities]);
+
+  const activeProject = getActiveProject(workspace);
+  const activeDocument = workspace?.activeDocument ?? null;
+  const panelDocument = workspace?.panelDocument ?? null;
+  const selectedEntity = getSelectedEntity(workspace);
+
+  const entitiesById = useMemo(() => {
+    const next = new Map<string, EntityRecord>();
+    workspace?.entities.forEach((entity) => next.set(entity.id, entity));
+    return next;
+  }, [workspace?.entities]);
+
+  const slicesById = useMemo(() => {
+    const next = new Map<string, SliceRecord>();
+    workspace?.slices.forEach((slice) => next.set(slice.id, slice));
+    return next;
+  }, [workspace?.slices]);
+
+  const boundariesBySliceId = useMemo(() => {
+    const next = new Map<string, SliceBoundaryRecord>();
+    workspace?.sliceBoundaries.forEach((boundary) => next.set(boundary.sliceId, boundary));
+    return next;
+  }, [workspace?.sliceBoundaries]);
+
+  const documentsById = useMemo(() => {
+    const next = new Map<string, DocumentSummary>();
+    workspace?.documents.forEach((document) => next.set(document.id, document));
+    return next;
+  }, [workspace?.documents]);
+
+  const editorRules = useMemo<EditorMatchingRule[]>(() => {
+    if (!workspace) {
+      return [];
+    }
+
+    return workspace.matchingRules.map((rule) => ({
+      ...rule,
+      entityName: entitiesById.get(rule.entityId)?.name ?? "Entity",
+    }));
+  }, [workspace, entitiesById]);
+
+  const exactSelectionEntityIds = useMemo(() => {
+    if (!workspace || mainSelection.empty) {
+      return [];
+    }
+
+    const normalizedSelection = normalizeForMatch(mainSelection.text.trim());
+    if (!normalizedSelection) {
+      return [];
+    }
+
+    return uniqueStrings(
+      workspace.matchingRules
+        .filter((rule) => rule.kind !== "regex")
+        .filter((rule) => normalizeForMatch(rule.pattern) === normalizedSelection)
+        .map((rule) => rule.entityId),
+    );
+  }, [workspace, mainSelection]);
+
+  const selectedEntitySlices = useMemo(() => {
+    if (!workspace || !selectedEntity) {
+      return [] as Array<{
+        slice: SliceRecord;
+        boundary: SliceBoundaryRecord | undefined;
+        document: DocumentSummary | undefined;
+      }>;
+    }
+
+    return workspace.entitySlices
+      .filter((link) => link.entityId === selectedEntity.id)
+      .sort((left, right) => left.ordering - right.ordering)
+      .flatMap((link) => {
+        const slice = slicesById.get(link.sliceId);
+        if (!slice) {
+          return [];
+        }
+        return [{
+          slice,
+          boundary: boundariesBySliceId.get(slice.id),
+          document: documentsById.get(slice.documentId),
+        }];
+      });
+  }, [workspace, selectedEntity, slicesById, boundariesBySliceId, documentsById]);
+
+  const mainVisibleBoundaries = useMemo(() => {
+    if (!workspace || !activeDocument) {
+      return [] as SliceBoundaryRecord[];
+    }
+
+    const allowedSliceIds = new Set<string>();
+    if (selectedEntity) {
+      workspace.entitySlices
+        .filter((link) => link.entityId === selectedEntity.id)
+        .forEach((link) => allowedSliceIds.add(link.sliceId));
+    }
+
+    if (pendingPlacement?.entityId) {
+      workspace.entitySlices
+        .filter((link) => link.entityId === pendingPlacement.entityId)
+        .forEach((link) => allowedSliceIds.add(link.sliceId));
+    }
+
+    return workspace.sliceBoundaries.filter((boundary) =>
+      boundary.documentId === activeDocument.id
+      && (allowedSliceIds.size === 0 || allowedSliceIds.has(boundary.sliceId)));
+  }, [workspace, activeDocument, selectedEntity, pendingPlacement]);
+
+  const panelVisibleBoundaries = useMemo(() => {
+    if (!workspace || !panelDocument) {
+      return [] as SliceBoundaryRecord[];
+    }
+
+    const selectedSliceIds = new Set<string>(
+      selectedEntity
+        ? workspace.entitySlices.filter((link) => link.entityId === selectedEntity.id).map((link) => link.sliceId)
+        : [],
+    );
+
+    return workspace.sliceBoundaries.filter((boundary) =>
+      boundary.documentId === panelDocument.id
+      && (selectedSliceIds.size === 0 || selectedSliceIds.has(boundary.sliceId)));
+  }, [workspace, panelDocument, selectedEntity]);
+
+  const mainPendingRange = useMemo<PendingSliceRange | null>(() => {
+    if (!pendingPlacement || pendingPlacement.surface !== "main") {
+      return null;
+    }
+
+    const start = pendingPlacement.start;
+    const end = pendingPlacement.end;
+    if (start === null || end === null) {
+      return null;
+    }
+
+    return { from: start, to: end, awaitingPlacement: start === end };
+  }, [pendingPlacement]);
+
+  const panelPendingRange = useMemo<PendingSliceRange | null>(() => {
+    if (!pendingPlacement || pendingPlacement.surface !== "panel") {
+      return null;
+    }
+
+    const start = pendingPlacement.start;
+    const end = pendingPlacement.end;
+    if (start === null || end === null) {
+      return null;
+    }
+
+    return { from: start, to: end, awaitingPlacement: start === end };
+  }, [pendingPlacement]);
+
+  const hoverEntity = hoverPreview ? entitiesById.get(hoverPreview.entityId) ?? null : null;
+  const hoverSlices = hoverPreview && hoverEntity
+    ? selectedSlicesForEntity(hoverPreview.entityId, workspace, slicesById, boundariesBySliceId, documentsById)
+    : [];
+
+  async function initializeWorkspace(): Promise<void> {
     setIsBusy(true);
 
     try {
-      const [nextStatus, nextState] = await Promise.all([
+      const [nextStatus, nextWorkspace] = await Promise.all([
         window.evernear.getStatus(),
-        window.evernear.loadState(),
+        window.evernear.loadWorkspace(),
       ]);
-
       setStatus(nextStatus);
-      applyHydratedState(nextState, "Workbench opened against the persisted head.");
+      applyWorkspace(nextWorkspace, "Workspace opened against the persisted project store.");
     } catch (error) {
-      appendLog(`Failed to initialize the workbench: ${stringifyError(error)}`, "warn");
+      appendLog(`Failed to initialize Evernear: ${stringifyError(error)}`, "warn");
     } finally {
       setIsBusy(false);
     }
   }
 
-  function replaceWorkbenchState(nextState: WorkbenchState): void {
-    workbenchStateRef.current = nextState;
-    setWorkbenchState(nextState);
-    persistedVersionRef.current = nextState.snapshot?.currentVersion ?? 0;
-  }
-
-  function applyHydratedState(nextState: WorkbenchState, message: string): void {
-    replaceWorkbenchState(nextState);
-    setReplayResult(null);
-    setClipboardAudit(null);
-    const snapshot = nextState.snapshot;
-    setDocumentSeed(snapshot?.contentJson ?? emptyDocumentJson);
-    setDocumentRevision((current) => current + 1);
-    setLiveSnapshot(snapshot ? snapshotToEditorSnapshot(snapshot) : null);
-    if (!snapshot || snapshot.plainText.trim().length === 0) {
-      setShowImportSlot(true);
+  function applyWorkspace(nextWorkspace: WorkspaceState, message?: string): void {
+    workspaceRef.current = nextWorkspace;
+    setWorkspace(nextWorkspace);
+    syncDocumentVersions(nextWorkspace);
+    if (message) {
+      appendLog(message, "success");
     }
-    appendLog(message, "success");
   }
 
-  function patchWorkbenchState(project: (current: WorkbenchState) => WorkbenchState): void {
-    const current = workbenchStateRef.current;
+  function syncDocumentVersions(nextWorkspace: WorkspaceState): void {
+    documentVersionsRef.current.clear();
+    if (nextWorkspace.activeDocument) {
+      documentVersionsRef.current.set(nextWorkspace.activeDocument.id, nextWorkspace.activeDocument.currentVersion);
+    }
+    if (nextWorkspace.panelDocument) {
+      documentVersionsRef.current.set(nextWorkspace.panelDocument.id, nextWorkspace.panelDocument.currentVersion);
+    }
+  }
+
+  function appendLog(message: string, tone: RunLogTone): void {
+    setRunLog((current) => [{
+      id: current.length + 1,
+      message,
+      tone,
+      createdAt: new Date().toLocaleTimeString(),
+    }, ...current].slice(0, 30));
+  }
+
+  async function flushPersistence(): Promise<void> {
+    await persistenceQueueRef.current.catch(() => undefined);
+  }
+
+  async function runWorkspaceMutation(
+    task: () => Promise<WorkspaceState>,
+    successMessage?: string,
+  ): Promise<void> {
+    setIsBusy(true);
+
+    try {
+      await flushPersistence();
+      const nextWorkspace = await task();
+      applyWorkspace(nextWorkspace, successMessage);
+    } catch (error) {
+      appendLog(stringifyError(error), "warn");
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  function patchWorkspaceDocument(result: ApplyDocumentTransactionResult): void {
+    const current = workspaceRef.current;
     if (!current) {
       return;
     }
 
-    replaceWorkbenchState(project(current));
-  }
+    const nextDocuments = current.documents.map((document) =>
+      document.id === result.summary.id ? result.summary : document);
+    const nextBoundaries = [
+      ...current.sliceBoundaries.filter((boundary) => boundary.documentId !== result.snapshot.id),
+      ...result.sliceBoundaries,
+    ];
 
-  function appendLog(message: string, tone: RunLogTone): void {
-    setRunLog((current) => [
-      {
-        id: current.length + 1,
-        message,
-        tone,
-        createdAt: new Date().toLocaleTimeString(),
-      },
+    const nextWorkspace: WorkspaceState = {
       ...current,
-    ]);
-  }
+      documents: nextDocuments,
+      activeDocument: current.activeDocument?.id === result.snapshot.id ? result.snapshot : current.activeDocument,
+      panelDocument: current.panelDocument?.id === result.snapshot.id ? result.snapshot : current.panelDocument,
+      sliceBoundaries: nextBoundaries,
+    };
 
-  async function flushTransactionQueue(): Promise<void> {
-    await transactionQueueRef.current.catch(() => undefined);
+    applyWorkspace(nextWorkspace);
   }
 
   function queueDocumentPersistence(
+    documentId: string,
+    title: string,
     snapshot: HarnessEditorSnapshot,
     transaction: SerializedTransactionBundle,
   ): void {
-    const epoch = persistenceEpochRef.current;
     setPendingWrites((current) => current + 1);
 
-    transactionQueueRef.current = transactionQueueRef.current
+    persistenceQueueRef.current = persistenceQueueRef.current
       .catch(() => undefined)
       .then(async () => {
-        if (epoch !== persistenceEpochRef.current) {
-          return;
-        }
-
-        const currentState = workbenchStateRef.current;
-        const currentDocument = currentState?.snapshot;
-        if (!currentDocument) {
-          return;
-        }
-
+        const baseVersion = documentVersionsRef.current.get(documentId) ?? 0;
         const result = await window.evernear.applyDocumentTransaction({
-          documentId: currentDocument.id,
-          baseVersion: persistedVersionRef.current,
-          title: currentDocument.title,
+          documentId,
+          baseVersion,
+          title,
           steps: transaction.steps,
           inverseSteps: transaction.inverseSteps,
           contentJson: snapshot.contentJson,
           plainText: snapshot.plainText,
         });
 
-        if (epoch !== persistenceEpochRef.current) {
-          return;
-        }
-
-        patchWorkbenchState((current) => ({
-          ...current,
-          snapshot: result.snapshot,
-          historySummary: result.historySummary,
-          anchorProbes: result.anchorProbes,
-        }));
+        documentVersionsRef.current.set(documentId, result.snapshot.currentVersion);
+        patchWorkspaceDocument(result);
       })
       .catch((error) => {
         appendLog(`Document persistence drifted: ${stringifyError(error)}`, "warn");
@@ -228,1305 +410,1311 @@ export function App() {
       });
   }
 
-  function handleMainEditorSnapshotChange(
+  function handleMainSnapshotChange(
     snapshot: HarnessEditorSnapshot,
     transaction: SerializedTransactionBundle | null,
   ): void {
-    setLiveSnapshot(snapshot);
-
-    if (transaction) {
-      queueDocumentPersistence(snapshot, transaction);
+    if (transaction && activeDocument) {
+      queueDocumentPersistence(activeDocument.id, documentTitleDraft || activeDocument.title, snapshot, transaction);
     }
   }
 
-  function handleImportEditorSnapshotChange(
+  function handlePanelSnapshotChange(
     snapshot: HarnessEditorSnapshot,
-    _transaction: SerializedTransactionBundle | null,
+    transaction: SerializedTransactionBundle | null,
   ): void {
-    setImportSnapshot(snapshot);
-  }
-
-  function focusMainEditorSoon(): void {
-    window.setTimeout(() => {
-      mainEditorRef.current?.focus();
-    }, 0);
-  }
-
-  async function reloadPersistedHead(message: string): Promise<void> {
-    setIsBusy(true);
-
-    try {
-      await flushTransactionQueue();
-      persistenceEpochRef.current += 1;
-      const nextState = await window.evernear.loadState();
-      applyHydratedState(nextState, message);
-      focusMainEditorSoon();
-    } catch (error) {
-      appendLog(`Reload failed: ${stringifyError(error)}`, "warn");
-    } finally {
-      setIsBusy(false);
+    if (transaction && panelDocument) {
+      queueDocumentPersistence(panelDocument.id, panelDocument.title, snapshot, transaction);
     }
   }
 
-  async function handleLoadSmallFixture(): Promise<void> {
-    setIsBusy(true);
-
-    try {
-      await flushTransactionQueue();
-      persistenceEpochRef.current += 1;
-      const nextState = await window.evernear.loadSmallFixture();
-      applyHydratedState(nextState, "Loaded the small deterministic fixture for edge-case probing.");
-      setImportSeed(nextState.snapshot?.contentJson ?? emptyDocumentJson);
-      setImportRevision((current) => current + 1);
-      setShowImportSlot(false);
-      focusMainEditorSoon();
-    } catch (error) {
-      appendLog(`Fixture load failed: ${stringifyError(error)}`, "warn");
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  async function handleWriteCheckpoint(): Promise<void> {
-    setIsBusy(true);
-
-    try {
-      await flushTransactionQueue();
-      await window.evernear.writeCheckpoint("manual-head-save");
-      const nextState = await window.evernear.loadState();
-      replaceWorkbenchState(nextState);
-      appendLog(
-        `Checkpoint saved at version ${nextState.historySummary.currentVersion}.`,
-        "success",
-      );
-      focusMainEditorSoon();
-    } catch (error) {
-      appendLog(`Checkpoint save failed: ${stringifyError(error)}`, "warn");
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  async function handleReplaceHeadFromImport(): Promise<void> {
-    setIsBusy(true);
-
-    try {
-      await flushTransactionQueue();
-      const snapshot = importEditorRef.current?.getSnapshot() ?? importSnapshot;
-      persistenceEpochRef.current += 1;
-      const nextState = await window.evernear.replaceDocumentHead({
-        documentId: HARNESS_DOCUMENT_ID,
-        title: HARNESS_DOCUMENT_TITLE,
-        contentJson: snapshot.contentJson,
-        plainText: snapshot.plainText,
-        source: "import-slot",
-      });
-
-      applyHydratedState(nextState, `Imported ${formatCount(snapshot.metrics.wordCount)} words from the manuscript replace slot.`);
-      setShowImportSlot(false);
-      focusMainEditorSoon();
-    } catch (error) {
-      appendLog(`Import replacement failed: ${stringifyError(error)}`, "warn");
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  function handleClearImportSlot(): void {
-    setImportSeed(emptyDocumentJson);
-    setImportRevision((current) => current + 1);
-    setImportSnapshot(initialImportSnapshot);
-    setShowImportSlot(true);
-    appendLog("Cleared the manuscript replace slot.", "info");
-  }
-
-  function handleMirrorHeadIntoImportSlot(): void {
-    const currentHead = workbenchStateRef.current?.snapshot;
-    if (!currentHead) {
-      return;
+  function handleSelectionChange(surface: "main" | "panel", selection: EditorSelectionInfo): void {
+    if (surface === "main") {
+      setMainSelection(selection);
+    } else {
+      setPanelSelection(selection);
     }
 
-    setImportSeed(currentHead.contentJson);
-    setImportRevision((current) => current + 1);
-    setImportSnapshot(snapshotToEditorSnapshot(currentHead));
-    setShowImportSlot(true);
-    appendLog("Copied the persisted head into the manuscript replace slot for comparison.", "info");
-  }
-
-  async function handleVerifyClipboard(): Promise<void> {
-    const editor = mainEditorRef.current;
-    if (!editor) {
-      return;
-    }
-
-    setIsBusy(true);
-
-    try {
-      await flushTransactionQueue();
-      await window.evernear.clearClipboard();
-      editor.selectAll();
-      editor.focus();
-      document.execCommand("copy");
-      await delay(60);
-
-      const [copiedText, copiedHtml, reloadedState] = await Promise.all([
-        window.evernear.readClipboardText(),
-        window.evernear.readClipboardHtml(),
-        window.evernear.loadState(),
-      ]);
-
-      replaceWorkbenchState(reloadedState);
-      const persistedPlainText = reloadedState.snapshot?.plainText ?? "";
-      const audit = buildClipboardAudit(copiedText, copiedHtml, persistedPlainText);
-      setClipboardAudit(audit);
-
-      const benchmark = await window.evernear.recordBenchmark("clipboard", audit as unknown as JsonObject);
-      patchWorkbenchState((current) => ({
-        ...current,
-        benchmarks: [benchmark, ...current.benchmarks].slice(0, 20),
-      }));
-
-      appendLog(
-        audit.copiedTextMatchesPersistedPlainText && !audit.leakedWorkbenchMarkup
-          ? "Clipboard audit passed persisted plain-text parity and HTML leak checks."
-          : "Clipboard audit found drift or leaked workbench markup.",
-        audit.copiedTextMatchesPersistedPlainText && !audit.leakedWorkbenchMarkup ? "success" : "warn",
-      );
-      focusMainEditorSoon();
-    } catch (error) {
-      appendLog(`Clipboard audit failed: ${stringifyError(error)}`, "warn");
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  async function handleCreateAnchorProbe(kind: AnchorProbeKind): Promise<void> {
-    const selection = mainEditorRef.current?.getSelection() ?? mainSelection;
-    if (!workbenchStateRef.current?.snapshot) {
-      return;
-    }
-
-    setIsBusy(true);
-
-    try {
-      await flushTransactionQueue();
-      const refreshedState = await window.evernear.loadState();
-      replaceWorkbenchState(refreshedState);
-
-      const refreshedSnapshot = refreshedState.snapshot;
-      if (!refreshedSnapshot) {
-        throw new Error("No persisted document head was available for slice/link tracking.");
+    setPendingPlacement((current) => {
+      if (!current || current.surface !== surface) {
+        return current;
       }
 
-      const anchor = buildTextAnchorFromSelection(refreshedSnapshot, selection);
-      if (!anchor) {
-        appendLog("Select a non-empty range before creating a slice boundary or link.", "warn");
-        return;
+      if (current.start === null) {
+        return {
+          ...current,
+          start: selection.from,
+          end: selection.empty ? selection.from : selection.to,
+        };
       }
 
-      const probe = await window.evernear.createAnchorProbe({
-        kind,
-        label: anchorLabel.trim() || defaultAnchorLabel(kind, refreshedState.anchorProbes.length + 1),
-        anchor,
-      });
-
-      patchWorkbenchState((current) => ({
+      return {
         ...current,
-        anchorProbes: [probe, ...current.anchorProbes],
-      }));
-      setAnchorLabel("");
-      appendLog(
-        `Created ${displayAnchorKind(kind)} on "${truncate(selection.text || anchor.exact, 42)}".`,
-        "success",
-      );
-      focusMainEditorSoon();
-    } catch (error) {
-      appendLog(`Slice/link creation failed: ${stringifyError(error)}`, "warn");
-    } finally {
-      setIsBusy(false);
-    }
+        end: selection.empty ? selection.from : selection.to,
+      };
+    });
   }
 
-  async function handleDeleteAnchorProbe(probeId: string): Promise<void> {
-    setIsBusy(true);
-
-    try {
-      const probes = await window.evernear.deleteAnchorProbe({ probeId });
-      patchWorkbenchState((current) => ({
-        ...current,
-        anchorProbes: probes,
-      }));
-      appendLog("Removed a slice/link tracker from the workbench.", "info");
-      focusMainEditorSoon();
-    } catch (error) {
-      appendLog(`Slice/link deletion failed: ${stringifyError(error)}`, "warn");
-    } finally {
-      setIsBusy(false);
+  async function handleProjectSwitch(projectId: string): Promise<void> {
+    if (!projectId || projectId === workspace?.layout.activeProjectId) {
+      return;
     }
+
+    await runWorkspaceMutation(
+      () => window.evernear.openProject({ projectId }),
+      "Opened the selected project.",
+    );
   }
 
-  async function handleSubmitMatchingRule(): Promise<void> {
-    if (matchingForm.label.trim().length === 0 || matchingForm.pattern.trim().length === 0) {
+  async function handleCreateProject(): Promise<void> {
+    const nextIndex = (workspace?.projects.length ?? 0) + 1;
+    await runWorkspaceMutation(
+      () => window.evernear.createProject({ name: `Untitled Project ${nextIndex}` }),
+      "Created a fresh local project.",
+    );
+  }
+
+  async function handleSaveProjectName(): Promise<void> {
+    if (!activeProject || projectNameDraft.trim() === activeProject.name) {
+      return;
+    }
+
+    await runWorkspaceMutation(
+      () => window.evernear.updateProject({ projectId: activeProject.id, name: projectNameDraft }),
+      "Updated the project name.",
+    );
+  }
+
+  async function handleCreateFolder(): Promise<void> {
+    if (!activeProject) {
+      return;
+    }
+
+    const title = newFolderTitle.trim() || `Folder ${countForLabel(workspace?.folders.length ?? 0)}`;
+    setNewFolderTitle("");
+    await runWorkspaceMutation(
+      () => window.evernear.createFolder({ projectId: activeProject.id, title }),
+      `Created folder "${title}".`,
+    );
+  }
+
+  async function handleCreateDocument(folderId: string | null, openInPanel = false): Promise<void> {
+    if (!activeProject) {
+      return;
+    }
+
+    const title = newDocumentTitle.trim() || `Document ${countForLabel(workspace?.documents.length ?? 0)}`;
+    setNewDocumentTitle("");
+    await runWorkspaceMutation(
+      () => window.evernear.createDocument({ projectId: activeProject.id, folderId, title, openInPanel }),
+      `Created document "${title}".`,
+    );
+  }
+
+  async function handleOpenDocument(documentId: string): Promise<void> {
+    await runWorkspaceMutation(
+      () => window.evernear.openDocument({ documentId, surface: "main" }),
+      "Opened the selected document.",
+    );
+  }
+
+  async function handleSaveDocumentMeta(nextFolderId?: string | null): Promise<void> {
+    if (!activeDocument) {
+      return;
+    }
+
+    const payload = {
+      documentId: activeDocument.id,
+      title: documentTitleDraft.trim() || activeDocument.title,
+      folderId: nextFolderId === undefined ? undefined : nextFolderId,
+    };
+
+    await runWorkspaceMutation(
+      () => window.evernear.updateDocumentMeta(payload),
+      "Updated document metadata.",
+    );
+  }
+
+  async function handleDeleteDocument(): Promise<void> {
+    if (!activeDocument) {
+      return;
+    }
+
+    await runWorkspaceMutation(
+      () => window.evernear.deleteDocument({ documentId: activeDocument.id }),
+      `Deleted "${activeDocument.title}".`,
+    );
+  }
+
+  async function handleReorderDocument(direction: "up" | "down"): Promise<void> {
+    if (!activeDocument) {
+      return;
+    }
+
+    await runWorkspaceMutation(
+      () => window.evernear.reorderDocument({ documentId: activeDocument.id, direction }),
+      `Moved "${activeDocument.title}" ${direction}.`,
+    );
+  }
+
+  async function handleToggleFolder(folderId: string): Promise<void> {
+    if (!workspace) {
+      return;
+    }
+
+    const expanded = workspace.layout.expandedFolderIds.includes(folderId);
+    await runWorkspaceMutation(
+      () => window.evernear.updateLayout({
+        expandedFolderIds: expanded
+          ? workspace.layout.expandedFolderIds.filter((id) => id !== folderId)
+          : [...workspace.layout.expandedFolderIds, folderId],
+      }),
+    );
+  }
+
+  async function handleRenameFolder(folder: DocumentFolderRecord, title: string): Promise<void> {
+    if (title.trim() === folder.title) {
+      return;
+    }
+
+    await runWorkspaceMutation(
+      () => window.evernear.updateFolder({ folderId: folder.id, title }),
+      "Updated folder title.",
+    );
+  }
+
+  async function handleDeleteFolder(folderId: string): Promise<void> {
+    await runWorkspaceMutation(
+      () => window.evernear.deleteFolder({ folderId }),
+      "Deleted the folder and moved its documents to the project root.",
+    );
+  }
+
+  async function handleToggleHighlights(): Promise<void> {
+    if (!workspace) {
+      return;
+    }
+
+    await runWorkspaceMutation(
+      () => window.evernear.updateLayout({
+        highlightsEnabled: !workspace.layout.highlightsEnabled,
+      }),
+    );
+  }
+
+  async function handleTogglePanel(): Promise<void> {
+    if (!workspace) {
+      return;
+    }
+
+    await runWorkspaceMutation(
+      () => window.evernear.updateLayout({
+        panelOpen: !workspace.layout.panelOpen,
+      }),
+    );
+  }
+
+  async function handleSelectEntity(entityId: string): Promise<void> {
+    await runWorkspaceMutation(
+      () => window.evernear.updateLayout({
+        selectedEntityId: entityId,
+        panelOpen: true,
+        panelMode: "entities",
+      }),
+    );
+  }
+
+  async function handleSaveEntityName(): Promise<void> {
+    if (!selectedEntity || entityNameDraft.trim() === selectedEntity.name) {
+      return;
+    }
+
+    await runWorkspaceMutation(
+      () => window.evernear.updateEntity({ entityId: selectedEntity.id, name: entityNameDraft }),
+      "Updated the entity name.",
+    );
+  }
+
+  async function handleCreateEntityRule(): Promise<void> {
+    if (!selectedEntity) {
+      return;
+    }
+
+    if (ruleForm.pattern.trim().length === 0 || ruleForm.label.trim().length === 0) {
       appendLog("Matching rules need both a label and a pattern.", "warn");
       return;
     }
 
-    setIsBusy(true);
-
-    try {
-      const rules = await window.evernear.upsertMatchingRule({
-        label: matchingForm.label.trim(),
-        kind: matchingForm.kind,
-        pattern: matchingForm.pattern,
-        wholeWord: matchingForm.wholeWord,
-        allowPossessive: matchingForm.allowPossessive,
-        enabled: matchingForm.enabled,
-      });
-
-      patchWorkbenchState((current) => ({
-        ...current,
-        matchingRules: rules,
-      }));
-      setMatchingForm(initialMatchingForm);
-      appendLog(`Added matching rule "${truncate(matchingForm.label.trim(), 28)}".`, "success");
-      focusMainEditorSoon();
-    } catch (error) {
-      appendLog(`Rule creation failed: ${stringifyError(error)}`, "warn");
-    } finally {
-      setIsBusy(false);
-    }
+    const form = ruleForm;
+    setRuleForm(initialRuleForm);
+    await runWorkspaceMutation(
+      () => window.evernear.upsertMatchingRule({
+        entityId: selectedEntity.id,
+        label: form.label.trim(),
+        kind: form.kind,
+        pattern: form.pattern,
+        wholeWord: form.wholeWord,
+        allowPossessive: form.allowPossessive,
+        enabled: form.enabled,
+      }),
+      `Added rule "${form.label.trim()}".`,
+    );
   }
 
-  async function handleToggleMatchingRule(rule: MatchingRuleRecord): Promise<void> {
-    try {
-      const rules = await window.evernear.upsertMatchingRule({
+  async function handleCreateManualEntity(): Promise<void> {
+    if (!activeProject) {
+      return;
+    }
+
+    const nextIndex = (workspace?.entities.length ?? 0) + 1;
+    await runWorkspaceMutation(
+      () => window.evernear.createEntity({
+        projectId: activeProject.id,
+        name: `Entity ${nextIndex}`,
+      }),
+      "Created a new empty entity.",
+    );
+  }
+
+  async function handleToggleRule(rule: MatchingRuleRecord): Promise<void> {
+    await runWorkspaceMutation(
+      () => window.evernear.upsertMatchingRule({
         id: rule.id,
+        entityId: rule.entityId,
         label: rule.label,
         kind: rule.kind,
         pattern: rule.pattern,
         wholeWord: rule.wholeWord,
         allowPossessive: rule.allowPossessive,
         enabled: !rule.enabled,
+      }),
+    );
+  }
+
+  async function handleDeleteRule(ruleId: string): Promise<void> {
+    await runWorkspaceMutation(
+      () => window.evernear.deleteMatchingRule({ ruleId }),
+      "Deleted the matching rule.",
+    );
+  }
+
+  async function handleDeleteEntity(): Promise<void> {
+    if (!selectedEntity) {
+      return;
+    }
+
+    await runWorkspaceMutation(
+      () => window.evernear.deleteEntity({ entityId: selectedEntity.id }),
+      `Deleted "${selectedEntity.name}" and cleaned up orphaned slice records.`,
+    );
+  }
+
+  async function handleDeleteSlice(sliceId: string): Promise<void> {
+    await runWorkspaceMutation(
+      () => window.evernear.deleteSlice({ sliceId }),
+      "Deleted the slice.",
+    );
+  }
+
+  async function openEverlinkChooser(): Promise<void> {
+    if (!activeDocument || mainSelection.empty || mainSelection.text.trim().length === 0) {
+      appendLog("Select some story text before starting Everlink it!.", "warn");
+      return;
+    }
+
+    const preselectedEntityId = exactSelectionEntityIds[0] ?? selectedEntity?.id ?? null;
+    const preselectedEntity = preselectedEntityId ? entitiesById.get(preselectedEntityId) ?? null : null;
+    const nextSession: EverlinkSession = {
+      sourceDocumentId: activeDocument.id,
+      sourceSelection: mainSelection,
+      sourceText: mainSelection.text,
+      selectedEntityId: preselectedEntityId,
+      entityNameDraft: preselectedEntity?.name ?? mainSelection.text.trim(),
+      targetDocumentId: activeDocument.id,
+      newTargetDocumentTitle: `${truncate(mainSelection.text.trim(), 24)} Notes`,
+      ruleKind: "literal",
+      mode: exactSelectionEntityIds.length > 0 ? "edit" : preselectedEntity ? "attach" : "create",
+    };
+
+    setEverlinkSession(nextSession);
+    await runWorkspaceMutation(
+      () => window.evernear.updateLayout({
+        panelOpen: true,
+        panelMode: "chooser",
+        selectedEntityId: preselectedEntityId,
+      }),
+    );
+  }
+
+  async function handleBeginPlacement(): Promise<void> {
+    if (!workspace || !activeProject || !everlinkSession) {
+      return;
+    }
+
+    const sourceText = everlinkSession.sourceText.trim();
+    if (!sourceText) {
+      appendLog("The Everlink session needs a non-empty source selection.", "warn");
+      return;
+    }
+
+    let entityId = everlinkSession.selectedEntityId;
+
+    if (!entityId) {
+      const nextWorkspace = await window.evernear.createEntity({
+        projectId: activeProject.id,
+        name: everlinkSession.entityNameDraft.trim() || sourceText,
       });
-
-      patchWorkbenchState((current) => ({
-        ...current,
-        matchingRules: rules,
-      }));
-    } catch (error) {
-      appendLog(`Rule toggle failed: ${stringifyError(error)}`, "warn");
+      applyWorkspace(nextWorkspace, `Created entity "${everlinkSession.entityNameDraft.trim() || sourceText}".`);
+      entityId = nextWorkspace.layout.selectedEntityId;
     }
-  }
 
-  async function handleDeleteMatchingRule(ruleId: string): Promise<void> {
-    try {
-      const rules = await window.evernear.deleteMatchingRule({ ruleId });
-      patchWorkbenchState((current) => ({
-        ...current,
-        matchingRules: rules,
-      }));
-      appendLog("Deleted a matching rule.", "info");
-    } catch (error) {
-      appendLog(`Rule deletion failed: ${stringifyError(error)}`, "warn");
-    }
-  }
-
-  async function handleRunAnchorScenarios(): Promise<void> {
-    setIsBusy(true);
-
-    try {
-      const result = await window.evernear.runAnchorScenarios();
-      setAnchorScenario(result);
-      appendLog("Ran the slice/link repair, ambiguity, and invalidation scenarios.", "success");
-    } catch (error) {
-      appendLog(`Slice/link scenarios failed: ${stringifyError(error)}`, "warn");
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  async function handleRunMatchingScenarios(): Promise<void> {
-    setIsBusy(true);
-
-    try {
-      const result = await window.evernear.runMatchingScenarios();
-      setMatchingScenario(result);
-      appendLog("Ran the matching normalization and regex scenarios.", "success");
-    } catch (error) {
-      appendLog(`Matching scenarios failed: ${stringifyError(error)}`, "warn");
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  async function handleRecordMatchingBenchmark(): Promise<void> {
-    if (!lastMatchingBenchmark) {
-      appendLog("Scroll or type with overlays on before recording a matching benchmark.", "warn");
+    if (!entityId) {
+      appendLog("Could not create or select an entity for this Everlink session.", "warn");
       return;
     }
 
-    try {
-      const benchmark = await window.evernear.recordBenchmark("matching", lastMatchingBenchmark as unknown as JsonObject);
-      patchWorkbenchState((current) => ({
-        ...current,
-        benchmarks: [benchmark, ...current.benchmarks].slice(0, 20),
-      }));
-      appendLog("Recorded the latest visible-range matching benchmark.", "success");
-    } catch (error) {
-      appendLog(`Benchmark recording failed: ${stringifyError(error)}`, "warn");
-    }
-  }
+    const matchingRuleExists = workspace.matchingRules.some((rule) =>
+      rule.entityId === entityId && normalizeForMatch(rule.pattern) === normalizeForMatch(sourceText),
+    );
 
-  async function handleReplayDocument(): Promise<void> {
-    const targetVersion = Number.parseInt(replayVersion, 10);
-    if (!Number.isFinite(targetVersion)) {
-      appendLog("Enter a numeric version before replaying history.", "warn");
-      return;
-    }
-
-    setIsBusy(true);
-
-    try {
-      await flushTransactionQueue();
-      const result = await window.evernear.replayDocumentToVersion(targetVersion);
-      setReplayResult(result);
-      appendLog(`Replayed the document head to version ${targetVersion}.`, "success");
-    } catch (error) {
-      appendLog(`Replay failed: ${stringifyError(error)}`, "warn");
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  async function handleRestoreReplay(): Promise<void> {
-    if (!replayResult) {
-      return;
-    }
-
-    setIsBusy(true);
-
-    try {
-      await flushTransactionQueue();
-      persistenceEpochRef.current += 1;
-      const nextState = await window.evernear.replaceDocumentHead({
-        documentId: HARNESS_DOCUMENT_ID,
-        title: replayResult.snapshot.title,
-        contentJson: replayResult.snapshot.contentJson,
-        plainText: replayResult.snapshot.plainText,
-        source: "replay-restore",
+    if (!matchingRuleExists) {
+      const nextWorkspace = await window.evernear.upsertMatchingRule({
+        entityId,
+        label: truncate(sourceText, 32),
+        pattern: sourceText,
+        kind: everlinkSession.ruleKind,
+        wholeWord: true,
+        allowPossessive: true,
+        enabled: true,
       });
-      applyHydratedState(nextState, `Restored replayed version ${replayResult.snapshot.currentVersion} as the live head.`);
-      focusMainEditorSoon();
-    } catch (error) {
-      appendLog(`Replay restore failed: ${stringifyError(error)}`, "warn");
-    } finally {
-      setIsBusy(false);
+      applyWorkspace(nextWorkspace, "Attached the selected text as an entity rule.");
     }
-  }
 
-  async function handleRunHistoryScenario(): Promise<void> {
-    setIsBusy(true);
-
-    try {
-      await flushTransactionQueue();
-      const result = await window.evernear.runHistoryScenario();
-      setHistoryScenario(result);
-      appendLog("Ran the history replay and projection rebuild parity checks.", "success");
-    } catch (error) {
-      appendLog(`History scenario failed: ${stringifyError(error)}`, "warn");
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  async function handleMeasureLayout(): Promise<void> {
-    const host = mainEditorHostRef.current;
-    const snapshot = liveSnapshot;
-    if (!host || !snapshot) {
+    let targetDocumentId = everlinkSession.targetDocumentId ?? activeDocument?.id ?? null;
+    if (!targetDocumentId) {
+      appendLog("Choose a target document before placing the slice.", "warn");
       return;
     }
 
+    if (everlinkSession.newTargetDocumentTitle.trim().length > 0 && targetDocumentId === "__create__") {
+      const nextWorkspace = await window.evernear.createDocument({
+        projectId: activeProject.id,
+        folderId: activeDocument?.id ? documentsById.get(activeDocument.id)?.folderId ?? null : null,
+        title: everlinkSession.newTargetDocumentTitle.trim(),
+        openInPanel: true,
+      });
+      applyWorkspace(nextWorkspace, `Created "${everlinkSession.newTargetDocumentTitle.trim()}" for slice placement.`);
+      targetDocumentId = nextWorkspace.panelDocument?.id ?? nextWorkspace.documents[nextWorkspace.documents.length - 1]?.id ?? null;
+    }
+
+    if (!targetDocumentId) {
+      appendLog("Could not prepare a target document for slice placement.", "warn");
+      return;
+    }
+
+    const surface: "main" | "panel" = targetDocumentId === activeDocument?.id ? "main" : "panel";
+
+    const nextWorkspace = surface === "panel"
+      ? await window.evernear.openDocument({ documentId: targetDocumentId, surface: "panel" })
+      : await window.evernear.updateLayout({ panelOpen: true, panelMode: "placement", panelDocumentId: null, selectedEntityId: entityId });
+    applyWorkspace(nextWorkspace, "Started slice placement.");
+
+    setPendingPlacement({
+      entityId,
+      sourceDocumentId: everlinkSession.sourceDocumentId,
+      sourceText,
+      targetDocumentId,
+      surface,
+      start: null,
+      end: null,
+    });
+    setEverlinkSession(null);
+  }
+
+  async function handleCreateTargetDocumentFromChooser(): Promise<void> {
+    if (!activeProject || !everlinkSession) {
+      return;
+    }
+
+    const title = everlinkSession.newTargetDocumentTitle.trim();
+    if (!title) {
+      appendLog("Name the new target document before creating it.", "warn");
+      return;
+    }
+
+    const nextWorkspace = await window.evernear.createDocument({
+      projectId: activeProject.id,
+      folderId: activeDocument ? documentsById.get(activeDocument.id)?.folderId ?? null : null,
+      title,
+      openInPanel: true,
+    });
+    applyWorkspace(nextWorkspace, `Created target document "${title}".`);
+    setEverlinkSession((current) => current ? {
+      ...current,
+      targetDocumentId: nextWorkspace.panelDocument?.id ?? null,
+      newTargetDocumentTitle: title,
+    } : current);
+  }
+
+  async function handleCommitPendingSlice(): Promise<void> {
+    if (!workspace || !activeProject || !pendingPlacement) {
+      return;
+    }
+
+    if (commitInFlightRef.current) {
+      return;
+    }
+
+    const editor = pendingPlacement.surface === "main" ? mainEditorRef.current : panelEditorRef.current;
+    if (!editor) {
+      appendLog("The slice placement surface is not ready yet.", "warn");
+      return;
+    }
+
+    let start = pendingPlacement.start;
+    let end = pendingPlacement.end;
+    if (start === null || end === null) {
+      const selection = pendingPlacement.surface === "main" ? mainSelection : panelSelection;
+      start = selection.from;
+      end = selection.empty ? selection.from : selection.to;
+    }
+
+    if (start === null || end === null) {
+      appendLog("Click or select inside the target document before committing the slice.", "warn");
+      return;
+    }
+
+    if (start === end) {
+      const insertedRange = editor.replaceSelection(pendingPlacement.sourceText);
+      if (!insertedRange) {
+        appendLog("Could not auto-fill the empty pending slice.", "warn");
+        return;
+      }
+      start = insertedRange.from;
+      end = insertedRange.to;
+    }
+
     setIsBusy(true);
+    commitInFlightRef.current = true;
 
     try {
-      await flushTransactionQueue();
-      const domMetrics = measureDomLayout(host);
-      if (!domMetrics) {
-        throw new Error("The editor surface was not available for layout measurement.");
+      await flushPersistence();
+      const refreshed = await window.evernear.loadWorkspace();
+      applyWorkspace(refreshed);
+
+      const targetSnapshot = refreshed.activeDocument?.id === pendingPlacement.targetDocumentId
+        ? refreshed.activeDocument
+        : refreshed.panelDocument?.id === pendingPlacement.targetDocumentId
+          ? refreshed.panelDocument
+          : null;
+
+      if (!targetSnapshot) {
+        throw new Error("Could not load the target document after slice placement.");
       }
 
-      const pretextMetrics = measurePretextLayout(
-        snapshot.plainText,
-        domMetrics.font,
-        domMetrics.textWidth,
-        domMetrics.lineHeight,
-        domMetrics.scrollTop,
-        domMetrics.viewportHeight,
-      );
+      const anchor = buildTextAnchorFromSelection(targetSnapshot, {
+        from: Math.min(start, end),
+        to: Math.max(start, end),
+        empty: false,
+        text: pendingPlacement.sourceText,
+      });
 
-      const result: LayoutProbeResult = {
-        width: Math.round(domMetrics.textWidth),
-        lineHeight: roundNumber(domMetrics.lineHeight),
-        domHeight: Math.round(domMetrics.domHeight),
-        domVisibleBlockCount: domMetrics.domVisibleBlockCount,
-        domComputationMs: roundNumber(domMetrics.domComputationMs),
-        pretextHeight: Math.round(pretextMetrics.pretextHeight),
-        pretextLineCount: pretextMetrics.pretextLineCount,
-        pretextVisibleLineCount: pretextMetrics.pretextVisibleLineCount,
-        pretextComputationMs: roundNumber(pretextMetrics.pretextComputationMs),
-        decision: decideLayoutPath(domMetrics.domHeight, pretextMetrics.pretextHeight),
-        createdAt: new Date().toISOString(),
-      };
+      if (!anchor) {
+        throw new Error("Could not build an anchored slice range from the committed placement.");
+      }
 
-      setLayoutProbe(result);
-      const benchmark = await window.evernear.recordBenchmark("layout", result as unknown as JsonObject);
-      patchWorkbenchState((current) => ({
-        ...current,
-        benchmarks: [benchmark, ...current.benchmarks].slice(0, 20),
-      }));
-
-      appendLog(
-        `Measured DOM vs Pretext layout at ${Math.round(domMetrics.textWidth)} px.`,
-        "success",
-      );
+      const nextWorkspace = await window.evernear.createSlice({
+        projectId: activeProject.id,
+        entityId: pendingPlacement.entityId,
+        documentId: pendingPlacement.targetDocumentId,
+        title: truncate(pendingPlacement.sourceText.trim(), 42),
+        anchor,
+      });
+      applyWorkspace(nextWorkspace, "Committed the slice and linked it to the selected entity.");
+      setPendingPlacement(null);
+      setHoverPreview(null);
     } catch (error) {
-      appendLog(`Layout probe failed: ${stringifyError(error)}`, "warn");
+      appendLog(`Slice placement failed: ${stringifyError(error)}`, "warn");
     } finally {
+      commitInFlightRef.current = false;
       setIsBusy(false);
     }
   }
 
-  const persistedSnapshot = workbenchState?.snapshot ?? null;
-  const liveMetrics = liveSnapshot?.metrics ?? collectDocumentMetrics(persistedSnapshot?.plainText ?? "");
-  const matchingRules = workbenchState?.matchingRules ?? [];
-  const anchorProbes = workbenchState?.anchorProbes ?? [];
-  const historySummary = workbenchState?.historySummary;
-  const latestClipboardStatus = clipboardAudit
-    ? clipboardAudit.copiedTextMatchesPersistedPlainText && !clipboardAudit.leakedWorkbenchMarkup
-      ? "Clean"
-      : "Review"
-    : "Pending";
+  async function handleCancelPlacement(): Promise<void> {
+    setPendingPlacement(null);
+    setEverlinkSession(null);
+    if (workspace) {
+      await runWorkspaceMutation(
+        () => window.evernear.updateLayout({
+          panelMode: "entities",
+        }),
+      );
+    }
+  }
+
+  async function handleOpenSliceInPanel(documentId: string, entityId: string): Promise<void> {
+    const nextWorkspace = await window.evernear.openDocument({ documentId, surface: "panel" });
+    applyWorkspace(nextWorkspace, "Opened the slice document in the persistent panel.");
+    await runWorkspaceMutation(
+      () => window.evernear.updateLayout({
+        selectedEntityId: entityId,
+        panelMode: "document",
+        panelOpen: true,
+      }),
+    );
+  }
+
+  async function handleEditorHover(payload: { entityId: string; clientX: number; clientY: number } | null): Promise<void> {
+    if (!payload) {
+      setHoverPreview(null);
+      return;
+    }
+
+    setHoverPreview({
+      entityId: payload.entityId,
+      x: payload.clientX,
+      y: payload.clientY,
+    });
+  }
+
+  async function handleEditorClick(entityId: string): Promise<void> {
+    await runWorkspaceMutation(
+      () => window.evernear.updateLayout({
+        selectedEntityId: entityId,
+        panelOpen: true,
+        panelMode: "entities",
+      }),
+      "Opened the entity panel from an in-text match.",
+    );
+  }
+
+  async function handlePanelBlur(): Promise<void> {
+    if (!pendingPlacement || pendingPlacement.surface !== "panel") {
+      return;
+    }
+
+    if ((pendingPlacement.start ?? 0) === (pendingPlacement.end ?? 0)) {
+      await handleCommitPendingSlice();
+    }
+  }
+
+  async function handleMainBlur(): Promise<void> {
+    if (!pendingPlacement || pendingPlacement.surface !== "main") {
+      return;
+    }
+
+    if ((pendingPlacement.start ?? 0) === (pendingPlacement.end ?? 0)) {
+      await handleCommitPendingSlice();
+    }
+  }
+
+  const documentsByFolder = useMemo(() => groupDocumentsByFolder(workspace?.documents ?? []), [workspace?.documents]);
+
+  const rootDocuments = documentsByFolder.get(null) ?? [];
+
+  const selectedEntityRules = selectedEntity
+    ? workspace?.matchingRules.filter((rule) => rule.entityId === selectedEntity.id) ?? []
+    : [];
+
+  const everlinkLabel = exactSelectionEntityIds.length > 0 ? "Edit Everlink" : "Everlink it!";
+  const emptySnapshot = createEmptyHarnessSnapshot();
 
   return (
-    <div className="app-shell workbench-shell">
-      <header className="hero-panel workbench-hero">
-        <div>
-          <p className="eyebrow">Phase 1 Proof Workbench</p>
-          <h1>Import real prose, test slices and links, measure matching, and pressure-test history before MVP.</h1>
-          <p className="hero-copy">
-            This shell is intentionally not the product. It is the local-only proof bench for the
-            remaining Phase 1 questions: better-sqlite3 durability, real-manuscript intake,
-            shared slice/link range healing, visible-range matching, event-log replay, and Pretext viability.
+    <div className="mvp-shell">
+      <header className="mvp-topbar">
+        <div className="brand-block">
+          <span className="eyebrow">Evernear MVP</span>
+          <h1>Writing Workspace</h1>
+          <p className="toolbar-note">
+            Local-first folders, generic documents, entity-aware highlights, and slice authoring in a persistent panel.
           </p>
         </div>
-        <div className="hero-meta">
-          <span className={pendingWrites > 0 ? "meta-pill meta-pill--dirty" : "meta-pill"}>
-            {pendingWrites > 0 ? `${pendingWrites} pending write${pendingWrites === 1 ? "" : "s"}` : "Head persisted"}
-          </span>
-          <span className="meta-pill">{decorationsEnabled ? "Derived overlays on" : "Derived overlays off"}</span>
-          <span className="meta-pill">{isBusy ? "Workbench busy" : "Workbench ready"}</span>
-          <span className="meta-pill">{status?.storageEngine ?? "storage pending"}</span>
+        <div className="topbar-actions">
+          <label className="field-stack field-stack--compact">
+            <span className="field-label">Project</span>
+            <select
+              className="select-input"
+              value={workspace?.layout.activeProjectId ?? ""}
+              onChange={(event) => void handleProjectSwitch(event.target.value)}
+            >
+              {(workspace?.projects ?? []).map((project) => (
+                <option key={project.id} value={project.id}>{project.name}</option>
+              ))}
+            </select>
+          </label>
+          <button className="secondary-button" onClick={() => void handleCreateProject()} type="button">
+            New Project
+          </button>
+          <button className="secondary-button" onClick={() => void handleTogglePanel()} type="button">
+            {workspace?.layout.panelOpen ? "Hide Panel" : "Show Panel"}
+          </button>
         </div>
       </header>
 
-      <section className="toolbar-panel workbench-toolbar">
-        <div className="toolbar-actions">
-          <button className="primary-button" onClick={handleLoadSmallFixture} disabled={isBusy} type="button">
-            Load Small Fixture
-          </button>
-          <button className="secondary-button" onClick={handleWriteCheckpoint} disabled={isBusy || !persistedSnapshot} type="button">
-            Save Head Checkpoint
-          </button>
-          <button className="secondary-button" onClick={() => void reloadPersistedHead("Reloaded the persisted head from SQLite.")} disabled={isBusy} type="button">
-            Reload Persisted Head
-          </button>
-          <button className="secondary-button" onClick={handleVerifyClipboard} disabled={isBusy || !persistedSnapshot} type="button">
-            Audit Clipboard
-          </button>
-          <button
-            className="secondary-button"
-            onClick={() => {
-              mainEditorRef.current?.toggleBold();
-              focusMainEditorSoon();
-            }}
-            disabled={isBusy}
-            type="button"
-          >
-            Bold
-          </button>
-          <button
-            className="secondary-button"
-            onClick={() => {
-              mainEditorRef.current?.toggleItalic();
-              focusMainEditorSoon();
-            }}
-            disabled={isBusy}
-            type="button"
-          >
-            Italic
-          </button>
-          <button
-            className="secondary-button"
-            onClick={() => {
-              setDecorationsEnabled((current) => !current);
-              focusMainEditorSoon();
-            }}
-            disabled={isBusy}
-            type="button"
-          >
-            {decorationsEnabled ? "Hide Overlays" : "Show Overlays"}
-          </button>
-        </div>
-        <div className="toolbar-notes">
-          <span>Document: {status?.documentId ?? "loading..."}</span>
-          <span>SQLite: {status?.dbPath ?? "loading..."}</span>
-          <span>{status ? `WAL / synchronous ${status.synchronousMode}` : "storage pending"}</span>
-        </div>
-      </section>
-
-      <section className="stats-grid workbench-stats">
-        <MetricCard label="Words" value={formatCount(liveMetrics.wordCount)} />
-        <MetricCard label="Version" value={String(historySummary?.currentVersion ?? 0)} />
-        <MetricCard label="Steps" value={formatCount(historySummary?.stepCount ?? 0)} />
-        <MetricCard label="Checkpoints" value={formatCount(historySummary?.checkpointCount ?? 0)} />
-        <MetricCard label="Events" value={formatCount(historySummary?.eventCount ?? 0)} />
-        <MetricCard label="Clipboard" value={latestClipboardStatus} />
-      </section>
-
-      <nav className="tab-strip" aria-label="Workbench views">
-        {([
-          ["document", "Document"],
-          ["anchors", "Slices / Links"],
-          ["matching", "Matching"],
-          ["history", "History"],
-          ["layout", "Layout"],
-        ] as const).map(([id, label]) => (
-          <button
-            key={id}
-            className={activeTab === id ? "tab-button tab-button--active" : "tab-button"}
-            onClick={() => setActiveTab(id)}
-            type="button"
-          >
-            {label}
-          </button>
-        ))}
-      </nav>
-
-      <main className="workspace-grid workbench-grid">
-        <section className="workspace-card workspace-card--editor">
-          <div className="card-header">
-            <div>
-              <p className="section-kicker">Live Head</p>
-              <h2>{persistedSnapshot?.title ?? HARNESS_DOCUMENT_TITLE}</h2>
+      <main className={workspace?.layout.panelOpen ? "mvp-grid" : "mvp-grid mvp-grid--panel-closed"}>
+        <aside className="nav-panel">
+          <section className="panel-section">
+            <p className="section-kicker">Project</p>
+            <input
+              className="text-input"
+              value={projectNameDraft}
+              onChange={(event) => setProjectNameDraft(event.target.value)}
+              onBlur={() => void handleSaveProjectName()}
+              placeholder="Project name"
+            />
+            <div className="toolbar-actions">
+              <input
+                className="text-input"
+                value={newFolderTitle}
+                onChange={(event) => setNewFolderTitle(event.target.value)}
+                placeholder="New folder"
+              />
+              <button className="ghost-button" onClick={() => void handleCreateFolder()} type="button">
+                Add Folder
+              </button>
             </div>
-            <p className="section-copy">
-              The main editor persists every transaction into the history substrate. Explicit
-              "save" writes a checkpoint, while reload remounts the persisted head so we can
-              sanity-check replay and import behavior without pretending this is the final UX.
-            </p>
+            <div className="toolbar-actions">
+              <input
+                className="text-input"
+                value={newDocumentTitle}
+                onChange={(event) => setNewDocumentTitle(event.target.value)}
+                placeholder="New document"
+              />
+              <button className="ghost-button" onClick={() => void handleCreateDocument(activeDocument ? documentsById.get(activeDocument.id)?.folderId ?? null : null)} type="button">
+                Add Doc
+              </button>
+            </div>
+          </section>
+
+          <section className="panel-section">
+            <p className="section-kicker">Documents</p>
+            <div className="tree-list">
+              {(workspace?.folders ?? []).map((folder) => {
+                const expanded = workspace?.layout.expandedFolderIds.includes(folder.id) ?? false;
+                const folderDocuments = documentsByFolder.get(folder.id) ?? [];
+                return (
+                  <article key={folder.id} className="tree-folder">
+                    <div className="tree-folder__header">
+                      <button className="tree-toggle" onClick={() => void handleToggleFolder(folder.id)} type="button">
+                        {expanded ? "−" : "+"}
+                      </button>
+                      <input
+                        className="tree-folder__input"
+                        defaultValue={folder.title}
+                        onBlur={(event) => void handleRenameFolder(folder, event.target.value)}
+                      />
+                      <button className="tree-inline-button" onClick={() => void handleCreateDocument(folder.id)} type="button">
+                        + Doc
+                      </button>
+                      <button className="tree-inline-button tree-inline-button--danger" onClick={() => void handleDeleteFolder(folder.id)} type="button">
+                        Delete
+                      </button>
+                    </div>
+                    {expanded ? (
+                      <div className="tree-documents">
+                        {folderDocuments.length === 0 ? (
+                          <p className="empty-state">No documents here yet.</p>
+                        ) : (
+                          folderDocuments.map((document) => (
+                            <button
+                              key={document.id}
+                              className={document.id === activeDocument?.id ? "tree-document tree-document--active" : "tree-document"}
+                              onClick={() => void handleOpenDocument(document.id)}
+                              type="button"
+                            >
+                              <span>{document.title}</span>
+                              <small>{formatCount(document.wordCount)} words</small>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    ) : null}
+                  </article>
+                );
+              })}
+
+              {rootDocuments.length > 0 ? (
+                <article className="tree-folder">
+                  <div className="tree-folder__header tree-folder__header--static">
+                    <strong>Loose Documents</strong>
+                  </div>
+                  <div className="tree-documents">
+                    {rootDocuments.map((document) => (
+                      <button
+                        key={document.id}
+                        className={document.id === activeDocument?.id ? "tree-document tree-document--active" : "tree-document"}
+                        onClick={() => void handleOpenDocument(document.id)}
+                        type="button"
+                      >
+                        <span>{document.title}</span>
+                        <small>{formatCount(document.wordCount)} words</small>
+                      </button>
+                    ))}
+                  </div>
+                </article>
+              ) : null}
+            </div>
+          </section>
+        </aside>
+
+        <section className="editor-panel">
+          <div className="editor-toolbar">
+            <div className="field-stack field-stack--grow">
+              <span className="field-label">Document</span>
+              <input
+                className="text-input text-input--title"
+                value={documentTitleDraft}
+                onChange={(event) => setDocumentTitleDraft(event.target.value)}
+                onBlur={() => void handleSaveDocumentMeta()}
+                placeholder="Document title"
+              />
+            </div>
+            <label className="field-stack field-stack--compact">
+              <span className="field-label">Folder</span>
+              <select
+                className="select-input"
+                value={activeDocument ? documentsById.get(activeDocument.id)?.folderId ?? "" : ""}
+                onChange={(event) => void handleSaveDocumentMeta(event.target.value || null)}
+              >
+                <option value="">Project Root</option>
+                {(workspace?.folders ?? []).map((folder) => (
+                  <option key={folder.id} value={folder.id}>{folder.title}</option>
+                ))}
+              </select>
+            </label>
+            <div className="toolbar-actions">
+              <button className="ghost-button" onClick={() => mainEditorRef.current?.toggleBold()} type="button">
+                Bold
+              </button>
+              <button className="ghost-button" onClick={() => mainEditorRef.current?.toggleItalic()} type="button">
+                Italic
+              </button>
+              <button className="ghost-button" onClick={() => void handleReorderDocument("up")} type="button">
+                Move Up
+              </button>
+              <button className="ghost-button" onClick={() => void handleReorderDocument("down")} type="button">
+                Move Down
+              </button>
+              <button className="ghost-button" onClick={() => void handleToggleHighlights()} type="button">
+                {workspace?.layout.highlightsEnabled ? "Mute Highlights" : "Show Highlights"}
+              </button>
+              <button className="primary-button" onClick={() => void openEverlinkChooser()} type="button">
+                {everlinkLabel}
+              </button>
+              <button className="ghost-button ghost-button--danger" onClick={() => void handleDeleteDocument()} type="button">
+                Delete Doc
+              </button>
+            </div>
           </div>
 
-          <div className="editor-host" ref={mainEditorHostRef}>
+          <div className="editor-statusbar">
+            <MetricCard label="Words" value={formatCount(activeDocument ? collectDocumentMetrics(activeDocument.plainText).wordCount : 0)} />
+            <MetricCard label="Paragraphs" value={formatCount(activeDocument ? collectDocumentMetrics(activeDocument.plainText).paragraphCount : 0)} />
+            <MetricCard label="Characters" value={formatCount(activeDocument ? collectDocumentMetrics(activeDocument.plainText).characterCount : 0)} />
+            <MetricCard label="Storage" value={status?.storageEngine ?? "better-sqlite3"} />
+            <MetricCard label="Sync" value={pendingWrites > 0 ? "Saving..." : "Saved"} />
+          </div>
+
+          <div className="editor-canvas">
             <HarnessEditor
-              key={documentRevision}
+              key={activeDocument?.id ?? emptySnapshot.id}
               ref={mainEditorRef}
-              initialDocumentJson={documentSeed}
-              decorationsEnabled={decorationsEnabled}
-              matchingRules={matchingRules}
-              anchorProbes={anchorProbes}
-              onDocumentSnapshotChange={handleMainEditorSnapshotChange}
-              onSelectionChange={setMainSelection}
-              onMatchingBenchmark={setLastMatchingBenchmark}
+              initialDocumentJson={activeDocument?.contentJson ?? emptySnapshot.contentJson}
+              decorationsEnabled
+              matchingRules={workspace?.layout.highlightsEnabled ? editorRules : []}
+              sliceBoundaries={mainVisibleBoundaries}
+              pendingRange={mainPendingRange}
+              legendLabels={{
+                match: "Entity match",
+                boundary: "Slice boundary",
+                pending: "Pending slice",
+              }}
+              onDocumentSnapshotChange={handleMainSnapshotChange}
+              onSelectionChange={(selection) => handleSelectionChange("main", selection)}
+              onEntityHover={(payload) => void handleEditorHover(payload)}
+              onEntityClick={(entityId) => void handleEditorClick(entityId)}
+              onBlur={() => void handleMainBlur()}
             />
           </div>
         </section>
 
-        <aside className="workspace-card workspace-card--sidebar">
-          {activeTab === "document" ? (
-            <>
-              <section className="sidebar-section">
-                <p className="section-kicker">Manuscript Replace</p>
-                <h2>One-time paste and replace</h2>
+        {workspace?.layout.panelOpen ? (
+          <aside className="panel-stack">
+            {everlinkSession ? (
+              <section className="panel-section">
+                <p className="section-kicker">Everlink it!</p>
+                <h2>{everlinkSession.mode === "edit" ? "Edit Entity Linkage" : "Create or Extend an Entity"}</h2>
                 <p className="section-copy">
-                  You only need this when replacing the whole manuscript from Google Docs. Normal
-                  editing happens in the main document. Paste here, then promote it into the live head.
+                  The current selection stays as clean manuscript text. This flow only creates or extends entity truth and then moves into slice placement.
                 </p>
-                <div className="toolbar-actions">
-                  <button
-                    className="secondary-button"
-                    onClick={() => setShowImportSlot((current) => !current)}
-                    type="button"
+                <div className="selection-card">
+                  <strong>Selected text</strong>
+                  <span>{truncate(everlinkSession.sourceText, 120)}</span>
+                </div>
+                <label className="field-stack">
+                  <span className="field-label">Attach to existing entity</span>
+                  <select
+                    className="select-input"
+                    value={everlinkSession.selectedEntityId ?? ""}
+                    onChange={(event) => setEverlinkSession((current) => current ? {
+                      ...current,
+                      selectedEntityId: event.target.value || null,
+                      mode: event.target.value ? "attach" : "create",
+                    } : current)}
                   >
-                    {showImportSlot ? "Hide Replace Slot" : "Open Replace Slot"}
+                    <option value="">Create a new entity</option>
+                    {(workspace?.entities ?? []).map((entity) => (
+                      <option key={entity.id} value={entity.id}>{entity.name}</option>
+                    ))}
+                  </select>
+                </label>
+                {everlinkSession.selectedEntityId ? null : (
+                  <label className="field-stack">
+                    <span className="field-label">New entity name</span>
+                    <input
+                      className="text-input"
+                      value={everlinkSession.entityNameDraft}
+                      onChange={(event) => setEverlinkSession((current) => current ? { ...current, entityNameDraft: event.target.value } : current)}
+                    />
+                  </label>
+                )}
+                <div className="form-grid">
+                  <label className="field-stack">
+                    <span className="field-label">Initial rule kind</span>
+                    <select
+                      className="select-input"
+                      value={everlinkSession.ruleKind}
+                      onChange={(event) => setEverlinkSession((current) => current ? { ...current, ruleKind: event.target.value as MatchingRuleKind } : current)}
+                    >
+                      <option value="literal">Literal</option>
+                      <option value="alias">Alias</option>
+                      <option value="regex">Regex</option>
+                    </select>
+                  </label>
+                  <label className="field-stack">
+                    <span className="field-label">Target document</span>
+                    <select
+                      className="select-input"
+                      value={everlinkSession.targetDocumentId ?? ""}
+                      onChange={(event) => setEverlinkSession((current) => current ? { ...current, targetDocumentId: event.target.value } : current)}
+                    >
+                      {workspace?.layout.recentTargetDocumentIds.map((documentId) => {
+                        const document = documentsById.get(documentId);
+                        return document ? <option key={document.id} value={document.id}>{document.title}</option> : null;
+                      })}
+                      {(workspace?.documents ?? []).filter((document) => !workspace.layout.recentTargetDocumentIds.includes(document.id)).map((document) => (
+                        <option key={document.id} value={document.id}>{document.title}</option>
+                      ))}
+                      <option value="__create__">Create new target document...</option>
+                    </select>
+                  </label>
+                </div>
+                {everlinkSession.targetDocumentId === "__create__" ? (
+                  <div className="toolbar-actions">
+                    <input
+                      className="text-input"
+                      value={everlinkSession.newTargetDocumentTitle}
+                      onChange={(event) => setEverlinkSession((current) => current ? { ...current, newTargetDocumentTitle: event.target.value } : current)}
+                      placeholder="New target document title"
+                    />
+                    <button className="ghost-button" onClick={() => void handleCreateTargetDocumentFromChooser()} type="button">
+                      Create Target Doc
+                    </button>
+                  </div>
+                ) : null}
+                <div className="toolbar-actions">
+                  <button className="primary-button" onClick={() => void handleBeginPlacement()} type="button">
+                    Continue to Slice Placement
                   </button>
-                  <button className="secondary-button" onClick={handleMirrorHeadIntoImportSlot} type="button">
-                    Mirror Current Head
+                  <button className="secondary-button" onClick={() => void handleCancelPlacement()} type="button">
+                    Cancel
                   </button>
-                  {showImportSlot ? (
-                    <button className="secondary-button" onClick={handleClearImportSlot} type="button">
-                      Clear Slot
+                </div>
+              </section>
+            ) : null}
+
+            {pendingPlacement ? (
+              <section className="panel-section panel-section--grow">
+                <p className="section-kicker">Slice Placement</p>
+                <h2>Place the slice in the target document</h2>
+                <p className="section-copy">
+                  Click once to set the slice start, then type, paste, or select the range you want to keep tracked. Empty placements auto-fill from the source selection on commit or blur.
+                </p>
+                <div className="selection-card">
+                  <strong>Source text</strong>
+                  <span>{truncate(pendingPlacement.sourceText, 140)}</span>
+                </div>
+                <div className="selection-card">
+                  <strong>Target</strong>
+                  <span>{documentsById.get(pendingPlacement.targetDocumentId)?.title ?? "Current document"}</span>
+                </div>
+                <div className="toolbar-actions">
+                  <button className="primary-button" onClick={() => void handleCommitPendingSlice()} type="button">
+                    Commit Slice
+                  </button>
+                  <button className="secondary-button" onClick={() => void handleCancelPlacement()} type="button">
+                    Cancel
+                  </button>
+                </div>
+                {pendingPlacement.surface === "panel" ? (
+                  <div className="panel-document-view">
+                    <HarnessEditor
+                      key={panelDocument?.id ?? emptySnapshot.id}
+                      ref={panelEditorRef}
+                      initialDocumentJson={panelDocument?.contentJson ?? emptySnapshot.contentJson}
+                      decorationsEnabled
+                      matchingRules={[]}
+                      sliceBoundaries={panelVisibleBoundaries}
+                      pendingRange={panelPendingRange}
+                      legendLabels={{
+                        match: "Panel view",
+                        boundary: "Slice boundary",
+                        pending: "Pending slice",
+                      }}
+                      onDocumentSnapshotChange={handlePanelSnapshotChange}
+                      onSelectionChange={(selection) => handleSelectionChange("panel", selection)}
+                      onBlur={() => void handlePanelBlur()}
+                    />
+                  </div>
+                ) : (
+                  <p className="panel-note">
+                    The current document is the placement surface. Click back into the main editor to set the slice range there, then commit from this panel.
+                  </p>
+                )}
+              </section>
+            ) : null}
+
+            {!everlinkSession && !pendingPlacement ? (
+              <>
+                <section className="panel-section">
+                  <p className="section-kicker">Entities</p>
+                  <h2>Entity Library</h2>
+                  <div className="entity-list">
+                    {(workspace?.entities ?? []).length === 0 ? (
+                      <div className="stack-list">
+                        <p className="empty-state">Start from a story selection with Everlink it!, or create the first entity manually here.</p>
+                        <button className="ghost-button" onClick={() => void handleCreateManualEntity()} type="button">
+                          Create First Entity
+                        </button>
+                      </div>
+                    ) : (
+                      (workspace?.entities ?? []).map((entity) => (
+                        <button
+                          key={entity.id}
+                          className={entity.id === selectedEntity?.id ? "entity-chip entity-chip--active" : "entity-chip"}
+                          onClick={() => void handleSelectEntity(entity.id)}
+                          type="button"
+                        >
+                          {entity.name}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                  {(workspace?.entities ?? []).length > 0 ? (
+                    <button className="ghost-button" onClick={() => void handleCreateManualEntity()} type="button">
+                      New Entity
                     </button>
                   ) : null}
-                </div>
-                {showImportSlot ? (
+                </section>
+
+                {selectedEntity ? (
                   <>
-                    <div className="import-note-grid">
-                      <MetricCard label="Import Words" value={formatCount(importSnapshot.metrics.wordCount)} compact />
-                      <MetricCard label="Import Paragraphs" value={formatCount(importSnapshot.metrics.paragraphCount)} compact />
-                      <MetricCard label="Import Characters" value={formatCount(importSnapshot.metrics.characterCount)} compact />
-                    </div>
-                    <HarnessEditor
-                      key={importRevision}
-                      ref={importEditorRef}
-                      initialDocumentJson={importSeed}
-                      decorationsEnabled={false}
-                      showLegend={false}
-                      onDocumentSnapshotChange={handleImportEditorSnapshotChange}
-                      onSelectionChange={() => undefined}
-                    />
-                    <button className="primary-button" onClick={() => void handleReplaceHeadFromImport()} disabled={isBusy} type="button">
-                      Replace Head From Slot
-                    </button>
-                  </>
-                ) : (
-                  <div className="selection-card">
-                    <span>Replace slot hidden</span>
-                    <span>Open it only when you want to paste a new manuscript</span>
-                  </div>
-                )}
-              </section>
-
-              <section className="sidebar-section">
-                <p className="section-kicker">Clipboard Audit</p>
-                <h2>Persisted plain text + clean HTML</h2>
-                <div className="verification-summary">
-                  <span className={clipboardAudit ? auditPillClassName(clipboardAudit) : "verification-pill"}>
-                    {clipboardAudit
-                      ? clipboardAudit.copiedTextMatchesPersistedPlainText && !clipboardAudit.leakedWorkbenchMarkup
-                        ? "Audit passed"
-                        : "Audit flagged"
-                      : "Not run"}
-                  </span>
-                  <span className="verification-note">
-                    Plain text parity: {clipboardAudit ? booleanWord(clipboardAudit.copiedTextMatchesPersistedPlainText) : "pending"}
-                  </span>
-                  <span className="verification-note">
-                    Rich HTML present: {clipboardAudit ? booleanWord(clipboardAudit.richHtmlPresent) : "pending"}
-                  </span>
-                  <span className="verification-note">
-                    Workbench markup leaked: {clipboardAudit ? booleanWord(clipboardAudit.leakedWorkbenchMarkup) : "pending"}
-                  </span>
-                </div>
-                <textarea
-                  className="verification-textarea"
-                  readOnly
-                  value={clipboardAudit?.copiedText ?? ""}
-                  placeholder="Audited clipboard plain text will appear here."
-                />
-                <textarea
-                  className="projection-textarea"
-                  readOnly
-                  value={clipboardAudit?.copiedHtml ?? ""}
-                  placeholder="Audited clipboard HTML will appear here for leak inspection."
-                />
-                {clipboardAudit?.leakedMarkers.length ? (
-                  <p className="warning-inline">
-                    Leaked markers: {clipboardAudit.leakedMarkers.join(", ")}
-                  </p>
-                ) : null}
-              </section>
-            </>
-          ) : null}
-
-          {activeTab === "anchors" ? (
-            <>
-              <section className="sidebar-section">
-                <p className="section-kicker">Selection</p>
-                <h2>Slice and link tracking</h2>
-                <p className="section-copy">
-                  Select a live range in the main editor, then capture it as either a slice boundary
-                  or a link. In this proof build, those markers only test whether a tracked range
-                  survives edits. With overlays on, slice boundaries render as teal rails and links
-                  render as gold underlines in the main editor.
-                </p>
-                <div className="selection-card">
-                  <span>Slice boundary: reusable tracked slice span</span>
-                  <span>Link: directly tracked linked text span</span>
-                </div>
-                <div className="selection-card">
-                  <span>From {mainSelection.from} to {mainSelection.to}</span>
-                  <span>{mainSelection.empty ? "No active selection" : `${mainSelection.text.length} selected chars`}</span>
-                </div>
-                <textarea
-                  className="projection-textarea"
-                  readOnly
-                  value={mainSelection.text}
-                  placeholder="The selected text will appear here."
-                />
-                <input
-                  className="text-input"
-                  value={anchorLabel}
-                  onChange={(event) => setAnchorLabel(event.target.value)}
-                  placeholder="Optional slice/link label"
-                />
-                <div className="toolbar-actions">
-                  <button className="secondary-button" onClick={() => void handleCreateAnchorProbe("boundary")} disabled={isBusy} type="button">
-                    Add Slice Boundary
-                  </button>
-                  <button className="secondary-button" onClick={() => void handleCreateAnchorProbe("annotation")} disabled={isBusy} type="button">
-                    Add Link
-                  </button>
-                  <button className="primary-button" onClick={() => void handleRunAnchorScenarios()} disabled={isBusy} type="button">
-                    Run Slice/Link Scenarios
-                  </button>
-                </div>
-              </section>
-
-              <section className="sidebar-section">
-                <p className="section-kicker">Live Markers</p>
-                <h2>Tracking state</h2>
-                <div className="stack-list">
-                  {anchorProbes.length === 0 ? (
-                    <p className="empty-state">No slice boundaries or links yet. Capture a real selection to start pressure-testing range tracking.</p>
-                  ) : (
-                    anchorProbes.map((probe) => (
-                      <article key={probe.id} className={`stack-card stack-card--${probe.resolution.status}`}>
-                        <div className="stack-card__meta">
-                          <strong>{probe.label}</strong>
-                          <span>{displayAnchorKind(probe.kind)}</span>
-                        </div>
-                        <p className="stack-card__copy">
-                          {probe.resolution.status} at {probe.resolution.anchor.from}-{probe.resolution.anchor.to}
-                        </p>
-                        <p className="stack-card__copy">{formatResolutionReason(probe.resolution.reason)}</p>
-                        <p className="stack-card__copy">{truncate(probe.anchor.exact, 96)}</p>
-                        <button className="ghost-button" onClick={() => void handleDeleteAnchorProbe(probe.id)} type="button">
-                          Delete marker
+                    <section className="panel-section">
+                      <p className="section-kicker">Entity Detail</p>
+                      <input
+                        className="text-input"
+                        value={entityNameDraft}
+                        onChange={(event) => setEntityNameDraft(event.target.value)}
+                        onBlur={() => void handleSaveEntityName()}
+                      />
+                      <div className="toolbar-actions">
+                        <button className="ghost-button ghost-button--danger" onClick={() => void handleDeleteEntity()} type="button">
+                          Delete Entity
                         </button>
-                      </article>
-                    ))
-                  )}
-                </div>
-              </section>
-
-              <section className="sidebar-section">
-                <p className="section-kicker">Scenario Output</p>
-                <h2>Slice/link tracking checks</h2>
-                <div className="stack-list">
-                  {anchorScenario?.cases.length ? (
-                    anchorScenario.cases.map((scenario) => (
-                      <article key={scenario.id} className={`stack-card stack-card--${scenario.status}`}>
-                        <div className="stack-card__meta">
-                          <strong>{scenario.label}</strong>
-                          <span>{scenario.status}</span>
-                        </div>
-                        <p className="stack-card__copy">{formatResolutionReason(scenario.reason)}</p>
-                      </article>
-                    ))
-                  ) : (
-                    <p className="empty-state">Run the scenario set to verify repaired, ambiguous, and invalid slice/link outcomes.</p>
-                  )}
-                </div>
-              </section>
-            </>
-          ) : null}
-
-          {activeTab === "matching" ? (
-            <>
-              <section className="sidebar-section">
-                <p className="section-kicker">Rule Engine</p>
-                <h2>Visible-range matching</h2>
-                <p className="section-copy">
-                  Literal, alias, and bounded-regex rules compile against normalized text and only
-                  run when overlays are enabled. The editor records visible-range timing so we can
-                  see whether matching stays out of the typing hot path.
-                </p>
-                <div className="form-grid">
-                  <input
-                    className="text-input"
-                    value={matchingForm.label}
-                    onChange={(event) => setMatchingForm((current) => ({ ...current, label: event.target.value }))}
-                    placeholder="Rule label"
-                  />
-                  <select
-                    className="text-input"
-                    value={matchingForm.kind}
-                    onChange={(event) => setMatchingForm((current) => ({ ...current, kind: event.target.value as MatchingRuleKind }))}
-                  >
-                    <option value="literal">Literal</option>
-                    <option value="alias">Alias</option>
-                    <option value="regex">Bounded regex</option>
-                  </select>
-                  <input
-                    className="text-input form-grid__wide"
-                    value={matchingForm.pattern}
-                    onChange={(event) => setMatchingForm((current) => ({ ...current, pattern: event.target.value }))}
-                    placeholder="Pattern"
-                  />
-                </div>
-                <label className="checkbox-row">
-                  <input
-                    checked={matchingForm.wholeWord}
-                    onChange={(event) => setMatchingForm((current) => ({ ...current, wholeWord: event.target.checked }))}
-                    type="checkbox"
-                  />
-                  Whole-word only
-                </label>
-                <label className="checkbox-row">
-                  <input
-                    checked={matchingForm.allowPossessive}
-                    onChange={(event) => setMatchingForm((current) => ({ ...current, allowPossessive: event.target.checked }))}
-                    type="checkbox"
-                  />
-                  Allow possessive
-                </label>
-                <label className="checkbox-row">
-                  <input
-                    checked={matchingForm.enabled}
-                    onChange={(event) => setMatchingForm((current) => ({ ...current, enabled: event.target.checked }))}
-                    type="checkbox"
-                  />
-                  Enabled on create
-                </label>
-                <div className="toolbar-actions">
-                  <button className="primary-button" onClick={() => void handleSubmitMatchingRule()} disabled={isBusy} type="button">
-                    Add Rule
-                  </button>
-                  <button className="secondary-button" onClick={() => void handleRunMatchingScenarios()} disabled={isBusy} type="button">
-                    Run Matching Scenarios
-                  </button>
-                </div>
-              </section>
-
-              <section className="sidebar-section">
-                <p className="section-kicker">Rules</p>
-                <h2>Current compiled rules</h2>
-                <div className="stack-list">
-                  {matchingRules.length === 0 ? (
-                    <p className="empty-state">Add a few literal, alias, or regex rules to see visible-range matching light up.</p>
-                  ) : (
-                    matchingRules.map((rule) => (
-                      <article key={rule.id} className="stack-card stack-card--neutral">
-                        <div className="stack-card__meta">
-                          <strong>{rule.label}</strong>
-                          <span>{rule.kind}</span>
-                        </div>
-                        <p className="stack-card__copy">{rule.pattern}</p>
-                        <p className="stack-card__copy">
-                          whole-word: {booleanWord(rule.wholeWord)} | possessive: {booleanWord(rule.allowPossessive)} | enabled: {booleanWord(rule.enabled)}
-                        </p>
-                        <div className="toolbar-actions">
-                          <button className="ghost-button" onClick={() => void handleToggleMatchingRule(rule)} type="button">
-                            {rule.enabled ? "Disable" : "Enable"}
-                          </button>
-                          <button className="ghost-button" onClick={() => void handleDeleteMatchingRule(rule.id)} type="button">
-                            Delete
-                          </button>
-                        </div>
-                      </article>
-                    ))
-                  )}
-                </div>
-              </section>
-
-              <section className="sidebar-section">
-                <p className="section-kicker">Benchmark</p>
-                <h2>Visible-range timing</h2>
-                <div className="selection-card">
-                  <span>Overlays: {decorationsEnabled ? "enabled" : "disabled"}</span>
-                  <span>
-                    {lastMatchingBenchmark
-                      ? `${roundNumber(lastMatchingBenchmark.recomputeMs)} ms / ${lastMatchingBenchmark.matchCount} hits`
-                      : "No benchmark observed yet"}
-                  </span>
-                </div>
-                <button className="secondary-button" onClick={() => void handleRecordMatchingBenchmark()} type="button">
-                  Record Latest Benchmark
-                </button>
-                <div className="stack-list">
-                  {matchingScenario?.cases.length ? (
-                    matchingScenario.cases.map((scenario) => (
-                      <article key={scenario.id} className={scenario.pass ? "stack-card stack-card--resolved" : "stack-card stack-card--invalid"}>
-                        <div className="stack-card__meta">
-                          <strong>{scenario.label}</strong>
-                          <span>{scenario.pass ? "pass" : "fail"}</span>
-                        </div>
-                        <p className="stack-card__copy">
-                          Matches: {scenario.matchLabels.length ? scenario.matchLabels.join(", ") : "none"}
-                        </p>
-                      </article>
-                    ))
-                  ) : (
-                    <p className="empty-state">Run the matching scenarios to validate normalization, possessives, and regex rules.</p>
-                  )}
-                </div>
-              </section>
-            </>
-          ) : null}
-
-          {activeTab === "history" ? (
-            <>
-              <section className="sidebar-section">
-                <p className="section-kicker">History Substrate</p>
-                <h2>Replay, rebuild, restore</h2>
-                <p className="section-copy">
-                  Every document mutation appends steps and updates the head in one path. Use this
-                  panel to checkpoint, replay a historical version, and run parity checks between
-                  replayed projections and the live head.
-                </p>
-                <div className="import-note-grid">
-                  <MetricCard label="Current Version" value={String(historySummary?.currentVersion ?? 0)} compact />
-                  <MetricCard label="Steps" value={formatCount(historySummary?.stepCount ?? 0)} compact />
-                  <MetricCard label="Events" value={formatCount(historySummary?.eventCount ?? 0)} compact />
-                </div>
-                <div className="toolbar-actions">
-                  <button className="secondary-button" onClick={handleWriteCheckpoint} disabled={isBusy || !persistedSnapshot} type="button">
-                    Save Checkpoint
-                  </button>
-                  <button className="secondary-button" onClick={() => void reloadPersistedHead("Reloaded the persisted head for history validation.")} disabled={isBusy} type="button">
-                    Reload Head
-                  </button>
-                  <button className="primary-button" onClick={() => void handleRunHistoryScenario()} disabled={isBusy} type="button">
-                    Run History Proof
-                  </button>
-                </div>
-              </section>
-
-              <section className="sidebar-section">
-                <p className="section-kicker">Replay</p>
-                <h2>Historical version</h2>
-                <div className="toolbar-actions">
-                  <input
-                    className="text-input text-input--version"
-                    value={replayVersion}
-                    onChange={(event) => setReplayVersion(event.target.value)}
-                    placeholder="Version"
-                  />
-                  <button className="secondary-button" onClick={() => void handleReplayDocument()} disabled={isBusy} type="button">
-                    Replay
-                  </button>
-                  <button className="secondary-button" onClick={() => void handleRestoreReplay()} disabled={isBusy || !replayResult} type="button">
-                    Restore Replay As Head
-                  </button>
-                </div>
-                <textarea
-                  className="projection-textarea"
-                  readOnly
-                  value={replayResult?.snapshot.plainText ?? ""}
-                  placeholder="Replayed plain text will appear here."
-                />
-                <div className="stack-list">
-                  {replayResult?.anchorResolutions.length ? (
-                    replayResult.anchorResolutions.map((probe) => (
-                      <article key={probe.id} className={`stack-card stack-card--${probe.resolution.status}`}>
-                        <div className="stack-card__meta">
-                          <strong>{probe.label}</strong>
-                          <span>{displayAnchorKind(probe.kind)}</span>
-                        </div>
-                        <p className="stack-card__copy">{formatResolutionReason(probe.resolution.reason)}</p>
-                      </article>
-                    ))
-                  ) : (
-                    <p className="empty-state">Replay a version to inspect historical slice/link tracking states.</p>
-                  )}
-                </div>
-              </section>
-
-              <section className="sidebar-section">
-                <p className="section-kicker">Parity Result</p>
-                <h2>Projection rebuild</h2>
-                {historyScenario ? (
-                  <article className="stack-card stack-card--neutral">
-                    <div className="stack-card__meta">
-                      <strong>History proof</strong>
-                      <span>v{historyScenario.currentVersion}</span>
-                    </div>
-                    <p className="stack-card__copy">
-                      Replay matches head: {booleanWord(historyScenario.replayMatchesHead)}
-                    </p>
-                    <p className="stack-card__copy">
-                      Rebuild matches head: {booleanWord(historyScenario.rebuildMatchesHead)}
-                    </p>
-                    <p className="stack-card__copy">
-                      Checkpoints observed: {formatCount(historyScenario.checkpointCount)}
-                    </p>
-                  </article>
-                ) : (
-                  <p className="empty-state">Run the history proof to compare replay and rebuild parity against the current head.</p>
-                )}
-              </section>
-            </>
-          ) : null}
-
-          {activeTab === "layout" ? (
-            <>
-              <section className="sidebar-section">
-                <p className="section-kicker">Pretext Viability</p>
-                <h2>DOM vs Pretext layout probe</h2>
-                <p className="section-copy">
-                  This compares the live editor surface against a Pretext pre-wrap measurement pass
-                  using the editor&apos;s computed font and width. The goal is not pixel-perfect parity yet;
-                  it is to learn whether Pretext is promising enough for document-view experiments.
-                </p>
-                <div className="toolbar-actions">
-                  <button className="primary-button" onClick={() => void handleMeasureLayout()} disabled={isBusy || !liveSnapshot} type="button">
-                    Measure Layout Probe
-                  </button>
-                </div>
-                {layoutProbe ? (
-                  <div className="stack-list">
-                    <article className="stack-card stack-card--neutral">
-                      <div className="stack-card__meta">
-                        <strong>Decision</strong>
-                        <span>{layoutDecisionLabel(layoutProbe.decision)}</span>
                       </div>
-                      <p className="stack-card__copy">
-                        DOM height {formatCount(layoutProbe.domHeight)} px vs Pretext height {formatCount(layoutProbe.pretextHeight)} px
-                      </p>
-                      <p className="stack-card__copy">
-                        DOM visible blocks {formatCount(layoutProbe.domVisibleBlockCount)} | Pretext visible lines {formatCount(layoutProbe.pretextVisibleLineCount)}
-                      </p>
-                      <p className="stack-card__copy">
-                        DOM {layoutProbe.domComputationMs} ms | Pretext {layoutProbe.pretextComputationMs} ms
-                      </p>
-                    </article>
-                  </div>
-                ) : (
-                  <p className="empty-state">Run the layout probe after importing real prose to compare DOM measurements with Pretext.</p>
-                )}
-              </section>
+                    </section>
 
-              <section className="sidebar-section">
-                <p className="section-kicker">Benchmarks</p>
-                <h2>Recent proof records</h2>
-                <div className="stack-list">
-                  {workbenchState?.benchmarks.length ? (
-                    workbenchState.benchmarks.map((benchmark) => (
-                      <article key={benchmark.id} className="stack-card stack-card--neutral">
-                        <div className="stack-card__meta">
-                          <strong>{benchmark.category}</strong>
-                          <span>{new Date(benchmark.createdAt).toLocaleTimeString()}</span>
+                    <section className="panel-section">
+                      <p className="section-kicker">Matching Rules</p>
+                      <div className="form-grid form-grid--stack">
+                        <input
+                          className="text-input"
+                          value={ruleForm.label}
+                          onChange={(event) => setRuleForm((current) => ({ ...current, label: event.target.value }))}
+                          placeholder="Rule label"
+                        />
+                        <input
+                          className="text-input"
+                          value={ruleForm.pattern}
+                          onChange={(event) => setRuleForm((current) => ({ ...current, pattern: event.target.value }))}
+                          placeholder="Pattern"
+                        />
+                        <div className="toolbar-actions">
+                          <select
+                            className="select-input"
+                            value={ruleForm.kind}
+                            onChange={(event) => setRuleForm((current) => ({ ...current, kind: event.target.value as MatchingRuleKind }))}
+                          >
+                            <option value="literal">Literal</option>
+                            <option value="alias">Alias</option>
+                            <option value="regex">Regex</option>
+                          </select>
+                          <label className="checkbox-row">
+                            <input
+                              checked={ruleForm.wholeWord}
+                              onChange={(event) => setRuleForm((current) => ({ ...current, wholeWord: event.target.checked }))}
+                              type="checkbox"
+                            />
+                            Whole word
+                          </label>
+                          <label className="checkbox-row">
+                            <input
+                              checked={ruleForm.allowPossessive}
+                              onChange={(event) => setRuleForm((current) => ({ ...current, allowPossessive: event.target.checked }))}
+                              type="checkbox"
+                            />
+                            Allow possessive
+                          </label>
+                          <button className="ghost-button" onClick={() => void handleCreateEntityRule()} type="button">
+                            Add Rule
+                          </button>
                         </div>
-                        <p className="stack-card__copy">{truncate(JSON.stringify(benchmark.payload), 120)}</p>
-                      </article>
-                    ))
-                  ) : (
-                    <p className="empty-state">Recorded clipboard, matching, and layout benchmarks will accumulate here.</p>
-                  )}
-                </div>
-              </section>
-            </>
-          ) : null}
+                      </div>
+                      <div className="stack-list">
+                        {selectedEntityRules.length === 0 ? (
+                          <p className="empty-state">This entity does not have any rules yet.</p>
+                        ) : (
+                          selectedEntityRules.map((rule) => (
+                            <article key={rule.id} className="stack-card">
+                              <div className="stack-card__meta">
+                                <strong>{rule.label}</strong>
+                                <span>{rule.kind}</span>
+                              </div>
+                              <p className="stack-card__copy">{rule.pattern}</p>
+                              <div className="toolbar-actions">
+                                <button className="ghost-button" onClick={() => void handleToggleRule(rule)} type="button">
+                                  {rule.enabled ? "Disable" : "Enable"}
+                                </button>
+                                <button className="ghost-button ghost-button--danger" onClick={() => void handleDeleteRule(rule.id)} type="button">
+                                  Delete
+                                </button>
+                              </div>
+                            </article>
+                          ))
+                        )}
+                      </div>
+                    </section>
 
-          <section className="sidebar-section">
-            <p className="section-kicker">Run Log</p>
-            <h2>Execution notes</h2>
-            <div className="run-log">
-              {runLog.length === 0 ? (
-                <p className="empty-state">Workbench events will show up here as you import, edit, replay, and measure.</p>
-              ) : (
-                runLog.map((entry) => (
-                  <article key={entry.id} className={`run-log-entry run-log-entry--${entry.tone}`}>
-                    <div className="run-log-meta">
-                      <span>{entry.createdAt}</span>
-                      <span>{entry.tone}</span>
-                    </div>
-                    <p>{entry.message}</p>
-                  </article>
-                ))
-              )}
-            </div>
-          </section>
-        </aside>
+                    <section className="panel-section panel-section--grow">
+                      <p className="section-kicker">Slices</p>
+                      <h2>Slice Viewer</h2>
+                      <div className="stack-list">
+                        {selectedEntitySlices.length === 0 ? (
+                          <p className="empty-state">No slices linked yet. Use Everlink it! to place the first one.</p>
+                        ) : (
+                          selectedEntitySlices.map(({ slice, boundary, document }) => (
+                            <article key={slice.id} className={`stack-card ${boundary ? `stack-card--${boundary.resolution.status}` : "stack-card--neutral"}`}>
+                              <div className="stack-card__meta">
+                                <strong>{slice.title}</strong>
+                                <span>{document?.title ?? "Document"}</span>
+                              </div>
+                              <p className="stack-card__copy">{slice.excerpt}</p>
+                              <p className="stack-card__copy">
+                                {boundary
+                                  ? formatBoundaryReason(boundary.resolution.reason)
+                                  : "Boundary record missing"}
+                              </p>
+                              <div className="toolbar-actions">
+                                <button className="ghost-button" onClick={() => void handleOpenSliceInPanel(slice.documentId, selectedEntity.id)} type="button">
+                                  Open in Panel
+                                </button>
+                                <button className="ghost-button ghost-button--danger" onClick={() => void handleDeleteSlice(slice.id)} type="button">
+                                  Delete
+                                </button>
+                              </div>
+                            </article>
+                          ))
+                        )}
+                      </div>
+                    </section>
+
+                    {panelDocument ? (
+                      <section className="panel-section panel-section--grow">
+                        <p className="section-kicker">Panel Document View</p>
+                        <h2>{panelDocument.title}</h2>
+                        <div className="panel-document-view">
+                          <HarnessEditor
+                            key={panelDocument.id}
+                            ref={panelEditorRef}
+                            initialDocumentJson={panelDocument.contentJson}
+                            decorationsEnabled
+                            matchingRules={[]}
+                            sliceBoundaries={panelVisibleBoundaries}
+                            pendingRange={null}
+                            legendLabels={{
+                              match: "Panel view",
+                              boundary: "Slice boundary",
+                              pending: "Pending slice",
+                            }}
+                            onDocumentSnapshotChange={handlePanelSnapshotChange}
+                            onSelectionChange={(selection) => handleSelectionChange("panel", selection)}
+                          />
+                        </div>
+                      </section>
+                    ) : null}
+                  </>
+                ) : null}
+              </>
+            ) : null}
+
+            <section className="panel-section">
+              <p className="section-kicker">Run Log</p>
+              <div className="run-log">
+                {runLog.length === 0 ? (
+                  <p className="empty-state">Workspace events will show up here as you open docs, Everlink selections, and place slices.</p>
+                ) : (
+                  runLog.map((entry) => (
+                    <article key={entry.id} className={`run-log-entry run-log-entry--${entry.tone}`}>
+                      <div className="run-log-meta">
+                        <span>{entry.createdAt}</span>
+                        <span>{entry.tone}</span>
+                      </div>
+                      <p>{entry.message}</p>
+                    </article>
+                  ))
+                )}
+              </div>
+            </section>
+          </aside>
+        ) : null}
       </main>
+
+      {hoverPreview && hoverEntity ? (
+        <div className="hover-preview" style={{ left: hoverPreview.x + 18, top: hoverPreview.y + 18 }}>
+          <p className="section-kicker">Preview</p>
+          <h3>{hoverEntity.name}</h3>
+          <div className="stack-list">
+            {hoverSlices.length === 0 ? (
+              <p className="empty-state">No linked slices yet.</p>
+            ) : (
+              hoverSlices.slice(0, 3).map(({ slice, boundary, document }) => (
+                <article key={slice.id} className="stack-card stack-card--neutral">
+                  <div className="stack-card__meta">
+                    <strong>{slice.title}</strong>
+                    <span>{document?.title ?? "Document"}</span>
+                  </div>
+                  <p className="stack-card__copy">{slice.excerpt}</p>
+                  {boundary ? <p className="stack-card__copy">{formatBoundaryReason(boundary.resolution.reason)}</p> : null}
+                </article>
+              ))
+            )}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
 
-function snapshotToEditorSnapshot(snapshot: StoredDocumentSnapshot): HarnessEditorSnapshot {
-  return {
-    contentJson: snapshot.contentJson,
-    plainText: snapshot.plainText,
-    metrics: collectDocumentMetrics(snapshot.plainText),
-  };
+function getActiveProject(workspace: WorkspaceState | null): ReturnType<typeof findProject> {
+  if (!workspace) {
+    return null;
+  }
+  return findProject(workspace.projects, workspace.layout.activeProjectId);
 }
 
-function MetricCard(props: { label: string; value: string; compact?: boolean }) {
+function findProject(projects: WorkspaceState["projects"], projectId: string | null) {
+  return projectId ? projects.find((project) => project.id === projectId) ?? null : null;
+}
+
+function getSelectedEntity(workspace: WorkspaceState | null): EntityRecord | null {
+  if (!workspace || !workspace.layout.selectedEntityId) {
+    return null;
+  }
+  return workspace.entities.find((entity) => entity.id === workspace.layout.selectedEntityId) ?? null;
+}
+
+function selectedSlicesForEntity(
+  entityId: string,
+  workspace: WorkspaceState | null,
+  slicesById: Map<string, SliceRecord>,
+  boundariesBySliceId: Map<string, SliceBoundaryRecord>,
+  documentsById: Map<string, DocumentSummary>,
+) {
+  if (!workspace) {
+    return [] as Array<{ slice: SliceRecord; boundary: SliceBoundaryRecord | undefined; document: DocumentSummary | undefined }>;
+  }
+
+  return workspace.entitySlices
+    .filter((link) => link.entityId === entityId)
+    .sort((left, right) => left.ordering - right.ordering)
+    .flatMap((link) => {
+      const slice = slicesById.get(link.sliceId);
+      if (!slice) {
+        return [];
+      }
+      return [{
+        slice,
+        boundary: boundariesBySliceId.get(slice.id),
+        document: documentsById.get(slice.documentId),
+      }];
+    });
+}
+
+function groupDocumentsByFolder(documents: DocumentSummary[]): Map<string | null, DocumentSummary[]> {
+  const grouped = new Map<string | null, DocumentSummary[]>();
+  for (const document of documents) {
+    const key = document.folderId;
+    const bucket = grouped.get(key) ?? [];
+    bucket.push(document);
+    grouped.set(key, bucket);
+  }
+
+  for (const [key, bucket] of grouped.entries()) {
+    grouped.set(key, [...bucket].sort((left, right) => left.ordering - right.ordering));
+  }
+
+  return grouped;
+}
+
+function MetricCard(props: { label: string; value: string }) {
   return (
-    <article className={props.compact ? "metric-card metric-card--compact" : "metric-card"}>
+    <article className="metric-card">
       <span className="metric-label">{props.label}</span>
       <strong className="metric-value">{props.value}</strong>
     </article>
   );
 }
 
-function measureDomLayout(host: HTMLDivElement): {
-  domHeight: number;
-  domVisibleBlockCount: number;
-  domComputationMs: number;
-  textWidth: number;
-  lineHeight: number;
-  font: string;
-  scrollTop: number;
-  viewportHeight: number;
-} | null {
-  const surface = host.querySelector(".editor-surface") as HTMLDivElement | null;
-  const editorRoot = host.querySelector(".editor-prosemirror") as HTMLDivElement | null;
-  if (!surface || !editorRoot) {
-    return null;
-  }
-
-  const startedAt = performance.now();
-  const surfaceRect = surface.getBoundingClientRect();
-  const blocks = [...editorRoot.children] as HTMLElement[];
-  const visibleBlockCount = blocks.reduce((count, block) => {
-    const rect = block.getBoundingClientRect();
-    if (rect.bottom < surfaceRect.top || rect.top > surfaceRect.bottom) {
-      return count;
-    }
-    return count + 1;
-  }, 0);
-  const styles = window.getComputedStyle(editorRoot);
-  const paddingLeft = Number.parseFloat(styles.paddingLeft) || 0;
-  const paddingRight = Number.parseFloat(styles.paddingRight) || 0;
-  const lineHeight = Number.parseFloat(styles.lineHeight) || 30;
-
-  return {
-    domHeight: editorRoot.scrollHeight,
-    domVisibleBlockCount: visibleBlockCount,
-    domComputationMs: performance.now() - startedAt,
-    textWidth: Math.max(120, editorRoot.clientWidth - paddingLeft - paddingRight),
-    lineHeight,
-    font: styles.font || "400 17px Georgia, serif",
-    scrollTop: surface.scrollTop,
-    viewportHeight: surface.clientHeight,
-  };
-}
-
-function measurePretextLayout(
-  plainText: string,
-  font: string,
-  width: number,
-  lineHeight: number,
-  scrollTop: number,
-  viewportHeight: number,
-): {
-  pretextHeight: number;
-  pretextLineCount: number;
-  pretextVisibleLineCount: number;
-  pretextComputationMs: number;
-} {
-  const startedAt = performance.now();
-  const prepared = prepareWithSegments(plainText, font, { whiteSpace: "pre-wrap" });
-  const layoutResult = layout(prepared, width, lineHeight);
-  const lineStats = measureLineStats(prepared, width);
-  const viewportTop = scrollTop;
-  const viewportBottom = scrollTop + viewportHeight;
-  let visibleLineCount = 0;
-  let index = 0;
-
-  walkLineRanges(prepared, width, () => {
-    const lineTop = index * lineHeight;
-    const lineBottom = lineTop + lineHeight;
-    if (lineBottom >= viewportTop && lineTop <= viewportBottom) {
-      visibleLineCount += 1;
-    }
-    index += 1;
-  });
-
-  return {
-    pretextHeight: layoutResult.height,
-    pretextLineCount: lineStats.lineCount,
-    pretextVisibleLineCount: visibleLineCount,
-    pretextComputationMs: performance.now() - startedAt,
-  };
-}
-
-function decideLayoutPath(domHeight: number, pretextHeight: number): LayoutDecision {
-  if (domHeight <= 0) {
-    return "keep-as-future-option";
-  }
-
-  const drift = Math.abs(domHeight - pretextHeight) / domHeight;
-  if (drift <= 0.08) {
-    return "adopt-document-view-only";
-  }
-  if (drift <= 0.18) {
-    return "keep-as-future-option";
-  }
-  return "reject-for-now";
-}
-
 function formatCount(value: number): string {
   return new Intl.NumberFormat("en-US").format(value);
 }
 
-function roundNumber(value: number): number {
-  return Math.round(value * 100) / 100;
-}
-
-function layoutDecisionLabel(decision: LayoutDecision): string {
-  if (decision === "adopt-document-view-only") {
-    return "Adopt for document view";
+function formatBoundaryReason(reason: string): string {
+  if (reason.includes("absorbed edits inside")) {
+    return "The slice boundary stayed intact while text inside it changed.";
   }
-  if (decision === "keep-as-future-option") {
-    return "Keep as future option";
+  if (reason.includes("mapped forward")) {
+    return "The slice boundary followed later edits cleanly.";
   }
-  return "Reject for now";
-}
-
-function auditPillClassName(audit: ClipboardAuditResult): string {
-  return audit.copiedTextMatchesPersistedPlainText && !audit.leakedWorkbenchMarkup
-    ? "verification-pill verification-pill--success"
-    : "verification-pill verification-pill--warn";
-}
-
-function displayAnchorKind(kind: AnchorProbeKind): string {
-  return kind === "boundary" ? "slice boundary" : "link";
-}
-
-function formatResolutionReason(reason: string): string {
-  if (reason === "captured from current selection") {
-    return "started from the range you selected";
+  if (reason.includes("multiple plausible matches")) {
+    return "The boundary failed closed because multiple plausible matches remained.";
   }
-
-  if (reason === "mapped forward through document steps") {
-    return "followed your edits cleanly";
-  }
-
-  if (reason === "slice boundary mapped forward through document steps") {
-    return "the slice boundary followed your edits cleanly";
-  }
-
-  if (reason === "slice boundary absorbed edits inside the tracked range") {
-    return "the slice boundary stayed intact and absorbed edits made inside the slice";
-  }
-
-  if (reason === "linked text mapped forward through document steps") {
-    return "the linked text followed your edits cleanly";
-  }
-
-  if (reason.includes("exact text plus context repaired the range")) {
-    return "the text moved, and the tracker repaired the range using exact text plus nearby context";
-  }
-
-  if (reason.includes("multiple plausible matches remained")) {
-    return "the tracker failed closed because multiple plausible matches remained";
-  }
-
   if (reason.includes("exact text no longer exists")) {
-    return "the tracked text no longer exists in the current document state";
+    return "The exact boundary text no longer exists in the document.";
   }
-
-  if (reason.includes("could not map repaired text back to document positions")) {
-    return "the text was found, but the tracker could not place the repaired range safely";
+  if (reason.includes("exact text plus context repaired")) {
+    return "The boundary repaired from exact text plus nearby context.";
   }
-
   return reason;
 }
 
-function booleanWord(value: boolean): string {
-  return value ? "yes" : "no";
+function countForLabel(currentCount: number): number {
+  return currentCount + 1;
+}
+
+function uniqueStrings(values: string[]): string[] {
+  return [...new Set(values)];
 }
 
 function truncate(value: string, maxLength: number): string {
@@ -1536,20 +1724,10 @@ function truncate(value: string, maxLength: number): string {
   return `${value.slice(0, Math.max(0, maxLength - 3))}...`;
 }
 
-function defaultAnchorLabel(kind: AnchorProbeKind, index: number): string {
-  return `${kind === "boundary" ? "Slice boundary" : "Link"} ${index}`;
-}
-
 function stringifyError(error: unknown): string {
   if (error instanceof Error) {
     return error.message;
   }
 
   return String(error);
-}
-
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    window.setTimeout(resolve, ms);
-  });
 }

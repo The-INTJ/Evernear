@@ -1,64 +1,95 @@
-import type { JsonObject } from "../domain/document";
 import type {
-  AnchorProbeRecord,
-  AnchorScenarioRun,
   ApplyDocumentTransactionInput,
   ApplyDocumentTransactionResult,
-  BenchmarkCategory,
-  BenchmarkRecord,
-  CreateAnchorProbeInput,
-  DeleteAnchorProbeInput,
+  ClipboardAuditResult,
+  CreateDocumentInput,
+  CreateEntityInput,
+  CreateFolderInput,
+  CreateProjectInput,
+  CreateSliceInput,
+  DeleteDocumentInput,
+  DeleteEntityInput,
+  DeleteFolderInput,
   DeleteMatchingRuleInput,
-  HistoryReplayResult,
-  HistoryScenarioResult,
-  MatchingRuleRecord,
-  MatchingScenarioResult,
-  ReplaceDocumentHeadInput,
+  DeleteSliceInput,
+  OpenDocumentInput,
+  OpenProjectInput,
+  ReorderDocumentInput,
+  UpdateDocumentMetaInput,
+  UpdateEntityInput,
+  UpdateFolderInput,
+  UpdateLayoutInput,
+  UpdateProjectInput,
   UpsertMatchingRuleInput,
-  WorkbenchState,
-  WorkbenchStatus,
-} from "../domain/workbench";
+  WorkspaceDocumentReplayResult,
+  WorkspaceState,
+  WorkspaceStatus,
+} from "../domain/workspace";
 
 export const HARNESS_CHANNELS = {
-  getStatus: "workbench:get-status",
-  loadState: "workbench:load-state",
-  replaceDocumentHead: "workbench:replace-document-head",
-  applyDocumentTransaction: "workbench:apply-document-transaction",
-  writeCheckpoint: "workbench:write-checkpoint",
-  createAnchorProbe: "workbench:create-anchor-probe",
-  deleteAnchorProbe: "workbench:delete-anchor-probe",
-  upsertMatchingRule: "workbench:upsert-matching-rule",
-  deleteMatchingRule: "workbench:delete-matching-rule",
-  replayDocumentToVersion: "workbench:replay-document-to-version",
-  rebuildProjectionsFromHistory: "workbench:rebuild-projections-from-history",
-  recordBenchmark: "workbench:record-benchmark",
-  loadSmallFixture: "workbench:load-small-fixture",
-  runAnchorScenarios: "workbench:run-anchor-scenarios",
-  runMatchingScenarios: "workbench:run-matching-scenarios",
-  runHistoryScenario: "workbench:run-history-scenario",
-  readClipboardText: "workbench:read-clipboard-text",
-  readClipboardHtml: "workbench:read-clipboard-html",
-  clearClipboard: "workbench:clear-clipboard",
+  getStatus: "workspace:get-status",
+  loadWorkspace: "workspace:load-workspace",
+  createProject: "workspace:create-project",
+  updateProject: "workspace:update-project",
+  openProject: "workspace:open-project",
+  createFolder: "workspace:create-folder",
+  updateFolder: "workspace:update-folder",
+  deleteFolder: "workspace:delete-folder",
+  createDocument: "workspace:create-document",
+  updateDocumentMeta: "workspace:update-document-meta",
+  deleteDocument: "workspace:delete-document",
+  reorderDocument: "workspace:reorder-document",
+  openDocument: "workspace:open-document",
+  updateLayout: "workspace:update-layout",
+  applyDocumentTransaction: "workspace:apply-document-transaction",
+  createEntity: "workspace:create-entity",
+  updateEntity: "workspace:update-entity",
+  deleteEntity: "workspace:delete-entity",
+  upsertMatchingRule: "workspace:upsert-matching-rule",
+  deleteMatchingRule: "workspace:delete-matching-rule",
+  createSlice: "workspace:create-slice",
+  deleteSlice: "workspace:delete-slice",
+  writeCheckpoint: "workspace:write-checkpoint",
+  replayDocumentToVersion: "workspace:replay-document-to-version",
+  readClipboardText: "workspace:read-clipboard-text",
+  readClipboardHtml: "workspace:read-clipboard-html",
+  clearClipboard: "workspace:clear-clipboard",
 } as const;
 
 export interface HarnessBridge {
-  getStatus(): Promise<WorkbenchStatus>;
-  loadState(): Promise<WorkbenchState>;
-  replaceDocumentHead(input: ReplaceDocumentHeadInput): Promise<WorkbenchState>;
+  getStatus(): Promise<WorkspaceStatus>;
+  loadWorkspace(): Promise<WorkspaceState>;
+  createProject(input: CreateProjectInput): Promise<WorkspaceState>;
+  updateProject(input: UpdateProjectInput): Promise<WorkspaceState>;
+  openProject(input: OpenProjectInput): Promise<WorkspaceState>;
+  createFolder(input: CreateFolderInput): Promise<WorkspaceState>;
+  updateFolder(input: UpdateFolderInput): Promise<WorkspaceState>;
+  deleteFolder(input: DeleteFolderInput): Promise<WorkspaceState>;
+  createDocument(input: CreateDocumentInput): Promise<WorkspaceState>;
+  updateDocumentMeta(input: UpdateDocumentMetaInput): Promise<WorkspaceState>;
+  deleteDocument(input: DeleteDocumentInput): Promise<WorkspaceState>;
+  reorderDocument(input: ReorderDocumentInput): Promise<WorkspaceState>;
+  openDocument(input: OpenDocumentInput): Promise<WorkspaceState>;
+  updateLayout(input: UpdateLayoutInput): Promise<WorkspaceState>;
   applyDocumentTransaction(input: ApplyDocumentTransactionInput): Promise<ApplyDocumentTransactionResult>;
-  writeCheckpoint(label: string | null): Promise<void>;
-  createAnchorProbe(input: CreateAnchorProbeInput): Promise<AnchorProbeRecord>;
-  deleteAnchorProbe(input: DeleteAnchorProbeInput): Promise<AnchorProbeRecord[]>;
-  upsertMatchingRule(input: UpsertMatchingRuleInput): Promise<MatchingRuleRecord[]>;
-  deleteMatchingRule(input: DeleteMatchingRuleInput): Promise<MatchingRuleRecord[]>;
-  replayDocumentToVersion(targetVersion: number): Promise<HistoryReplayResult>;
-  rebuildProjectionsFromHistory(): Promise<HistoryScenarioResult>;
-  recordBenchmark(category: BenchmarkCategory, payload: JsonObject): Promise<BenchmarkRecord>;
-  loadSmallFixture(): Promise<WorkbenchState>;
-  runAnchorScenarios(): Promise<AnchorScenarioRun>;
-  runMatchingScenarios(): Promise<MatchingScenarioResult>;
-  runHistoryScenario(): Promise<HistoryScenarioResult>;
+  createEntity(input: CreateEntityInput): Promise<WorkspaceState>;
+  updateEntity(input: UpdateEntityInput): Promise<WorkspaceState>;
+  deleteEntity(input: DeleteEntityInput): Promise<WorkspaceState>;
+  upsertMatchingRule(input: UpsertMatchingRuleInput): Promise<WorkspaceState>;
+  deleteMatchingRule(input: DeleteMatchingRuleInput): Promise<WorkspaceState>;
+  createSlice(input: CreateSliceInput): Promise<WorkspaceState>;
+  deleteSlice(input: DeleteSliceInput): Promise<WorkspaceState>;
+  writeCheckpoint(documentId: string, label: string | null): Promise<void>;
+  replayDocumentToVersion(documentId: string, targetVersion: number): Promise<WorkspaceDocumentReplayResult>;
   readClipboardText(): Promise<string>;
   readClipboardHtml(): Promise<string>;
   clearClipboard(): Promise<void>;
 }
+
+export type ClipboardAuditBridge = {
+  readClipboardText(): Promise<string>;
+  readClipboardHtml(): Promise<string>;
+  clearClipboard(): Promise<void>;
+};
+
+export type WorkspaceDebugSnapshot = ClipboardAuditResult;

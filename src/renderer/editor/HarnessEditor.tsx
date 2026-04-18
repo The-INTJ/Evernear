@@ -8,9 +8,9 @@ import {
 import { baseKeymap, toggleMark } from "prosemirror-commands";
 import { history, redo, undo } from "prosemirror-history";
 import { keymap } from "prosemirror-keymap";
+import type { MarkType, Node as ProseMirrorNode, Slice } from "prosemirror-model";
 import { schema as basicSchema } from "prosemirror-schema-basic";
 import { AllSelection, EditorState, type Transaction } from "prosemirror-state";
-import type { MarkType, Node as ProseMirrorNode, Slice } from "prosemirror-model";
 import { Decoration, DecorationSet, EditorView, type DecorationSource } from "prosemirror-view";
 
 import {
@@ -19,11 +19,11 @@ import {
   collectDocumentMetrics,
 } from "../../shared/domain/document";
 import type {
-  AnchorProbeRecord,
   MatchingBenchmark,
-  MatchingRuleRecord,
-} from "../../shared/domain/workbench";
+  SliceBoundaryRecord,
+} from "../../shared/domain/workspace";
 import {
+  type EditorMatchingRule,
   type EditorSelectionInfo,
   type SerializedTransactionBundle,
   collectMatchesForVisibleBlocks,
@@ -36,6 +36,12 @@ export type HarnessEditorSnapshot = {
   metrics: DocumentMetrics;
 };
 
+export type PendingSliceRange = {
+  from: number;
+  to: number;
+  awaitingPlacement?: boolean;
+};
+
 export type HarnessEditorHandle = {
   getSnapshot(): HarnessEditorSnapshot;
   getSelection(): EditorSelectionInfo;
@@ -43,17 +49,27 @@ export type HarnessEditorHandle = {
   selectAll(): void;
   toggleBold(): void;
   toggleItalic(): void;
+  replaceSelection(text: string): { from: number; to: number } | null;
 };
 
 type HarnessEditorProps = {
   initialDocumentJson: JsonObject;
   decorationsEnabled: boolean;
-  matchingRules?: MatchingRuleRecord[];
-  anchorProbes?: AnchorProbeRecord[];
+  matchingRules?: EditorMatchingRule[];
+  sliceBoundaries?: SliceBoundaryRecord[];
+  pendingRange?: PendingSliceRange | null;
   showLegend?: boolean;
+  legendLabels?: {
+    match?: string;
+    boundary?: string;
+    pending?: string;
+  };
   onDocumentSnapshotChange(nextSnapshot: HarnessEditorSnapshot, transaction: SerializedTransactionBundle | null): void;
   onSelectionChange(selection: EditorSelectionInfo): void;
   onMatchingBenchmark?(benchmark: MatchingBenchmark): void;
+  onEntityHover?(payload: { entityId: string; clientX: number; clientY: number } | null): void;
+  onEntityClick?(entityId: string): void;
+  onBlur?(): void;
 };
 
 export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>(
@@ -64,16 +80,24 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
     const onDocumentSnapshotChangeRef = useRef(props.onDocumentSnapshotChange);
     const onSelectionChangeRef = useRef(props.onSelectionChange);
     const onMatchingBenchmarkRef = useRef(props.onMatchingBenchmark);
+    const onEntityHoverRef = useRef(props.onEntityHover);
+    const onEntityClickRef = useRef(props.onEntityClick);
+    const onBlurRef = useRef(props.onBlur);
     const currentDecorationsRef = useRef<DecorationSet>(DecorationSet.empty);
     const rulesRef = useRef(props.matchingRules ?? []);
-    const probesRef = useRef(props.anchorProbes ?? []);
+    const boundariesRef = useRef(props.sliceBoundaries ?? []);
+    const pendingRangeRef = useRef(props.pendingRange ?? null);
     const decorationsEnabledRef = useRef(props.decorationsEnabled);
 
     onDocumentSnapshotChangeRef.current = props.onDocumentSnapshotChange;
     onSelectionChangeRef.current = props.onSelectionChange;
     onMatchingBenchmarkRef.current = props.onMatchingBenchmark;
+    onEntityHoverRef.current = props.onEntityHover;
+    onEntityClickRef.current = props.onEntityClick;
+    onBlurRef.current = props.onBlur;
     rulesRef.current = props.matchingRules ?? [];
-    probesRef.current = props.anchorProbes ?? [];
+    boundariesRef.current = props.sliceBoundaries ?? [];
+    pendingRangeRef.current = props.pendingRange ?? null;
     decorationsEnabledRef.current = props.decorationsEnabled;
 
     useEffect(() => {
@@ -91,7 +115,16 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
 
           const nextState = currentView.state.apply(transaction);
           currentView.updateState(nextState);
-          recomputeDecorations(currentView, surfaceRef.current, currentDecorationsRef, rulesRef.current, probesRef.current, decorationsEnabledRef.current, onMatchingBenchmarkRef.current);
+          recomputeDecorations(
+            currentView,
+            surfaceRef.current,
+            currentDecorationsRef,
+            rulesRef.current,
+            boundariesRef.current,
+            pendingRangeRef.current,
+            decorationsEnabledRef.current,
+            onMatchingBenchmarkRef.current,
+          );
 
           const snapshot = serializeEditorSnapshot(nextState.doc);
           const selection = getSelectionInfo(nextState);
@@ -109,26 +142,83 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
         decorations: decorationSource(currentDecorationsRef),
       });
 
-      viewRef.current = view;
-      recomputeDecorations(view, surfaceRef.current, currentDecorationsRef, rulesRef.current, probesRef.current, decorationsEnabledRef.current, onMatchingBenchmarkRef.current);
-      onSelectionChangeRef.current(getSelectionInfo(view.state));
-      onDocumentSnapshotChangeRef.current(serializeEditorSnapshot(view.state.doc), null);
-
       const handleScroll = () => {
         const currentView = viewRef.current;
         if (!currentView) {
           return;
         }
-        recomputeDecorations(currentView, surfaceRef.current, currentDecorationsRef, rulesRef.current, probesRef.current, decorationsEnabledRef.current, onMatchingBenchmarkRef.current);
+        recomputeDecorations(
+          currentView,
+          surfaceRef.current,
+          currentDecorationsRef,
+          rulesRef.current,
+          boundariesRef.current,
+          pendingRangeRef.current,
+          decorationsEnabledRef.current,
+          onMatchingBenchmarkRef.current,
+        );
       };
 
+      const handleMouseMove = (event: MouseEvent) => {
+        const target = event.target instanceof HTMLElement
+          ? event.target.closest("[data-entity-id]") as HTMLElement | null
+          : null;
+        const entityId = target?.dataset.entityId;
+        onEntityHoverRef.current?.(
+          entityId
+            ? { entityId, clientX: event.clientX, clientY: event.clientY }
+            : null,
+        );
+      };
+
+      const handleMouseLeave = () => {
+        onEntityHoverRef.current?.(null);
+      };
+
+      const handleClick = (event: MouseEvent) => {
+        const target = event.target instanceof HTMLElement
+          ? event.target.closest("[data-entity-id]") as HTMLElement | null
+          : null;
+        const entityId = target?.dataset.entityId;
+        if (entityId) {
+          onEntityClickRef.current?.(entityId);
+        }
+      };
+
+      const handleBlur = () => {
+        onBlurRef.current?.();
+      };
+
+      viewRef.current = view;
+      recomputeDecorations(
+        view,
+        surfaceRef.current,
+        currentDecorationsRef,
+        rulesRef.current,
+        boundariesRef.current,
+        pendingRangeRef.current,
+        decorationsEnabledRef.current,
+        onMatchingBenchmarkRef.current,
+      );
+      onSelectionChangeRef.current(getSelectionInfo(view.state));
+      onDocumentSnapshotChangeRef.current(serializeEditorSnapshot(view.state.doc), null);
+
       const currentSurface = surfaceRef.current;
+      const dom = view.dom;
       currentSurface?.addEventListener("scroll", handleScroll);
       window.addEventListener("resize", handleScroll);
+      dom.addEventListener("mousemove", handleMouseMove);
+      dom.addEventListener("mouseleave", handleMouseLeave);
+      dom.addEventListener("click", handleClick);
+      dom.addEventListener("focusout", handleBlur);
 
       return () => {
         currentSurface?.removeEventListener("scroll", handleScroll);
         window.removeEventListener("resize", handleScroll);
+        dom.removeEventListener("mousemove", handleMouseMove);
+        dom.removeEventListener("mouseleave", handleMouseLeave);
+        dom.removeEventListener("click", handleClick);
+        dom.removeEventListener("focusout", handleBlur);
         view.destroy();
         viewRef.current = null;
       };
@@ -140,8 +230,17 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
         return;
       }
 
-      recomputeDecorations(view, surfaceRef.current, currentDecorationsRef, rulesRef.current, probesRef.current, decorationsEnabledRef.current, onMatchingBenchmarkRef.current);
-    }, [props.decorationsEnabled, props.matchingRules, props.anchorProbes]);
+      recomputeDecorations(
+        view,
+        surfaceRef.current,
+        currentDecorationsRef,
+        rulesRef.current,
+        boundariesRef.current,
+        pendingRangeRef.current,
+        decorationsEnabledRef.current,
+        onMatchingBenchmarkRef.current,
+      );
+    }, [props.decorationsEnabled, props.matchingRules, props.sliceBoundaries, props.pendingRange]);
 
     useImperativeHandle(ref, () => ({
       getSnapshot() {
@@ -174,15 +273,30 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
       toggleItalic() {
         toggleMarkFromHandle(viewRef.current, basicSchema.marks.em);
       },
+      replaceSelection(text: string) {
+        const view = viewRef.current;
+        if (!view) {
+          return null;
+        }
+
+        const { from, to } = view.state.selection;
+        const tr = view.state.tr.insertText(text, from, to);
+        view.dispatch(tr);
+        view.focus();
+        return {
+          from,
+          to: from + text.length,
+        };
+      },
     }));
 
     return (
       <div className="editor-frame">
         {props.showLegend !== false ? (
           <div className="editor-legend">
-            <span className="legend-chip legend-chip--highlight">Visible-range match</span>
-            <span className="legend-chip legend-chip--boundary">Slice boundary</span>
-            <span className="legend-chip legend-chip--annotation">Link</span>
+            <span className="legend-chip legend-chip--highlight">{props.legendLabels?.match ?? "Entity match"}</span>
+            <span className="legend-chip legend-chip--boundary">{props.legendLabels?.boundary ?? "Slice boundary"}</span>
+            <span className="legend-chip legend-chip--pending">{props.legendLabels?.pending ?? "Pending slice"}</span>
           </div>
         ) : null}
         <div className="editor-surface" ref={surfaceRef}>
@@ -215,8 +329,9 @@ function recomputeDecorations(
   view: EditorView,
   surface: HTMLDivElement | null,
   decorationRef: React.MutableRefObject<DecorationSet>,
-  matchingRules: MatchingRuleRecord[],
-  anchorProbes: AnchorProbeRecord[],
+  matchingRules: EditorMatchingRule[],
+  sliceBoundaries: SliceBoundaryRecord[],
+  pendingRange: PendingSliceRange | null,
   decorationsEnabled: boolean,
   onMatchingBenchmark: ((benchmark: MatchingBenchmark) => void) | undefined,
 ): void {
@@ -235,23 +350,35 @@ function recomputeDecorations(
     decorations.push(
       Decoration.inline(hit.from, hit.to, {
         class: "pm-match-highlight",
+        "data-entity-id": hit.entityId,
+        "data-entity-name": hit.entityName,
       }),
     );
   }
 
-  for (const probe of anchorProbes) {
-    const { from, to } = probe.resolution.anchor;
-    if (from >= to || probe.resolution.status === "invalid") {
+  for (const boundary of sliceBoundaries) {
+    const { from, to } = boundary.resolution.anchor;
+    if (from >= to) {
       continue;
     }
 
-    const className = probe.kind === "boundary"
-      ? `pm-anchor-boundary pm-anchor-${probe.resolution.status}`
-      : `pm-anchor-annotation pm-anchor-${probe.resolution.status}`;
+    decorations.push(Decoration.inline(from, to, {
+      class: `pm-slice-boundary pm-slice-boundary--${boundary.resolution.status}`,
+      "data-slice-id": boundary.sliceId,
+    }));
+  }
 
-    decorations.push(
-      Decoration.inline(from, to, { class: className }),
-    );
+  if (pendingRange) {
+    const from = Math.min(pendingRange.from, pendingRange.to);
+    const to = Math.max(pendingRange.from, pendingRange.to);
+
+    if (from === to) {
+      decorations.push(Decoration.widget(from, buildPendingMarker("pm-pending-slice-caret"), { side: -1 }));
+    } else {
+      decorations.push(Decoration.inline(from, to, { class: "pm-pending-slice-range" }));
+      decorations.push(Decoration.widget(from, buildPendingMarker("pm-pending-slice-rail"), { side: -1 }));
+      decorations.push(Decoration.widget(to, buildPendingMarker("pm-pending-slice-rail"), { side: 1 }));
+    }
   }
 
   decorationRef.current = DecorationSet.create(view.state.doc, decorations);
@@ -271,6 +398,14 @@ function recomputeDecorations(
     highlightingEnabled: decorationsEnabled,
     createdAt: new Date().toISOString(),
   });
+}
+
+function buildPendingMarker(className: string): () => HTMLElement {
+  return () => {
+    const element = document.createElement("span");
+    element.className = className;
+    return element;
+  };
 }
 
 function refreshDecorations(

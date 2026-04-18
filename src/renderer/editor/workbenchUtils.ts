@@ -1,16 +1,13 @@
 import { Node as ProseMirrorNode } from "prosemirror-model";
 import { schema as basicSchema } from "prosemirror-schema-basic";
 
-import type {
-  JsonObject,
-  StoredDocumentSnapshot,
-} from "../../shared/domain/document";
+import type { JsonObject, StoredDocumentSnapshot } from "../../shared/domain/document";
 import type {
   ClipboardAuditResult,
-  MatchHit,
+  EntityMatchHit,
   MatchingRuleRecord,
   TextAnchor,
-} from "../../shared/domain/workbench";
+} from "../../shared/domain/workspace";
 
 export type EditorSelectionInfo = {
   from: number;
@@ -28,6 +25,10 @@ export type VisibleBlockRange = {
   from: number;
   to: number;
   text: string;
+};
+
+export type EditorMatchingRule = MatchingRuleRecord & {
+  entityName: string;
 };
 
 export function buildTextAnchorFromSelection(
@@ -92,10 +93,9 @@ export function buildClipboardAudit(
 ): ClipboardAuditResult {
   const leakedMarkers = [
     "pm-match-highlight",
-    "pm-anchor-boundary",
-    "pm-anchor-annotation",
-    "pm-anchor-ambiguous",
-    "pm-anchor-invalid",
+    "pm-slice-boundary",
+    "pm-pending-slice",
+    "pm-entity-preview",
     "pm-workbench",
   ].filter((marker) => copiedHtml.includes(marker));
 
@@ -110,10 +110,10 @@ export function buildClipboardAudit(
 }
 
 export function collectMatchesForVisibleBlocks(
-  rules: MatchingRuleRecord[],
+  rules: EditorMatchingRule[],
   blocks: VisibleBlockRange[],
-): MatchHit[] {
-  const hits: MatchHit[] = [];
+): EntityMatchHit[] {
+  const hits: EntityMatchHit[] = [];
 
   for (const block of blocks) {
     const normalizedText = normalizeForMatch(block.text);
@@ -133,6 +133,8 @@ export function collectMatchesForVisibleBlocks(
           }
 
           hits.push({
+            entityId: rule.entityId,
+            entityName: rule.entityName,
             ruleId: rule.id,
             label: rule.label,
             from: block.from + matchIndex,
@@ -160,6 +162,8 @@ export function collectMatchesForVisibleBlocks(
 
         if (wholeWordOkay && possessiveOkay) {
           hits.push({
+            entityId: rule.entityId,
+            entityName: rule.entityName,
             ruleId: rule.id,
             label: rule.label,
             from: block.from + foundAt,
@@ -216,9 +220,9 @@ function walkNodeText(
   });
 }
 
-function dedupeMatchHits(hits: MatchHit[]): MatchHit[] {
+function dedupeMatchHits(hits: EntityMatchHit[]): EntityMatchHit[] {
   const seen = new Set<string>();
-  const unique: MatchHit[] = [];
+  const unique: EntityMatchHit[] = [];
 
   for (const hit of hits) {
     const key = `${hit.ruleId}:${hit.from}:${hit.to}`;

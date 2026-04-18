@@ -1,5 +1,3 @@
-export const HARNESS_DOCUMENT_ID = "phase-1-manuscript";
-export const HARNESS_DOCUMENT_TITLE = "Phase 1 Round-Trip Manuscript";
 export const HARNESS_CONTENT_FORMAT = "prosemirror-basic";
 export const HARNESS_CONTENT_SCHEMA_VERSION = 1;
 
@@ -18,18 +16,6 @@ export type StoredDocumentSnapshot = {
   plainText: string;
   currentVersion: number;
   updatedAt: string;
-};
-
-export type SaveHarnessDocumentInput = {
-  id: string;
-  title: string;
-  contentJson: JsonObject;
-  plainText: string;
-};
-
-export type SeedFixtureResult = {
-  snapshot: StoredDocumentSnapshot;
-  wordCount: number;
 };
 
 export type PersistedDocumentSelection = {
