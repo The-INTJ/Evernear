@@ -48,6 +48,8 @@ Read [FOR_HUMAN_CODE--DOC.md](../../FOR_HUMAN_CODE--DOC.md) first, then [FLOW.md
 - Slice boundaries and annotations share the same anchor-payload shape.
 - Slice boundaries persist one range anchor each, using exact text plus context and optional coarse jump hints rather than line-number truth.
 - Domain events, document steps, and document checkpoints are the canonical history record; current-state tables are derived.
+- **Bootstrap precondition vs. event-derived state.** A pure replay from the event log + checkpoints does not recreate the default project, Story folder, or initial document. Those are materialized as a first-run side effect by `WorkspaceRepository.ensureSeedState` without appending to the event log, because synthetic seed events on every fresh database would muddy the log with non-author actions. Treat the bootstrap row set as a precondition the replay assumes. The exception is `EntityRepository.adoptOrphanedMatchingRules`, which can run on a non-empty database and so must append the events for each adopted rule.
+- **Legacy data backfills go in the migrations framework, not in `loadWorkspace()`.** Pre-Phase-1 row shapes are repaired once by a numbered migration in `src/db/migrations.ts` (gated by `user_version`), not by an idempotent fixup that runs on every read. If you find yourself writing a "fix-this-row-on-every-load" guard, extract it to a migration instead.
 
 ## Open
 - The exact local project package shape.

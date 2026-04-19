@@ -36,6 +36,7 @@ export const EVENT_TYPES = {
 
   documentCreated: "documentCreated",
   documentMetaUpdated: "documentMetaUpdated",
+  documentReordered: "documentReordered",
   documentDeleted: "documentDeleted",
 
   entityCreated: "entityCreated",
@@ -44,6 +45,7 @@ export const EVENT_TYPES = {
 
   matchingRuleCreated: "matchingRuleCreated",
   matchingRuleUpdated: "matchingRuleUpdated",
+  matchingRuleDeleted: "matchingRuleDeleted",
 
   sliceCreated: "sliceCreated",
   sliceBoundaryAutoResolved: "sliceBoundaryAutoResolved",
@@ -62,6 +64,14 @@ export type EventPayloadMap = {
 
   documentCreated: { title: string; folderId: string | null };
   documentMetaUpdated: { title: string; folderId: string | null };
+  documentReordered: {
+    documentId: string;
+    fromOrdering: number;
+    toOrdering: number;
+    swapDocumentId: string;
+    swapFromOrdering: number;
+    swapToOrdering: number;
+  };
   documentDeleted: { title: string };
 
   entityCreated: { name: string };
@@ -79,6 +89,10 @@ export type EventPayloadMap = {
     label: string;
     kind: MatchingRuleKind;
     pattern: string;
+  };
+  matchingRuleDeleted: {
+    entityId: string;
+    label: string;
   };
 
   sliceCreated: {

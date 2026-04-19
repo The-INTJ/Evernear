@@ -231,6 +231,43 @@ export const MIGRATIONS: Migration[] = [
       `);
     },
   },
+  {
+    // Replaces WorkspaceRepository.ensureLegacyDocumentShape, which used to
+    // run on every loadWorkspace(). The match clause is the same; the only
+    // difference is `user_version` now gates it to one execution.
+    //
+    // Pre-Phase-1 builds wrote documents with NULL project_id / NULL
+    // created_at / ordering=0. The defaults below match the seed values
+    // ensureSeedState materializes for fresh databases: any orphaned legacy
+    // row gets parented to DEFAULT_PROJECT_ID + DEFAULT_FOLDER_ID, and the
+    // ordering is renumbered by updated_at so the document list is stable.
+    //
+    // No event append: this is a one-shot data backfill that predates the
+    // event-sourcing invariant. Treat it like the seed-state precondition.
+    version: 3,
+    description: "backfill legacy documents missing project/folder/ordering/created_at",
+    up(database) {
+      const legacyDocs = database.prepare(`
+        SELECT id
+        FROM documents
+        WHERE project_id IS NULL OR created_at IS NULL
+        ORDER BY updated_at ASC
+      `).all() as Array<{ id: string }>;
+
+      const update = database.prepare(`
+        UPDATE documents
+        SET
+          project_id = COALESCE(project_id, 'default-project'),
+          folder_id = COALESCE(folder_id, 'story-folder'),
+          ordering = CASE WHEN ordering = 0 THEN ? ELSE ordering END,
+          created_at = COALESCE(created_at, updated_at)
+        WHERE id = ?
+      `);
+      legacyDocs.forEach((row, index) => {
+        update.run(index, row.id);
+      });
+    },
+  },
 ];
 
 export const CURRENT_SCHEMA_VERSION = MIGRATIONS[MIGRATIONS.length - 1]?.version ?? 0;

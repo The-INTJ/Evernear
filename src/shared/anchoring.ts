@@ -26,6 +26,14 @@ export type PlainTextIndex = {
   charEnds: number[];
 };
 
+// When two candidate matches score within this distance of each other, the
+// resolver fails closed to `ambiguous` rather than guessing — context
+// (prefix/suffix/proximity) wasn't strong enough to pick a unique winner.
+// Tuned against the test cases in anchoring.test.ts; lowering it makes the
+// resolver more aggressive (more "repaired", fewer "ambiguous"), raising
+// it makes it more conservative.
+export const FUZZY_MATCH_AMBIGUITY_THRESHOLD = 0.25;
+
 export function createMappingFromSteps(serializedSteps: JsonObject[]): Mapping {
   const mapping = new Mapping();
   for (const serializedStep of serializedSteps) {
@@ -111,7 +119,7 @@ export function resolveAnchorWithFallback(
   const best = candidates[0]!;
   const second = candidates[1];
 
-  if (second && Math.abs(best.score - second.score) < 0.25) {
+  if (second && Math.abs(best.score - second.score) < FUZZY_MATCH_AMBIGUITY_THRESHOLD) {
     return {
       status: "ambiguous",
       reason: `${fallbackReason}; multiple plausible matches remained`,

@@ -246,8 +246,21 @@ export class DocumentRepository {
     }
 
     const database = this.sqlite.getConnection();
-    database.prepare("UPDATE documents SET ordering = ? WHERE id = ?").run(swapWith.ordering, current.id);
-    database.prepare("UPDATE documents SET ordering = ? WHERE id = ?").run(current.ordering, swapWith.id);
+    const fromOrdering = current.ordering;
+    const toOrdering = swapWith.ordering;
+    database.prepare("UPDATE documents SET ordering = ? WHERE id = ?").run(toOrdering, current.id);
+    database.prepare("UPDATE documents SET ordering = ? WHERE id = ?").run(fromOrdering, swapWith.id);
+
+    // Both sides of the swap are captured so a replay can reconstruct the
+    // pair without re-deriving sibling order from the projection.
+    this.history.appendEvent("document", current.id, "documentReordered", current.current_version, {
+      documentId: current.id,
+      fromOrdering,
+      toOrdering,
+      swapDocumentId: swapWith.id,
+      swapFromOrdering: toOrdering,
+      swapToOrdering: fromOrdering,
+    });
     return current;
   }
 

@@ -182,35 +182,61 @@ export class EntityRepository {
   }
 
   deleteMatchingRule(input: DeleteMatchingRuleInput): void {
-    this.sqlite.getConnection()
-      .prepare("DELETE FROM matching_rules WHERE id = ?")
-      .run(input.ruleId);
+    const database = this.sqlite.getConnection();
+    const row = database.prepare(`
+      SELECT entity_id, label
+      FROM matching_rules
+      WHERE id = ?
+    `).get(input.ruleId) as { entity_id: string | null; label: string } | undefined;
+    if (!row) {
+      return;
+    }
+
+    database.prepare("DELETE FROM matching_rules WHERE id = ?").run(input.ruleId);
+
+    this.history.appendEvent("matchingRule", input.ruleId, "matchingRuleDeleted", 0, {
+      entityId: row.entity_id ?? "",
+      label: row.label,
+    });
   }
 
   // ──────────────── seed bootstrap ────────────────
 
   // Legacy matching_rules rows can predate entities being a table — give
   // each an "Imported Entity" wrapper so downstream joins don't hide them.
+  // Unlike the other seed-state work in WorkspaceRepository.ensureSeedState,
+  // this CAN run on a non-empty database (any orphaned rule will trigger
+  // it), so it must append events to keep the event log a complete record
+  // of mutations.
   adoptOrphanedMatchingRules(projectId: string, createEntityId: () => string): void {
     const database = this.sqlite.getConnection();
     const orphans = database.prepare(`
-      SELECT id, label, updated_at
+      SELECT id, label, kind, pattern, updated_at
       FROM matching_rules
       WHERE entity_id IS NULL
       ORDER BY updated_at ASC
-    `).all() as Array<{ id: string; label: string; updated_at: string }>;
+    `).all() as Array<{ id: string; label: string; kind: string; pattern: string; updated_at: string }>;
 
     for (const rule of orphans) {
       const entityId = createEntityId();
+      const entityName = rule.label || "Imported Entity";
       database.prepare(`
         INSERT INTO entities (id, project_id, name, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?)
-      `).run(entityId, projectId, rule.label || "Imported Entity", rule.updated_at, rule.updated_at);
+      `).run(entityId, projectId, entityName, rule.updated_at, rule.updated_at);
+      this.history.appendEvent("entity", entityId, "entityCreated", 0, { name: entityName });
+
       database.prepare(`
         UPDATE matching_rules
         SET entity_id = ?, created_at = COALESCE(created_at, updated_at)
         WHERE id = ?
       `).run(entityId, rule.id);
+      this.history.appendEvent("matchingRule", rule.id, "matchingRuleUpdated", 0, {
+        entityId,
+        label: rule.label,
+        kind: rule.kind as MatchingRuleRecord["kind"],
+        pattern: rule.pattern,
+      });
     }
   }
 }

@@ -9,6 +9,7 @@ import {
   buildAnchorFromRange,
   buildPlainTextIndex,
   createMappingFromSteps,
+  FUZZY_MATCH_AMBIGUITY_THRESHOLD,
   mapBoundaryForward,
   offsetToPosition,
   resolveAnchorWithFallback,
@@ -194,6 +195,62 @@ describe("resolveAnchorWithFallback", () => {
     const anchor = anchorFor(original, "exact phrase");
     const nextDoc = docOf(["Completely different prose about nothing."]);
 
+    const result = resolveAnchorWithFallback(anchor, nextDoc, "mapping collapsed", 2);
+    expect(result.status).toBe("invalid");
+  });
+});
+
+describe("FUZZY_MATCH_AMBIGUITY_THRESHOLD", () => {
+  // The threshold is load-bearing for the "fail closed when uncertain"
+  // contract. Lock its value so a future tweak forces an explicit
+  // re-justification with the test cases below.
+  it("is the documented value the resolver compares score gaps against", () => {
+    expect(FUZZY_MATCH_AMBIGUITY_THRESHOLD).toBe(0.25);
+  });
+
+  it("returns `repaired` when a clear single-candidate match wins by a wide margin", () => {
+    // "garden at dusk" appears once; the resolver should pick it without
+    // any ambiguity score competition.
+    const original = docOf(["The garden at dusk was quiet."]);
+    const anchor = anchorFor(original, "garden at dusk");
+    const nextDoc = docOf(["Some preface.", "The garden at dusk was quiet."]);
+    const result = resolveAnchorWithFallback(anchor, nextDoc, "mapping collapsed", 2);
+    expect(result.status).toBe("repaired");
+  });
+
+  it("returns `repaired` when multiple candidates exist but one is the unambiguous winner via prefix/suffix", () => {
+    // "the cat" appears twice; only one occurrence has the matching
+    // surrounding context, so the prefix/suffix score gap exceeds the
+    // ambiguity threshold and the resolver picks the right one.
+    const original = docOf(["the gray sky and the cat sat on the windowsill"]);
+    const anchor = anchorFor(original, "the cat");
+    const nextDoc = docOf([
+      "the cat was elsewhere first",
+      "the gray sky and the cat sat on the windowsill",
+    ]);
+    const result = resolveAnchorWithFallback(anchor, nextDoc, "mapping collapsed", 2);
+    expect(result.status).toBe("repaired");
+    // Repaired range must be the second occurrence (the one with matching context).
+    const repairedText = nextDoc.textBetween(result.anchor.from, result.anchor.to, "\n\n");
+    expect(repairedText).toBe("the cat");
+    expect(result.anchor.prefix.endsWith("the gray sky and ")).toBe(true);
+  });
+
+  it("returns `ambiguous` when two candidates score within the threshold of each other", () => {
+    // Identical lines, no prefix/suffix to disambiguate — both candidates
+    // score 0 and the gap (0) is below the 0.25 threshold.
+    const original = docOf(["echo"]);
+    const baseAnchor = anchorFor(original, "echo");
+    const weakAnchor = { ...baseAnchor, prefix: "", suffix: "", approxPlainTextOffset: undefined };
+    const nextDoc = docOf(["echo", "echo", "echo"]);
+    const result = resolveAnchorWithFallback(weakAnchor, nextDoc, "mapping collapsed", 2);
+    expect(result.status).toBe("ambiguous");
+  });
+
+  it("returns `invalid` when no candidates exist at all", () => {
+    const original = docOf(["unique phrase"]);
+    const anchor = anchorFor(original, "unique phrase");
+    const nextDoc = docOf(["something else entirely"]);
     const result = resolveAnchorWithFallback(anchor, nextDoc, "mapping collapsed", 2);
     expect(result.status).toBe("invalid");
   });

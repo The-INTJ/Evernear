@@ -487,6 +487,22 @@ export class WorkspaceRepository {
   // Private seed + layout helpers
   // ═══════════════════════════════════════════════════════════════════════
 
+  // Bootstrap precondition. A pure replay from the event log + checkpoints
+  // will NOT recreate the default project / Story folder / initial document
+  // — those rows are materialized here as a first-run side effect, without
+  // appending to the event log. This is intentional: synthetic seed events
+  // on every fresh database would muddy the log with non-author actions
+  // and wouldn't carry meaningful payloads.
+  //
+  // If a future feature needs the initial state to be fully derivable from
+  // logs + checkpoints (e.g. cross-device replay, tamper detection), append
+  // synthetic *Materialized events here instead. See src/db/README.md
+  // ("Bootstrap precondition vs. event-derived state") for the policy.
+  //
+  // The one operation here that CAN run on a non-empty database is
+  // `adoptOrphanedMatchingRules` — it materializes entities from pre-Phase-1
+  // matching rules and so MUST append events. That happens inside the
+  // EntityRepository call below.
   private ensureSeedState(): void {
     if (this.projects.countProjects() === 0) {
       this.projects.insertSeedProject(DEFAULT_PROJECT_ID, DEFAULT_PROJECT_NAME);
@@ -506,8 +522,6 @@ export class WorkspaceRepository {
         updatedAt: new Date().toISOString(),
       });
     }
-
-    this.ensureLegacyDocumentShape(activeProjectId);
 
     const documents = this.documents.loadDocumentSummaries(activeProjectId);
     if (documents.length === 0) {
@@ -535,28 +549,6 @@ export class WorkspaceRepository {
       this.entities.loadEntities(activeProjectId),
       (projectId) => this.folders.loadFolderIds(projectId),
     );
-  }
-
-  private ensureLegacyDocumentShape(activeProjectId: string): void {
-    const database = this.sqlite.getConnection();
-    const legacyDocs = database.prepare(`
-      SELECT id, updated_at
-      FROM documents
-      WHERE project_id IS NULL OR created_at IS NULL
-      ORDER BY updated_at ASC
-    `).all() as Array<{ id: string; updated_at: string }>;
-
-    legacyDocs.forEach((row, index) => {
-      database.prepare(`
-        UPDATE documents
-        SET
-          project_id = COALESCE(project_id, ?),
-          folder_id = COALESCE(folder_id, ?),
-          ordering = CASE WHEN ordering = 0 THEN ? ELSE ordering END,
-          created_at = COALESCE(created_at, updated_at)
-        WHERE id = ?
-      `).run(activeProjectId, DEFAULT_FOLDER_ID, index, row.id);
-    });
   }
 
   private loadLayoutWithDeps(projectId: string) {
