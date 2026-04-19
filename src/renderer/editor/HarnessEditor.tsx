@@ -365,7 +365,7 @@ function recomputeDecorations(
     decorations.push(Decoration.inline(from, to, {
       class: `pm-slice-boundary pm-slice-boundary--${boundary.resolution.status}`,
       "data-slice-id": boundary.sliceId,
-    }));
+    }, { inclusiveEnd: true }));
   }
 
   if (pendingRange) {

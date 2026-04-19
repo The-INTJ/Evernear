@@ -12,6 +12,7 @@ import type {
   EditorSelectionInfo,
   SerializedTransactionBundle,
 } from "../../editor/workbenchUtils";
+import { DEBUG_PANELS } from "../../utils/devFlags";
 
 type Props = {
   snapshot: StoredDocumentSnapshot;
@@ -40,6 +41,7 @@ export const PanelDocumentView = forwardRef<HarnessEditorHandle, Props>(
             matchingRules={[]}
             sliceBoundaries={boundaries}
             pendingRange={pendingRange}
+            showLegend={DEBUG_PANELS}
             legendLabels={{
               match: "Panel view",
               boundary: "Slice boundary",

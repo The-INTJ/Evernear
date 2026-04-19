@@ -22,6 +22,7 @@ import type {
   SerializedTransactionBundle,
 } from "../../editor/workbenchUtils";
 import { formatCount } from "../../utils/formatting";
+import { DEBUG_PANELS } from "../../utils/devFlags";
 
 type Props = {
   workspace: WorkspaceState | null;
@@ -122,11 +123,13 @@ export const EditorPane = forwardRef<HarnessEditorHandle, Props>(function Editor
         </div>
       </div>
 
-      <div className="editor-statusbar">
+      <div className={DEBUG_PANELS ? "editor-statusbar" : "editor-statusbar editor-statusbar--compact"}>
         <MetricCard label="Words" value={formatCount(metrics?.wordCount ?? 0)} />
         <MetricCard label="Paragraphs" value={formatCount(metrics?.paragraphCount ?? 0)} />
         <MetricCard label="Characters" value={formatCount(metrics?.characterCount ?? 0)} />
-        <MetricCard label="Storage" value={status?.storageEngine ?? "better-sqlite3"} />
+        {DEBUG_PANELS ? (
+          <MetricCard label="Storage" value={status?.storageEngine ?? "better-sqlite3"} />
+        ) : null}
         <MetricCard label="Sync" value={pendingWrites > 0 ? "Saving..." : "Saved"} />
       </div>
 
@@ -139,6 +142,7 @@ export const EditorPane = forwardRef<HarnessEditorHandle, Props>(function Editor
           matchingRules={workspace?.layout.highlightsEnabled ? editorRules : []}
           sliceBoundaries={visibleBoundaries}
           pendingRange={pendingRange}
+          showLegend={DEBUG_PANELS}
           legendLabels={{
             match: "Entity match",
             boundary: "Slice boundary",

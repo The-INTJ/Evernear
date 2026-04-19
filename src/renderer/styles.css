@@ -285,9 +285,19 @@ select {
 
 .tree-folder__header {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 8px;
   align-items: center;
+}
+
+.tree-folder__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.tree-folder__actions .tree-inline-button {
+  flex: 1;
 }
 
 .tree-folder__header--static {
@@ -335,6 +345,10 @@ select {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 10px;
+}
+
+.editor-statusbar--compact {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .metric-card {
@@ -567,11 +581,43 @@ select {
 .hover-preview {
   position: fixed;
   z-index: 50;
-  width: min(360px, calc(100vw - 48px));
-  pointer-events: none;
+  width: min(420px, calc(100vw - 48px));
+  max-height: min(520px, calc(100vh - 48px));
+  pointer-events: auto;
   border-radius: 22px;
   padding: 16px;
   background: rgba(12, 25, 33, 0.96);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hover-preview__header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.hover-preview__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  padding-right: 4px;
+  min-height: 0;
+}
+
+.hover-preview__excerpt {
+  white-space: pre-wrap;
+  line-height: 1.55;
+}
+
+.stack-card__reason {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-soft);
+  opacity: 0.78;
 }
 
 @media (max-width: 1380px) {

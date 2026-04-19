@@ -98,15 +98,13 @@ export function useEverlinkPlacement(input: UseEverlinkPlacementInput): Everlink
       if (!current || current.surface !== surface) {
         return current;
       }
-      if (current.start === null) {
-        return {
-          ...current,
-          start: selection.from,
-          end: selection.empty ? selection.from : selection.to,
-        };
-      }
+      // Track the live selection/cursor so the user can freely type, paste,
+      // or select in the target doc. The pending range always reflects the
+      // current selection — an empty cursor at commit triggers source-text
+      // insertion; a non-empty selection is used verbatim as the slice.
       return {
         ...current,
+        start: selection.from,
         end: selection.empty ? selection.from : selection.to,
       };
     });
@@ -352,21 +350,11 @@ export function useEverlinkPlacement(input: UseEverlinkPlacementInput): Everlink
     }
   }, [workspace, runMutation]);
 
-  const handleMainBlur = useCallback(async () => {
-    const placement = placementRef.current;
-    if (!placement || placement.surface !== "main") return;
-    if ((placement.start ?? 0) === (placement.end ?? 0)) {
-      await commitPendingSlice();
-    }
-  }, [commitPendingSlice]);
-
-  const handlePanelBlur = useCallback(async () => {
-    const placement = placementRef.current;
-    if (!placement || placement.surface !== "panel") return;
-    if ((placement.start ?? 0) === (placement.end ?? 0)) {
-      await commitPendingSlice();
-    }
-  }, [commitPendingSlice]);
+  // Blur no longer auto-commits: the live placement now follows the cursor,
+  // so an idle cursor after typing would otherwise trigger a surprise commit
+  // every time the author clicked away. Commit is always explicit.
+  const handleMainBlur = useCallback(async () => {}, []);
+  const handlePanelBlur = useCallback(async () => {}, []);
 
   const mutableEverlinkSessionSetter = setEverlinkSession as unknown as React.Dispatch<React.SetStateAction<EverlinkSession | null>>;
 

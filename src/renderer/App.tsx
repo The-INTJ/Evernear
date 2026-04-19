@@ -44,6 +44,7 @@ import { SliceViewer } from "./features/panes/SliceViewer";
 import { PanelDocumentView } from "./features/panes/PanelDocumentView";
 import { HoverPreview } from "./features/panes/HoverPreview";
 import { RunLog } from "./features/history/RunLog";
+import { DEBUG_PANELS } from "./utils/devFlags";
 
 export function App() {
   const mainEditorRef = useRef<HarnessEditorHandle | null>(null);
@@ -203,13 +204,35 @@ export function App() {
     }
   }, [panelDocument, workspaceHook]);
 
+  const hoverCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clearHoverCloseTimeout = useCallback(() => {
+    if (hoverCloseTimeoutRef.current !== null) {
+      clearTimeout(hoverCloseTimeoutRef.current);
+      hoverCloseTimeoutRef.current = null;
+    }
+  }, []);
+
   const handleEditorHover = useCallback((payload: { entityId: string; clientX: number; clientY: number } | null) => {
     if (!payload) {
-      setHoverPreview(null);
+      clearHoverCloseTimeout();
+      hoverCloseTimeoutRef.current = setTimeout(() => {
+        setHoverPreview(null);
+        hoverCloseTimeoutRef.current = null;
+      }, 180);
       return;
     }
+    clearHoverCloseTimeout();
     setHoverPreview({ entityId: payload.entityId, x: payload.clientX, y: payload.clientY });
-  }, []);
+  }, [clearHoverCloseTimeout]);
+
+  const handlePreviewEnter = useCallback(() => {
+    clearHoverCloseTimeout();
+  }, [clearHoverCloseTimeout]);
+
+  const handlePreviewLeave = useCallback(() => {
+    clearHoverCloseTimeout();
+    setHoverPreview(null);
+  }, [clearHoverCloseTimeout]);
 
   return (
     <div className="mvp-shell">
@@ -341,13 +364,19 @@ export function App() {
               </>
             ) : null}
 
-            <RunLog entries={runLog} />
+            {DEBUG_PANELS ? <RunLog entries={runLog} /> : null}
           </aside>
         ) : null}
       </main>
 
       {hoverPreview ? (
-        <HoverPreview hover={hoverPreview} entity={hoverEntity} slices={hoverSlices} />
+        <HoverPreview
+          hover={hoverPreview}
+          entity={hoverEntity}
+          slices={hoverSlices}
+          onMouseEnter={handlePreviewEnter}
+          onMouseLeave={handlePreviewLeave}
+        />
       ) : null}
     </div>
   );

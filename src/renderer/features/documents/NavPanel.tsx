@@ -112,6 +112,8 @@ export function NavPanel(props: Props) {
                     defaultValue={folder.title}
                     onBlur={(event) => onRenameFolder(folder, event.target.value)}
                   />
+                </div>
+                <div className="tree-folder__actions">
                   <button
                     className="tree-inline-button"
                     onClick={() => onCreateDocument(folder.id)}

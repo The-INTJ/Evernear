@@ -15,7 +15,7 @@ export function SlicePlacementPanel({ placement, documentsById, onCommit, onCanc
       <p className="section-kicker">Slice Placement</p>
       <h2>Place the slice in the target document</h2>
       <p className="section-copy">
-        Click once to set the slice start, then type, paste, or select the range you want to keep tracked. Empty placements auto-fill from the source selection on commit or blur.
+        Write freely in the target document, then select the passage you want to track as a slice and click Commit. If you commit with an empty cursor instead, the source selection is inserted there and becomes the slice.
       </p>
       <div className="selection-card">
         <strong>Source text</strong>

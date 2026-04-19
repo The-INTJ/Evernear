@@ -41,8 +41,11 @@ export function mapBoundaryForward(
   nextDoc: ProseMirrorNode,
   nextVersion: number,
 ): AnchorResolutionResult {
+  // `to` uses +1 so text inserted at the tail of a slice stays inside the
+  // slice — writing at the trailing boundary should grow it, not escape it.
+  // `from` stays +1 so text typed immediately before a slice stays outside.
   const mappedFrom = mapping.map(anchor.from, 1);
-  const mappedTo = mapping.map(anchor.to, -1);
+  const mappedTo = mapping.map(anchor.to, 1);
 
   if (mappedFrom < mappedTo) {
     const mappedExact = nextDoc.textBetween(mappedFrom, mappedTo, "\n\n");
