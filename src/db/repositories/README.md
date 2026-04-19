@@ -22,14 +22,17 @@ Read [src/db/README.md](../README.md) first, then [src/shared/domain/README.md](
 - React-facing view models.
 - Raw schema design decisions in isolation.
 
-## Likely repository areas
-- `ProjectRepository`
-- `DocumentRepository`
-- `EntityRepository`
-- `SliceRepository`
-- `AnnotationRepository`
-- `HistoryRepository`
-- `WorkspaceRepository`
+## Current repository areas
+- [`ProjectRepository`](./ProjectRepository.ts) — project row + preferences
+- [`FolderRepository`](./FolderRepository.ts) — document folder tree
+- [`DocumentRepository`](./DocumentRepository.ts) — documents + step log append/replay coordination
+- [`EntityRepository`](./EntityRepository.ts) — entities + matching rules + orphan-rule adoption
+- [`SliceRepository`](./SliceRepository.ts) — slices, slice boundaries, entity-slice links
+- [`HistoryRepository`](./HistoryRepository.ts) — event log, step log, checkpoints, replay, projection-rebuild
+- [`LayoutRepository`](./LayoutRepository.ts) — persisted workspace layout state
+- [`WorkspaceRepository`](./WorkspaceRepository.ts) — thin composition facade for cross-aggregate reads and transactions; not a bucket for new mutations
+
+`AnnotationRepository` is reserved for Phase 5 when anchored annotations land as a first-class aggregate; today annotations are planned but not yet a stored family.
 
 ## Key relationships
 - Repositories should hide SQL details from the rest of the app.

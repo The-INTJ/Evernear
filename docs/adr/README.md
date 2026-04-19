@@ -25,6 +25,7 @@ Read [docs/README.md](../README.md) first, then [FOR_HUMAN_CODE--DOC.md](../../F
 - [ADR-004: Prove Load-Bearing Editor Risks Before Phase 2](./ADR-004-prove-load-bearing-editor-risks-before-phase-2.md)
 - [ADR-005: Editor Foundation Locked to ProseMirror](./ADR-005-editor-foundation-locked-to-prosemirror.md)
 - [ADR-006: Event-Sourced Document and Metadata History](./ADR-006-event-sourced-document-and-metadata-history.md)
+- [ADR-007: Workbench Storage Engine for Phase 1 Proof](./ADR-007-workbench-storage-engine-for-phase-1-proof.md)
 
 ## Decided
 - ADRs should stay lightweight in this phase.

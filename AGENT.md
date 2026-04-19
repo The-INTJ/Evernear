@@ -36,7 +36,7 @@ If you just arrived and don't remember the codebase:
 1. Read [CLAUDE.md](CLAUDE.md). Invariants, boundaries, and stack are there.
 2. Scan [refineCode.md](refineCode.md) §"What to preserve" — these are the conventions, not suggestions.
 3. Skim the folder README for the folder you're about to edit. Every `src/*` folder has one in the canonical shape (Status / Owns / Does not own / …).
-4. Check [package.json](package.json) scripts before inventing commands. There is no test runner yet — `npm run check` is typecheck + build.
+4. Check [package.json](package.json) scripts before inventing commands. `npm run check` is the canonical gate — typecheck → lint → test → build. Vitest is wired in; `npm run test` handles the better-sqlite3 Node/Electron ABI rebuild dance.
 
 ---
 
@@ -92,7 +92,7 @@ Use the terms from the vocabulary table in [FOR_HUMAN_CODE--DOC.md](FOR_HUMAN_CO
 
 - Do not invent synonyms.
 - If you need a new concept, add it to the vocabulary table *before* naming the type.
-- "Workspace" and "workbench" are currently ambiguous — see [refineCode.md](refineCode.md) §C5. Don't introduce either in new code without resolving that first.
+- "Workspace" is the canonical term; "workbench" survives only in a couple of CSS classes and the Phase 1 proof-workbench planning docs — don't introduce new "workbench" identifiers in code. See [refineCode.md](refineCode.md) §C5.
 
 ### R5. Type discipline
 
@@ -161,7 +161,7 @@ If the user asked for a UI change, you cannot claim success without running `npm
 
 If a user request conflicts with a rule in this doc, surface the conflict before starting:
 
-- They ask you to add a feature directly into App.tsx or workbenchRepository.ts → offer to extract the relevant section first and explain why.
+- They ask you to add a feature directly into App.tsx or into [WorkspaceRepository](src/db/repositories/WorkspaceRepository.ts) (the composition facade) → offer to extract into the matching feature folder or per-aggregate repository first and explain why.
 - They ask you to add a cross-cutting type into a feature folder → point at [src/shared/domain/](src/shared/domain/) instead.
 - They ask you to bypass the event log for performance → refuse; event sourcing is an invariant, not a preference. Suggest a projection or a read optimization instead.
 - They ask for a CRDT / cloud sync / merge flow → refuse; local-first single-user is load-bearing.

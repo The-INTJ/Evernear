@@ -1,10 +1,10 @@
 # Feature Brief: Selection-Driven Everlink
 
 ## Status
-Planned
+Implemented — lives in [useEverlinkSession](../src/renderer/state/useEverlinkSession.ts), [usePendingPlacement](../src/renderer/state/usePendingPlacement.ts), [useEverlinkPlacement](../src/renderer/state/useEverlinkPlacement.ts), and [EverlinkPanel](../src/renderer/features/entities/EverlinkPanel.tsx) + [SlicePlacementPanel](../src/renderer/features/panes/SlicePlacementPanel.tsx). Still pending real-manuscript adversarial pass.
 
 ## Date
-2026-04-17
+2026-04-17, last reviewed 2026-04-19
 
 ## Problem
 Entity and slice authoring is too detached from the moment a writer notices a new person, place, or concept in story text.

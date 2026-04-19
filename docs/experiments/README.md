@@ -20,7 +20,9 @@ Read [FOR_HUMAN_AND_AI_ROADMAP--DOC.md](../../FOR_HUMAN_AND_AI_ROADMAP--DOC.md) 
 - Final architecture decisions by itself.
 - Routine implementation notes that are not rewrite-risk material.
 
-## Planned
+## In progress
+All four are implemented in the live app but still need real-manuscript (50k+ word) findings before they can be marked Resolved.
+
 - [EXP-001: Shared Anchor Substrate Under Live Edits](./EXP-001-shared-anchor-substrate.md)
 - [EXP-002: Matching Normalization and Chapter-Scale Performance](./EXP-002-matching-normalization-and-scale.md)
 - [EXP-005: Event Log and Checkpoint Replay](./EXP-005-event-log-and-checkpoint-replay.md)

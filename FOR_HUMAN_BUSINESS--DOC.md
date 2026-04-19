@@ -1,6 +1,7 @@
 # FOR_HUMAN_BUSINESS--DOC
 
 ## Last change
+2026-04-19: marked the Phase 0 "doc-only" note below as historical — the repo has had runnable code since commit `d0ea627` and is now in Phase 1.5 foundation-hardened shape.
 2026-04-17: defined selection-driven Everlink authoring as selection-bootstrapped entity plus slice creation with panel-based target editing and fail-closed anchor repair.
 2026-04-17: defined document organization as folders plus generic documents, reserved anchored outline nodes, and made clean copy/paste plus future slice-preserving text transfer phase-zero concerns.
 2026-04-17: cleaned the merged planning pass, aligned the history promise with the actual MVP architecture, and removed stale editor-choice language.
@@ -31,7 +32,7 @@ The first writing workflow must also respect how real projects arrive: paste in 
 - A future text-transfer seam must be able to preserve slice meaning across move or copy workflows without making ordinary editing or clipboard behavior weird in the meantime.
 - An annotation is a quiet personal note anchored straight to the main document, not a collaborative comment system and not a second-class afterthought.
 - The app is organized around `main`, `preload`, `renderer`, `shared`, and `db` so product ideas map cleanly to runtime boundaries.
-- The repo is intentionally doc-only right now. Each future code folder contains markdown that explains what will eventually live there and what broader docs to read first.
+- The runnable Phase 1.5 app implements this organization with strict boundaries enforced by ESLint; each source folder has a canonical README explaining its ownership and chain-up reads.
 - SQLite is the canonical project store, with explicit author-ownership protections through export and package support that carries history, not just current state.
 - Highlights are derived from entity matches and should not become stored records.
 - History is event-sourced: an append-only domain event log plus the ProseMirror step log are the canonical record; the tables writers query are rebuildable projections.
@@ -90,7 +91,6 @@ The full annotation surface can land after the central loop proves itself, but i
 - History is event-sourced. Writers eventually get time travel over prose and metadata on the same timeline.
 - The first visible history surface can be a minimal restore-previous-version action; the broader timeline comes later.
 - Merge, conflict resolution, and collaboration are permanently out of scope.
-- The repo should show a real future-ish app structure now, even before code exists.
 
 ## Open
 - How aggressive entity highlighting should be before it becomes visual spam.

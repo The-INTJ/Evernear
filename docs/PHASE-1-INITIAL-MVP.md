@@ -1,10 +1,10 @@
 # Initial MVP for Phase 1
 
 ## Status
-Implemented, then expanded into the active proof workbench
+Historical — harness landed, widened into the Phase 1 proof workbench, then the workbench became the real app through Phase 1.5 foundation hardening. Kept for context; see [PHASE-1-GATE-RETROSPECTIVE.md](./PHASE-1-GATE-RETROSPECTIVE.md) and [PHASE-1.5-FOUNDATION-HARDENING.md](./PHASE-1.5-FOUNDATION-HARDENING.md) for the current state.
 
 ## Date
-2026-04-17
+2026-04-17 (original), last reviewed 2026-04-19
 
 ## Parent reads
 - [FOR_HUMAN_BUSINESS--DOC.md](../FOR_HUMAN_BUSINESS--DOC.md)
@@ -15,7 +15,7 @@ Implemented, then expanded into the active proof workbench
 
 ## Why this exists
 Phase 1 has several load-bearing spikes, but the first executable deliverable needed to be smaller than "do all of Phase 1."
-This document originally scoped a narrow round-trip harness. That harness now exists, and it has been intentionally widened into the active **Phase 1 proof workbench** so the remaining spikes can share one executable surface instead of starting over from scratch.
+This document originally scoped a narrow round-trip harness. That harness landed, was intentionally widened into the **Phase 1 proof workbench** so the remaining spikes could share one executable surface, and then became the real app after Phase 1.5 split the god files and hardened the foundation. The build slices and exit criteria below describe the original deliverable, not the current state.
 
 Note: The AI will never directly manage or execute over prose. The amount of text would destroy context windows and consume usage quotas.
 
