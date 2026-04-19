@@ -191,6 +191,11 @@ export const DeleteSliceInputSchema = z.object({
   sliceId: NonEmptyString,
 });
 
+export const UpdateSliceBoundaryInputSchema = z.object({
+  boundaryId: NonEmptyString,
+  anchor: TextAnchorSchema,
+});
+
 // ──────────────── history ────────────────
 
 export const WriteCheckpointArgsSchema = z.tuple([NonEmptyString, z.string().nullable()]);

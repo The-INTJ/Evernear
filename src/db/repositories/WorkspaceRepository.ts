@@ -34,6 +34,8 @@ import {
   type DeleteFolderInput,
   type DeleteMatchingRuleInput,
   type DeleteSliceInput,
+  type SliceBoundaryRecord,
+  type UpdateSliceBoundaryInput,
   type HistorySummary,
   type OpenDocumentInput,
   type OpenProjectInput,
@@ -447,6 +449,10 @@ export class WorkspaceRepository {
       this.slices.deleteSlice(input.sliceId);
       return this.loadWorkspace();
     });
+  }
+
+  updateSliceBoundary(input: UpdateSliceBoundaryInput): SliceBoundaryRecord {
+    return this.sqlite.runInTransaction(() => this.slices.updateSliceBoundary(input.boundaryId, input.anchor));
   }
 
   // ═══════════════════════════════════════════════════════════════════════

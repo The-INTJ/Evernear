@@ -11,7 +11,6 @@ export function EntityList({ workspace, selectedEntity, onSelectEntity, onCreate
   const entities = workspace?.entities ?? [];
   return (
     <section className="panel-section">
-      <p className="section-kicker">Entities</p>
       <h2>Entity Library</h2>
       <div className="entity-list">
         {entities.length === 0 ? (

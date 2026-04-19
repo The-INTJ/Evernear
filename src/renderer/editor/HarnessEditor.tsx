@@ -57,6 +57,10 @@ type HarnessEditorProps = {
   decorationsEnabled: boolean;
   matchingRules?: EditorMatchingRule[];
   sliceBoundaries?: SliceBoundaryRecord[];
+  // When true, boundaries paint with the `--editing` modifier and gain
+  // start/end handle widgets. Foundation for drag-to-reposition; the
+  // gesture itself is not implemented yet.
+  boundariesEditable?: boolean;
   pendingRange?: PendingSliceRange | null;
   showLegend?: boolean;
   legendLabels?: {
@@ -83,11 +87,17 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
     const onEntityHoverRef = useRef(props.onEntityHover);
     const onEntityClickRef = useRef(props.onEntityClick);
     const onBlurRef = useRef(props.onBlur);
+    // Tracks the entity id reported by the last mousemove. We only fire
+    // onEntityHover(null) when the cursor *transitions* off an entity word —
+    // otherwise every mousemove over plain text would kick the App-level
+    // close timer, making the floating preview unreachable.
+    const lastEntityIdRef = useRef<string | null>(null);
     const currentDecorationsRef = useRef<DecorationSet>(DecorationSet.empty);
     const rulesRef = useRef(props.matchingRules ?? []);
     const boundariesRef = useRef(props.sliceBoundaries ?? []);
     const pendingRangeRef = useRef(props.pendingRange ?? null);
     const decorationsEnabledRef = useRef(props.decorationsEnabled);
+    const boundariesEditableRef = useRef(props.boundariesEditable ?? false);
 
     onDocumentSnapshotChangeRef.current = props.onDocumentSnapshotChange;
     onSelectionChangeRef.current = props.onSelectionChange;
@@ -99,6 +109,7 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
     boundariesRef.current = props.sliceBoundaries ?? [];
     pendingRangeRef.current = props.pendingRange ?? null;
     decorationsEnabledRef.current = props.decorationsEnabled;
+    boundariesEditableRef.current = props.boundariesEditable ?? false;
 
     useEffect(() => {
       if (!containerRef.current || viewRef.current) {
@@ -123,6 +134,7 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
             boundariesRef.current,
             pendingRangeRef.current,
             decorationsEnabledRef.current,
+            boundariesEditableRef.current,
             onMatchingBenchmarkRef.current,
           );
 
@@ -155,6 +167,7 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
           boundariesRef.current,
           pendingRangeRef.current,
           decorationsEnabledRef.current,
+          boundariesEditableRef.current,
           onMatchingBenchmarkRef.current,
         );
       };
@@ -163,15 +176,18 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
         const target = event.target instanceof HTMLElement
           ? event.target.closest("[data-entity-id]") as HTMLElement | null
           : null;
-        const entityId = target?.dataset.entityId;
-        onEntityHoverRef.current?.(
-          entityId
-            ? { entityId, clientX: event.clientX, clientY: event.clientY }
-            : null,
-        );
+        const entityId = target?.dataset.entityId ?? null;
+        if (entityId) {
+          lastEntityIdRef.current = entityId;
+          onEntityHoverRef.current?.({ entityId, clientX: event.clientX, clientY: event.clientY });
+        } else if (lastEntityIdRef.current !== null) {
+          lastEntityIdRef.current = null;
+          onEntityHoverRef.current?.(null);
+        }
       };
 
       const handleMouseLeave = () => {
+        lastEntityIdRef.current = null;
         onEntityHoverRef.current?.(null);
       };
 
@@ -198,6 +214,7 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
         boundariesRef.current,
         pendingRangeRef.current,
         decorationsEnabledRef.current,
+        boundariesEditableRef.current,
         onMatchingBenchmarkRef.current,
       );
       onSelectionChangeRef.current(getSelectionInfo(view.state));
@@ -238,9 +255,10 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
         boundariesRef.current,
         pendingRangeRef.current,
         decorationsEnabledRef.current,
+        boundariesEditableRef.current,
         onMatchingBenchmarkRef.current,
       );
-    }, [props.decorationsEnabled, props.matchingRules, props.sliceBoundaries, props.pendingRange]);
+    }, [props.decorationsEnabled, props.matchingRules, props.sliceBoundaries, props.pendingRange, props.boundariesEditable]);
 
     useImperativeHandle(ref, () => ({
       getSnapshot() {
@@ -333,6 +351,7 @@ function recomputeDecorations(
   sliceBoundaries: SliceBoundaryRecord[],
   pendingRange: PendingSliceRange | null,
   decorationsEnabled: boolean,
+  boundariesEditable: boolean,
   onMatchingBenchmark: ((benchmark: MatchingBenchmark) => void) | undefined,
 ): void {
   if (!decorationsEnabled || !surface) {
@@ -362,10 +381,19 @@ function recomputeDecorations(
       continue;
     }
 
+    const inlineClass = boundariesEditable
+      ? `pm-slice-boundary pm-slice-boundary--${boundary.resolution.status} pm-slice-boundary--editing`
+      : `pm-slice-boundary pm-slice-boundary--${boundary.resolution.status}`;
+
     decorations.push(Decoration.inline(from, to, {
-      class: `pm-slice-boundary pm-slice-boundary--${boundary.resolution.status}`,
+      class: inlineClass,
       "data-slice-id": boundary.sliceId,
     }, { inclusiveEnd: true }));
+
+    if (boundariesEditable) {
+      decorations.push(Decoration.widget(from, buildBoundaryHandle(boundary.sliceId, "start"), { side: -1 }));
+      decorations.push(Decoration.widget(to, buildBoundaryHandle(boundary.sliceId, "end"), { side: 1 }));
+    }
   }
 
   if (pendingRange) {
@@ -404,6 +432,16 @@ function buildPendingMarker(className: string): () => HTMLElement {
   return () => {
     const element = document.createElement("span");
     element.className = className;
+    return element;
+  };
+}
+
+function buildBoundaryHandle(sliceId: string, position: "start" | "end"): () => HTMLElement {
+  return () => {
+    const element = document.createElement("span");
+    element.className = `pm-slice-handle pm-slice-handle--${position}`;
+    element.dataset.sliceId = sliceId;
+    element.dataset.handle = position;
     return element;
   };
 }

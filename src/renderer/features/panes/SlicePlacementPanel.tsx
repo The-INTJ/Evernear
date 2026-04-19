@@ -12,7 +12,6 @@ type Props = {
 export function SlicePlacementPanel({ placement, documentsById, onCommit, onCancel }: Props) {
   return (
     <section className="panel-section panel-section--grow">
-      <p className="section-kicker">Slice Placement</p>
       <h2>Place the slice in the target document</h2>
       <p className="section-copy">
         Write freely in the target document, then select the passage you want to track as a slice and click Commit. If you commit with an empty cursor instead, the source selection is inserted there and becomes the slice.

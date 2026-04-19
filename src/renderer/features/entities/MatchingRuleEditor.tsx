@@ -20,7 +20,7 @@ export function MatchingRuleEditor({
 }: Props) {
   return (
     <section className="panel-section">
-      <p className="section-kicker">Matching Rules</p>
+      <h2>Matching Rules</h2>
       <div className="form-grid form-grid--stack">
         <input
           className="text-input"

@@ -49,8 +49,10 @@ type Props = {
   ) => void;
   onSelectionChange: (selection: EditorSelectionInfo) => void;
   onEntityHover: (payload: { entityId: string; clientX: number; clientY: number } | null) => void;
-  onEntityClick: (entityId: string) => void;
+  onEntityClick?: (entityId: string) => void;
   onEditorBlur: () => void;
+  fullScreen?: boolean;
+  onToggleFullScreen?: () => void;
 };
 
 // Forward-ref so App.tsx can still drive bold/italic toggles and
@@ -80,6 +82,8 @@ export const EditorPane = forwardRef<HarnessEditorHandle, Props>(function Editor
     onEntityHover,
     onEntityClick,
     onEditorBlur,
+    fullScreen,
+    onToggleFullScreen,
   } = props;
 
   const metrics = activeDocument ? collectDocumentMetrics(activeDocument.plainText) : null;
@@ -119,6 +123,8 @@ export const EditorPane = forwardRef<HarnessEditorHandle, Props>(function Editor
             onDeleteDocument={onDeleteDocument}
             workspace={workspace}
             everlinkLabel={everlinkLabel}
+            fullScreen={fullScreen ?? false}
+            onToggleFullScreen={onToggleFullScreen}
           />
         </div>
       </div>
@@ -179,6 +185,8 @@ function ToolbarButtons({
   onDeleteDocument,
   workspace,
   everlinkLabel,
+  fullScreen,
+  onToggleFullScreen,
 }: {
   forwardedRef: React.ForwardedRef<HarnessEditorHandle>;
   onReorderDocument: (direction: "up" | "down") => void;
@@ -187,6 +195,8 @@ function ToolbarButtons({
   onDeleteDocument: () => void;
   workspace: WorkspaceState | null;
   everlinkLabel: string;
+  fullScreen: boolean;
+  onToggleFullScreen?: () => void;
 }) {
   const resolveRef = (): HarnessEditorHandle | null => {
     if (!forwardedRef || typeof forwardedRef === "function") return null;
@@ -202,6 +212,11 @@ function ToolbarButtons({
       <button className="ghost-button" onClick={onToggleHighlights} type="button">
         {workspace?.layout.highlightsEnabled ? "Mute Highlights" : "Show Highlights"}
       </button>
+      {onToggleFullScreen ? (
+        <button className="ghost-button" onClick={onToggleFullScreen} type="button">
+          {fullScreen ? "Exit Full Screen" : "Full Screen"}
+        </button>
+      ) : null}
       <button className="primary-button" onClick={onOpenEverlinkChooser} type="button">{everlinkLabel}</button>
       <button className="ghost-button ghost-button--danger" onClick={onDeleteDocument} type="button">
         Delete Doc

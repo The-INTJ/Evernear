@@ -12,6 +12,8 @@ import type {
   DeleteFolderInput,
   DeleteMatchingRuleInput,
   DeleteSliceInput,
+  SliceBoundaryRecord,
+  UpdateSliceBoundaryInput,
   OpenDocumentInput,
   OpenProjectInput,
   ReorderDocumentInput,
@@ -49,6 +51,7 @@ export const HARNESS_CHANNELS = {
   deleteMatchingRule: "workspace:delete-matching-rule",
   createSlice: "workspace:create-slice",
   deleteSlice: "workspace:delete-slice",
+  updateSliceBoundary: "workspace:update-slice-boundary",
   writeCheckpoint: "workspace:write-checkpoint",
   replayDocumentToVersion: "workspace:replay-document-to-version",
   readClipboardText: "workspace:read-clipboard-text",
@@ -79,6 +82,7 @@ export interface HarnessBridge {
   deleteMatchingRule(input: DeleteMatchingRuleInput): Promise<WorkspaceState>;
   createSlice(input: CreateSliceInput): Promise<WorkspaceState>;
   deleteSlice(input: DeleteSliceInput): Promise<WorkspaceState>;
+  updateSliceBoundary(input: UpdateSliceBoundaryInput): Promise<SliceBoundaryRecord>;
   writeCheckpoint(documentId: string, label: string | null): Promise<void>;
   replayDocumentToVersion(documentId: string, targetVersion: number): Promise<WorkspaceDocumentReplayResult>;
   readClipboardText(): Promise<string>;

@@ -18,6 +18,7 @@ import {
   DeleteFolderInputSchema,
   DeleteMatchingRuleInputSchema,
   DeleteSliceInputSchema,
+  UpdateSliceBoundaryInputSchema,
   OpenDocumentInputSchema,
   OpenProjectInputSchema,
   ReorderDocumentInputSchema,
@@ -111,6 +112,8 @@ function registerIpcHandlers(): void {
     repository.createSlice(parseInput(CreateSliceInputSchema, input, C.createSlice)));
   ipcMain.handle(C.deleteSlice, (_event, input) =>
     repository.deleteSlice(parseInput(DeleteSliceInputSchema, input, C.deleteSlice)));
+  ipcMain.handle(C.updateSliceBoundary, (_event, input) =>
+    repository.updateSliceBoundary(parseInput(UpdateSliceBoundaryInputSchema, input, C.updateSliceBoundary)));
 
   ipcMain.handle(C.writeCheckpoint, (_event, documentId, label) => {
     const [id, lbl] = parseInput(WriteCheckpointArgsSchema, [documentId, label], C.writeCheckpoint);
@@ -137,6 +140,17 @@ function createMainWindow(): void {
     minHeight: 760,
     backgroundColor: "#0e1820",
     title: "Evernear",
+    // Custom chrome: hide the OS frame and let WCO render only the
+    // OS-supplied min/max/close buttons over our title bar. Everything
+    // else (project switcher, panel toggle, drag region) lives in the
+    // renderer-side TitleBar component.
+    frame: false,
+    titleBarStyle: "hidden",
+    titleBarOverlay: {
+      color: "#0e1820",
+      symbolColor: "#cbd6df",
+      height: 36,
+    },
     webPreferences: {
       preload: path.join(__dirname, "../preload/index.js"),
       contextIsolation: true,

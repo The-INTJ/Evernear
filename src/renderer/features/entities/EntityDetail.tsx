@@ -13,7 +13,6 @@ export function EntityDetail({
 }: Props) {
   return (
     <section className="panel-section">
-      <p className="section-kicker">Entity Detail</p>
       <input
         className="text-input"
         value={entityNameDraft}
