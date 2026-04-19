@@ -4,10 +4,14 @@
 // lives in useEverlinkSession.resolveSessionTargets — this hook receives
 // the already-resolved IDs and just drives the editor surface.
 //
-// This hook holds the editor refs and is responsible for commit-time
-// re-anchoring. PR 5 (Tier 1.4) tightens that re-anchoring; the current
-// commit body is the pre-fix version preserved verbatim from the original
-// useEverlinkPlacement so this PR stays a no-behavior-change extraction.
+// Commit-time re-anchoring builds the anchor against the editor's own
+// snapshot (not a fresh DB load) so the from/to positions and the
+// snapshot they're sliced into come from the same source of truth.
+// Using a DB snapshot for content while the positions came from the
+// editor was the previous race window: any typing between flushPersistence
+// and createSlice would leave the snapshot one or more versions behind
+// the editor, producing an anchor with mismatched exact/prefix/suffix
+// text and a stale versionSeen.
 
 import { useCallback, useMemo, useRef, useState } from "react";
 
@@ -19,6 +23,7 @@ import {
   buildTextAnchorFromSelection,
   type EditorSelectionInfo,
 } from "../editor/workbenchUtils";
+import type { StoredDocumentSnapshot } from "../../shared/domain/document";
 import { stringifyError, truncate } from "../utils/formatting";
 import type {
   EverlinkSession,
@@ -51,7 +56,7 @@ type UsePendingPlacementInput = {
 
 export function usePendingPlacement(input: UsePendingPlacementInput): PendingPlacementHook {
   const { workspaceHook, selections, editorRefs } = input;
-  const { workspace, applyWorkspace, appendLog, flushPersistence, setBusy, commitInFlightRef } = workspaceHook;
+  const { workspace, applyWorkspace, appendLog, flushPersistence, setBusy, commitInFlightRef, workspaceRef } = workspaceHook;
   const { mainSelection, panelSelection, setSelection } = selections;
 
   const [placement, setPlacement] = useState<PendingSlicePlacement | null>(null);
@@ -154,20 +159,36 @@ export function usePendingPlacement(input: UsePendingPlacementInput): PendingPla
 
     try {
       await flushPersistence();
-      const refreshed = await window.evernear.loadWorkspace();
-      applyWorkspace(refreshed);
 
-      const targetSnapshot = refreshed.activeDocument?.id === current.targetDocumentId
-        ? refreshed.activeDocument
-        : refreshed.panelDocument?.id === current.targetDocumentId
-          ? refreshed.panelDocument
+      // Snapshot the editor and read the persisted document version
+      // synchronously, before any further await. This pair is the anchor
+      // substrate: the editor's contentJson is what start/end index into,
+      // and workspaceRef.currentVersion is what the resolver will start
+      // from when later mapping the anchor through subsequent edits.
+      const editorSnapshot = editor.getSnapshot();
+      const ws = workspaceRef.current;
+      const targetDoc = ws?.activeDocument?.id === current.targetDocumentId
+        ? ws.activeDocument
+        : ws?.panelDocument?.id === current.targetDocumentId
+          ? ws.panelDocument
           : null;
 
-      if (!targetSnapshot) {
-        throw new Error("Could not load the target document after slice placement.");
+      if (!targetDoc) {
+        throw new Error("Could not find the target document for slice placement.");
       }
 
-      const anchor = buildTextAnchorFromSelection(targetSnapshot, {
+      const anchorSnapshot: StoredDocumentSnapshot = {
+        id: current.targetDocumentId,
+        title: targetDoc.title,
+        contentFormat: targetDoc.contentFormat,
+        contentSchemaVersion: targetDoc.contentSchemaVersion,
+        contentJson: editorSnapshot.contentJson,
+        plainText: editorSnapshot.plainText,
+        currentVersion: targetDoc.currentVersion,
+        updatedAt: targetDoc.updatedAt,
+      };
+
+      const anchor = buildTextAnchorFromSelection(anchorSnapshot, {
         from: Math.min(start, end),
         to: Math.max(start, end),
         empty: false,
@@ -193,7 +214,7 @@ export function usePendingPlacement(input: UsePendingPlacementInput): PendingPla
       commitInFlightRef.current = false;
       setBusy(false);
     }
-  }, [workspace, mainSelection, panelSelection, editorRefs, appendLog, applyWorkspace, flushPersistence, setBusy, commitInFlightRef]);
+  }, [workspace, mainSelection, panelSelection, editorRefs, appendLog, applyWorkspace, flushPersistence, setBusy, commitInFlightRef, workspaceRef]);
 
   const resetPlacement = useCallback(() => {
     setPlacement(null);
