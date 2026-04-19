@@ -3,11 +3,12 @@
 // inside the same transaction, so a replay from the log can reconstruct
 // the projection.
 //
-// Today this file covers reorderDocument (the one mutation that historically
-// shipped without an event append). Per Tier 3.1 of the foundation plan,
-// the rest of the document mutations (createDocument, updateDocumentMeta,
-// deleteDocument, applyDocumentTransaction) get folded in here when their
-// PR lands.
+// Coverage by mutation:
+//   - createDocument            → documentCreated event + initial checkpoint
+//   - updateDocumentMeta        → documentMetaUpdated event with title/folderId
+//   - deleteDocument            → documentDeleted event + slice-id cascade list
+//   - reorderDocument           → documentReordered event with both swap sides
+//   - applyDocumentTransaction  → N step rows + checkpoint on saveIntent
 
 import path from "node:path";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -32,6 +33,277 @@ beforeEach(() => {
 afterEach(() => {
   harness.close();
   rmSync(tempDir, { recursive: true, force: true });
+});
+
+describe("DocumentRepository.createDocument", () => {
+  it("appends exactly one documentCreated event with the title and folderId payload", () => {
+    const state = repository.ensureWorkspaceState();
+    const projectId = state.layout.activeProjectId!;
+    const folderId = state.folders[0]!.id;
+
+    const before = countEvents(harness, "document", "documentCreated");
+    const after = repository.createDocument({ projectId, folderId, title: "Scene 7" });
+    const afterCount = countEvents(harness, "document", "documentCreated");
+
+    expect(afterCount).toBe(before + 1);
+    const created = after.documents.find((d) => d.title === "Scene 7")!;
+    expect(created).toBeDefined();
+    expect(created.folderId).toBe(folderId);
+
+    const payload = latestEventPayload(harness, "document", "documentCreated");
+    expect(payload.title).toBe("Scene 7");
+    expect(payload.folderId).toBe(folderId);
+
+    // R3 invariant: a checkpoint at version 0 must exist for replay to
+    // start from somewhere when the user later emits steps.
+    const checkpoints = harness.getConnection()
+      .prepare("SELECT version FROM document_checkpoints WHERE document_id = ?")
+      .all(created.id) as Array<{ version: number }>;
+    expect(checkpoints.some((c) => c.version === 0)).toBe(true);
+  });
+
+  it("normalises an empty/whitespace title to 'Untitled Document' in both row and event", () => {
+    const state = repository.ensureWorkspaceState();
+    const projectId = state.layout.activeProjectId!;
+    const folderId = state.folders[0]!.id;
+
+    const after = repository.createDocument({ projectId, folderId, title: "   " });
+    const created = [...after.documents]
+      .filter((d) => d.folderId === folderId)
+      .sort((left, right) => right.ordering - left.ordering)[0]!;
+
+    expect(created.title).toBe("Untitled Document");
+    const payload = latestEventPayload(harness, "document", "documentCreated");
+    expect(payload.title).toBe("Untitled Document");
+  });
+});
+
+describe("DocumentRepository.updateDocumentMeta", () => {
+  it("appends one documentMetaUpdated event with the new title and folderId", () => {
+    const state = repository.ensureWorkspaceState();
+    const projectId = state.layout.activeProjectId!;
+    const folderId = state.folders[0]!.id;
+
+    const created = repository.createDocument({ projectId, folderId, title: "Working title" });
+    const docId = created.documents.find((d) => d.title === "Working title")!.id;
+
+    const before = countEvents(harness, "document", "documentMetaUpdated");
+    repository.updateDocumentMeta({ documentId: docId, title: "Final title" });
+    const after = countEvents(harness, "document", "documentMetaUpdated");
+
+    expect(after).toBe(before + 1);
+    const payload = latestEventPayload(harness, "document", "documentMetaUpdated");
+    expect(payload.title).toBe("Final title");
+    expect(payload.folderId).toBe(folderId);
+
+    const reloaded = repository.loadWorkspace().documents.find((d) => d.id === docId)!;
+    expect(reloaded.title).toBe("Final title");
+  });
+
+  it("re-orders the document into the destination folder when folderId changes", () => {
+    const state = repository.ensureWorkspaceState();
+    const projectId = state.layout.activeProjectId!;
+    const sourceFolderId = state.folders[0]!.id;
+
+    // Create a sibling folder so we have somewhere to move the doc.
+    const withFolder = repository.createFolder({ projectId, title: "Outline" });
+    const destFolderId = withFolder.folders.find((f) => f.title === "Outline")!.id;
+
+    const created = repository.createDocument({
+      projectId,
+      folderId: sourceFolderId,
+      title: "Mover",
+    });
+    const docId = created.documents.find((d) => d.title === "Mover")!.id;
+
+    repository.updateDocumentMeta({ documentId: docId, folderId: destFolderId });
+
+    const reloaded = repository.loadWorkspace().documents.find((d) => d.id === docId)!;
+    expect(reloaded.folderId).toBe(destFolderId);
+
+    const payload = latestEventPayload(harness, "document", "documentMetaUpdated");
+    expect(payload.folderId).toBe(destFolderId);
+  });
+});
+
+describe("DocumentRepository.deleteDocument", () => {
+  it("appends one documentDeleted event with the prior title", () => {
+    const state = repository.ensureWorkspaceState();
+    const projectId = state.layout.activeProjectId!;
+    const folderId = state.folders[0]!.id;
+
+    const created = repository.createDocument({ projectId, folderId, title: "To go" });
+    const docId = created.documents.find((d) => d.title === "To go")!.id;
+
+    const before = countEvents(harness, "document", "documentDeleted");
+    repository.deleteDocument({ documentId: docId });
+    const after = countEvents(harness, "document", "documentDeleted");
+
+    expect(after).toBe(before + 1);
+    const payload = latestEventPayload(harness, "document", "documentDeleted");
+    expect(payload.title).toBe("To go");
+
+    // The history rows must be cleaned up — deleteDocumentHistory runs
+    // inside the same outer transaction.
+    const remainingSteps = harness.getConnection()
+      .prepare("SELECT COUNT(*) AS count FROM document_steps WHERE document_id = ?")
+      .get(docId) as { count: number };
+    expect(remainingSteps.count).toBe(0);
+    const remainingCheckpoints = harness.getConnection()
+      .prepare("SELECT COUNT(*) AS count FROM document_checkpoints WHERE document_id = ?")
+      .get(docId) as { count: number };
+    expect(remainingCheckpoints.count).toBe(0);
+  });
+
+  it("returns the slice-id cascade list so the facade can fan out slice deletes", () => {
+    // Drive the cascade through the WorkspaceRepository facade since that's
+    // where the cross-aggregate transaction lives. The DocumentRepository
+    // delete returns the slice IDs; the facade is what calls deleteSlice.
+    const state = repository.ensureWorkspaceState();
+    const projectId = state.layout.activeProjectId!;
+    const folderId = state.folders[0]!.id;
+
+    const created = repository.createDocument({ projectId, folderId, title: "Has slices" });
+    const documentId = created.documents.find((d) => d.title === "Has slices")!.id;
+
+    const entityCreated = repository.createEntity({ projectId, name: "Cascade target" });
+    const entityId = entityCreated.layout.selectedEntityId!;
+
+    const sliceCreated = repository.createSlice({
+      projectId,
+      entityId,
+      documentId,
+      title: "Slice 1",
+      anchor: {
+        documentId,
+        from: 1,
+        to: 1,
+        exact: "",
+        prefix: "",
+        suffix: "",
+        blockPath: [0],
+        versionSeen: 0,
+      },
+    });
+    const sliceId = sliceCreated.slices.find((s) => s.documentId === documentId)!.id;
+
+    repository.deleteDocument({ documentId });
+
+    const afterDelete = repository.loadWorkspace();
+    expect(afterDelete.slices.some((s) => s.id === sliceId)).toBe(false);
+    expect(afterDelete.sliceBoundaries.some((b) => b.sliceId === sliceId)).toBe(false);
+  });
+});
+
+describe("DocumentRepository.applyDocumentTransaction", () => {
+  it("appends N step rows for N steps and advances the document version", () => {
+    const state = repository.ensureWorkspaceState();
+    const documentId = state.activeDocument!.id;
+    const baseVersion = state.activeDocument!.currentVersion;
+
+    const stepsBefore = countDocumentSteps(harness, documentId);
+    repository.applyDocumentTransaction({
+      documentId,
+      baseVersion,
+      title: state.activeDocument!.title,
+      steps: [{ stepType: "test-1" }, { stepType: "test-2" }, { stepType: "test-3" }],
+      inverseSteps: [{ stepType: "inv-1" }, { stepType: "inv-2" }, { stepType: "inv-3" }],
+      contentJson: { type: "doc", content: [{ type: "paragraph" }] },
+      plainText: "",
+    });
+    const stepsAfter = countDocumentSteps(harness, documentId);
+    expect(stepsAfter - stepsBefore).toBe(3);
+
+    const reloaded = repository.loadWorkspace();
+    const versionRow = harness.getConnection()
+      .prepare("SELECT current_version AS version FROM documents WHERE id = ?")
+      .get(documentId) as { version: number };
+    expect(versionRow.version).toBe(baseVersion + 3);
+    expect(reloaded.documents.some((d) => d.id === documentId)).toBe(true);
+
+    // Each row's version must increment monotonically from baseVersion + 1.
+    const rows = harness.getConnection()
+      .prepare(`
+        SELECT version
+        FROM document_steps
+        WHERE document_id = ?
+        ORDER BY version ASC
+      `)
+      .all(documentId) as Array<{ version: number }>;
+    const tail = rows.slice(rows.length - 3);
+    expect(tail.map((r) => r.version)).toEqual([baseVersion + 1, baseVersion + 2, baseVersion + 3]);
+  });
+
+  it("writes a checkpoint when saveIntent is true", () => {
+    const state = repository.ensureWorkspaceState();
+    const documentId = state.activeDocument!.id;
+    const baseVersion = state.activeDocument!.currentVersion;
+
+    const checkpointsBefore = countCheckpoints(harness, documentId);
+    repository.applyDocumentTransaction({
+      documentId,
+      baseVersion,
+      title: state.activeDocument!.title,
+      steps: [{ stepType: "save-step" }],
+      inverseSteps: [{ stepType: "inv-save-step" }],
+      contentJson: { type: "doc", content: [{ type: "paragraph" }] },
+      plainText: "",
+      saveIntent: true,
+    });
+    const checkpointsAfter = countCheckpoints(harness, documentId);
+
+    // INSERT OR REPLACE means the same (document_id, version) row is
+    // overwritten, but a new version means a new checkpoint row.
+    expect(checkpointsAfter).toBeGreaterThan(checkpointsBefore);
+    const latest = harness.getConnection()
+      .prepare(`
+        SELECT version, label
+        FROM document_checkpoints
+        WHERE document_id = ?
+        ORDER BY version DESC
+        LIMIT 1
+      `)
+      .get(documentId) as { version: number; label: string };
+    expect(latest.version).toBe(baseVersion + 1);
+    expect(latest.label).toBe("explicit-save");
+  });
+
+  it("does not write a checkpoint when saveIntent is omitted and the version is below the auto cadence", () => {
+    const state = repository.ensureWorkspaceState();
+    const documentId = state.activeDocument!.id;
+    const baseVersion = state.activeDocument!.currentVersion;
+
+    const checkpointsBefore = countCheckpoints(harness, documentId);
+    repository.applyDocumentTransaction({
+      documentId,
+      baseVersion,
+      title: state.activeDocument!.title,
+      steps: [{ stepType: "noisy-step" }],
+      inverseSteps: [{ stepType: "inv-noisy" }],
+      contentJson: { type: "doc", content: [{ type: "paragraph" }] },
+      plainText: "",
+    });
+    const checkpointsAfter = countCheckpoints(harness, documentId);
+
+    // The seed checkpoint at v0 stays; no new row at v1.
+    expect(checkpointsAfter).toBe(checkpointsBefore);
+  });
+
+  it("throws when baseVersion does not match the persisted currentVersion", () => {
+    const state = repository.ensureWorkspaceState();
+    const documentId = state.activeDocument!.id;
+    const baseVersion = state.activeDocument!.currentVersion;
+
+    expect(() => repository.applyDocumentTransaction({
+      documentId,
+      baseVersion: baseVersion + 5,
+      title: state.activeDocument!.title,
+      steps: [{ stepType: "stale" }],
+      inverseSteps: [{ stepType: "inv-stale" }],
+      contentJson: { type: "doc", content: [{ type: "paragraph" }] },
+      plainText: "",
+    })).toThrow(/Version mismatch/);
+  });
 });
 
 describe("DocumentRepository.reorderDocument", () => {
@@ -96,6 +368,20 @@ describe("DocumentRepository.reorderDocument", () => {
     expect(reorderEventsAfter).toBe(reorderEventsBefore);
   });
 });
+
+function countDocumentSteps(h: SqliteHarness, documentId: string): number {
+  const row = h.getConnection()
+    .prepare("SELECT COUNT(*) AS count FROM document_steps WHERE document_id = ?")
+    .get(documentId) as { count: number };
+  return row.count;
+}
+
+function countCheckpoints(h: SqliteHarness, documentId: string): number {
+  const row = h.getConnection()
+    .prepare("SELECT COUNT(*) AS count FROM document_checkpoints WHERE document_id = ?")
+    .get(documentId) as { count: number };
+  return row.count;
+}
 
 function countEvents(h: SqliteHarness, aggregate: string, eventType: string): number {
   const row = h.getConnection()
