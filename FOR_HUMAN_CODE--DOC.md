@@ -98,10 +98,13 @@ Where the domain concepts live in the code right now. Update this section whenev
 | IPC handler registration | [src/main/index.ts](src/main/index.ts) |
 | Preload forwarders (context bridge) | [src/preload/index.ts](src/preload/index.ts) |
 | Editor host (ProseMirror view) | [src/renderer/editor/HarnessEditor.tsx](src/renderer/editor/HarnessEditor.tsx) |
-| Renderer-side anchor + match utilities | [src/renderer/editor/workbenchUtils.ts](src/renderer/editor/workbenchUtils.ts) |
+| Renderer-side anchor + match utilities | [src/renderer/editor/editorUtils.ts](src/renderer/editor/editorUtils.ts) |
 | Workspace persistence coordinator | [src/renderer/state/useWorkspace.ts](src/renderer/state/useWorkspace.ts) |
-| Mutation handlers hook | [src/renderer/state/useWorkspaceActions.ts](src/renderer/state/useWorkspaceActions.ts) |
-| Everlink + pending-placement flow | [src/renderer/state/useEverlinkPlacement.ts](src/renderer/state/useEverlinkPlacement.ts) |
+| Mutation handlers facade (composes the per-aggregate hooks) | [src/renderer/state/useWorkspaceActions.ts](src/renderer/state/useWorkspaceActions.ts) |
+| Per-aggregate mutation hooks (project / document / entity / slice+layout) | [src/renderer/state/useProjectActions.ts](src/renderer/state/useProjectActions.ts), [src/renderer/state/useDocumentActions.ts](src/renderer/state/useDocumentActions.ts), [src/renderer/state/useEntityActions.ts](src/renderer/state/useEntityActions.ts), [src/renderer/state/useSliceAndLayoutActions.ts](src/renderer/state/useSliceAndLayoutActions.ts) |
+| Everlink session orchestration (entity / target document choice) | [src/renderer/state/useEverlinkSession.ts](src/renderer/state/useEverlinkSession.ts) |
+| Everlink pending-placement (in-editor range + commit) | [src/renderer/state/usePendingPlacement.ts](src/renderer/state/usePendingPlacement.ts) |
+| Everlink composition facade (threads session ↔ placement) | [src/renderer/state/useEverlinkPlacement.ts](src/renderer/state/useEverlinkPlacement.ts) |
 | Memoized id-indexed workspace lookups | [src/renderer/state/useWorkspaceLookups.ts](src/renderer/state/useWorkspaceLookups.ts) |
 | Editor selection state | [src/renderer/state/useEditorSelections.ts](src/renderer/state/useEditorSelections.ts) |
 | Short-lived UI session types (EverlinkSession, RuleFormState, HoverPreview, etc.) | [src/renderer/state/sessionTypes.ts](src/renderer/state/sessionTypes.ts) |
@@ -114,7 +117,12 @@ Where the domain concepts live in the code right now. Update this section whenev
 | Feature: slice viewer, panel-document view, hover preview | [src/renderer/features/panes/SliceViewer.tsx](src/renderer/features/panes/SliceViewer.tsx), [src/renderer/features/panes/PanelDocumentView.tsx](src/renderer/features/panes/PanelDocumentView.tsx), [src/renderer/features/panes/HoverPreview.tsx](src/renderer/features/panes/HoverPreview.tsx) |
 | Feature: run log | [src/renderer/features/history/RunLog.tsx](src/renderer/features/history/RunLog.tsx) |
 | App shell (composition only) | [src/renderer/App.tsx](src/renderer/App.tsx) |
-| Tests | [src/shared/anchoring.test.ts](src/shared/anchoring.test.ts), [src/db/repositories/WorkspaceRepository.test.ts](src/db/repositories/WorkspaceRepository.test.ts) |
+| Tests — anchor math | [src/shared/anchoring.test.ts](src/shared/anchoring.test.ts) |
+| Tests — repositories (event log + cascade + replay) | [src/db/repositories/WorkspaceRepository.test.ts](src/db/repositories/WorkspaceRepository.test.ts), [src/db/repositories/DocumentRepository.test.ts](src/db/repositories/DocumentRepository.test.ts), [src/db/repositories/EntityRepository.test.ts](src/db/repositories/EntityRepository.test.ts), [src/db/repositories/HistoryRepository.test.ts](src/db/repositories/HistoryRepository.test.ts) |
+| Tests — schema migrations | [src/db/migrations.test.ts](src/db/migrations.test.ts) |
+| Tests — IPC contract symmetry (channels ↔ bridge ↔ schemas ↔ handlers) | [src/shared/contracts/harnessApi.test.ts](src/shared/contracts/harnessApi.test.ts) |
+| Tests — anchor selection building | [src/renderer/editor/editorUtils.test.ts](src/renderer/editor/editorUtils.test.ts) |
+| Tests — clipboard prose-only invariant | [src/renderer/editor/HarnessEditor.test.ts](src/renderer/editor/HarnessEditor.test.ts) |
 
 ## Data and storage stance
 SQLite is the canonical runtime store.

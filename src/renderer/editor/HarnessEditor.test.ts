@@ -11,7 +11,7 @@
 //      A future change that swapped this for a richer serializer would
 //      silently leak workbench markup into the clipboard.
 //
-//   2. buildClipboardAudit (workbenchUtils) scans copied HTML for the
+//   2. buildClipboardAudit (editorUtils) scans copied HTML for the
 //      known leaky class-name markers (pm-match-highlight,
 //      pm-slice-boundary, etc.) and surfaces them to dev-mode harnesses.
 //      A future change that dropped a marker from the audit list would
@@ -32,7 +32,7 @@ import { Fragment, Mark, Node as ProseMirrorNode, Slice } from "prosemirror-mode
 import { schema as basicSchema } from "prosemirror-schema-basic";
 import { describe, expect, it } from "vitest";
 
-import { buildClipboardAudit } from "./workbenchUtils";
+import { buildClipboardAudit } from "./editorUtils";
 
 const repoRoot = path.resolve(__dirname, "..", "..", "..");
 const harnessEditorSource = readFileSync(

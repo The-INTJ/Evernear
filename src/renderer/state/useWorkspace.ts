@@ -11,7 +11,7 @@ import type {
   WorkspaceStatus,
 } from "../../shared/domain/workspace";
 import type { HarnessEditorSnapshot } from "../editor/HarnessEditor";
-import type { SerializedTransactionBundle } from "../editor/workbenchUtils";
+import type { SerializedTransactionBundle } from "../editor/editorUtils";
 import { stringifyError } from "../utils/formatting";
 import type { RunLogEntry, RunLogTone } from "./sessionTypes";
 

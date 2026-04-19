@@ -10,7 +10,7 @@ import type {
   SliceRecord,
   WorkspaceState,
 } from "../../shared/domain/workspace";
-import type { EditorMatchingRule } from "../editor/workbenchUtils";
+import type { EditorMatchingRule } from "../editor/editorUtils";
 
 export type WorkspaceLookups = {
   entitiesById: Map<string, EntityRecord>;

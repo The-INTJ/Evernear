@@ -20,7 +20,7 @@ import type {
   EditorMatchingRule,
   EditorSelectionInfo,
   SerializedTransactionBundle,
-} from "../../editor/workbenchUtils";
+} from "../../editor/editorUtils";
 import { formatCount } from "../../utils/formatting";
 import { DEBUG_PANELS } from "../../utils/devFlags";
 

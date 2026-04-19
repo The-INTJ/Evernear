@@ -22,7 +22,7 @@ import type {
 import {
   buildTextAnchorFromSelection,
   type EditorSelectionInfo,
-} from "../editor/workbenchUtils";
+} from "../editor/editorUtils";
 import type { StoredDocumentSnapshot } from "../../shared/domain/document";
 import { stringifyError, truncate } from "../utils/formatting";
 import type {

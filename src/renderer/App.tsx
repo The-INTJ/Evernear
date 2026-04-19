@@ -13,7 +13,7 @@ import type {
   HarnessEditorHandle,
   HarnessEditorSnapshot,
 } from "./editor/HarnessEditor";
-import type { SerializedTransactionBundle } from "./editor/workbenchUtils";
+import type { SerializedTransactionBundle } from "./editor/editorUtils";
 
 import { useEditorSelections } from "./state/useEditorSelections";
 import { useEverlinkPlacement } from "./state/useEverlinkPlacement";

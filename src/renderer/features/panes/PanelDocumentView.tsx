@@ -11,7 +11,7 @@ import {
 import type {
   EditorSelectionInfo,
   SerializedTransactionBundle,
-} from "../../editor/workbenchUtils";
+} from "../../editor/editorUtils";
 import { DEBUG_PANELS } from "../../utils/devFlags";
 
 type Props = {

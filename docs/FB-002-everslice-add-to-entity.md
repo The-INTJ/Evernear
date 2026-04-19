@@ -44,7 +44,7 @@ From any open document, the author can highlight a passage and, via one modal, p
 - If the modal steals focus from the editor, the frozen selection can get visually lost. Mitigation: the modal keeps the selection highlighted in the editor (reuse the existing pending-slice decoration style in `HarnessEditor`).
 - Search across many entities could lag if the filter runs on every keystroke unbatched. Mitigation: cap result rows at ~50 and re-evaluate only if authors report slowness on a project with more than a few hundred entities.
 - The "create new entity" path makes it easy to generate near-duplicate entities. Mitigation: if the typed name matches an existing entity's name or alias case-insensitively, hoist that entity to the top of the list and require an explicit "create anyway" click.
-- R7: `useEverlinkPlacement` is already at the hook cap. The symmetry is tempting — do *not* merge the two. Keep `useEverslicePlacement` separate; shared helpers (anchor building, slice creation) live in `editor/workbenchUtils.ts` or a new `src/renderer/state/everlinkShared.ts` if extraction is needed.
+- R7: `useEverlinkPlacement` is already at the hook cap. The symmetry is tempting — do *not* merge the two. Keep `useEverslicePlacement` separate; shared helpers (anchor building, slice creation) live in `editor/editorUtils.ts` or a new `src/renderer/state/everlinkShared.ts` if extraction is needed.
 
 ## Proof
 - From a document with text, selecting a phrase and clicking `Everslice it!` opens a modal pre-filled with the selection.

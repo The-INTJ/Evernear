@@ -145,7 +145,7 @@ The most recent commit message is *"Phase 1.5, refining and furthering tests"* b
 **Priority order:**
 
 1. **Repository integration tests** against a throwaway SQLite file (not mocks). Scenarios: `createProject` → `loadWorkspace` round-trip; `applyDocumentTransaction` appends exactly one event and N steps; `replayDocumentToVersion` reconstructs state correctly from checkpoint + steps.
-2. **Anchor resolution unit tests.** Feed [workbenchUtils.ts](src/renderer/editor/workbenchUtils.ts) canonical before/after documents and verify `TextAnchor` survival, including the fuzzy-fallback path in `resolveAnchorWithFallback`. This is load-bearing algorithmic code with zero coverage today.
+2. **Anchor resolution unit tests.** Feed [editorUtils.ts](src/renderer/editor/editorUtils.ts) canonical before/after documents and verify `TextAnchor` survival, including the fuzzy-fallback path in `resolveAnchorWithFallback`. This is load-bearing algorithmic code with zero coverage today.
 3. **IPC contract tests.** Typecheck that every `HARNESS_CHANNELS` key has a matching `HarnessBridge` method and a matching `ipcMain.handle` registration. Cheap to write, catches an entire class of drift.
 
 Use Vitest — it runs on Vite's config and keeps tooling count low. Tests live next to source (`foo.test.ts` beside `foo.ts`).

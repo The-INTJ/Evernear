@@ -12,7 +12,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 
-import { normalizeForMatch } from "../editor/workbenchUtils";
+import { normalizeForMatch } from "../editor/editorUtils";
 import { truncate } from "../utils/formatting";
 import type { EverlinkSession } from "./sessionTypes";
 import type { WorkspaceHook } from "./useWorkspace";

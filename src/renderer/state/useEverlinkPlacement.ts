@@ -21,7 +21,7 @@ import type {
   HarnessEditorHandle,
   PendingSliceRange,
 } from "../editor/HarnessEditor";
-import type { EditorSelectionInfo } from "../editor/workbenchUtils";
+import type { EditorSelectionInfo } from "../editor/editorUtils";
 import type {
   EverlinkSession,
   PendingSlicePlacement,

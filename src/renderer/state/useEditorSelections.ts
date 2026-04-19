@@ -3,7 +3,7 @@
 
 import { useCallback, useState } from "react";
 
-import type { EditorSelectionInfo } from "../editor/workbenchUtils";
+import type { EditorSelectionInfo } from "../editor/editorUtils";
 
 export type SelectionSurface = "main" | "panel";
 

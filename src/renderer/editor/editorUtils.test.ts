@@ -24,7 +24,7 @@ import {
   resolveAnchorWithFallback,
   serializeNodePlainText,
 } from "../../shared/anchoring";
-import { buildTextAnchorFromSelection } from "./workbenchUtils";
+import { buildTextAnchorFromSelection } from "./editorUtils";
 
 function docOf(paragraphs: string[]): ProseMirrorNode {
   return basicSchema.nodeFromJSON({

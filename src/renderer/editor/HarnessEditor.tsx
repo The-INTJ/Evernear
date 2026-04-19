@@ -28,7 +28,7 @@ import {
   type SerializedTransactionBundle,
   collectMatchesForVisibleBlocks,
   type VisibleBlockRange,
-} from "./workbenchUtils";
+} from "./editorUtils";
 
 export type HarnessEditorSnapshot = {
   contentJson: JsonObject;

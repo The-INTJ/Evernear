@@ -5,7 +5,7 @@
 // reference one source without tempting App.tsx to redeclare them.
 
 import type { MatchingRuleKind } from "../../shared/domain/workspace";
-import type { EditorSelectionInfo } from "../editor/workbenchUtils";
+import type { EditorSelectionInfo } from "../editor/editorUtils";
 
 export type RunLogTone = "info" | "success" | "warn";
 
