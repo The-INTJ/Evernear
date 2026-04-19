@@ -694,6 +694,89 @@ select {
   opacity: 0.78;
 }
 
+.everslice-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(5, 12, 17, 0.64);
+  backdrop-filter: blur(4px);
+}
+
+.everslice-modal-card {
+  width: min(560px, 100%);
+  max-height: calc(100vh - 96px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px 22px 18px;
+  border-radius: 22px;
+  border: 1px solid var(--panel-border);
+  background: rgba(12, 25, 33, 0.96);
+  box-shadow: var(--panel-shadow);
+}
+
+.everslice-modal-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.everslice-modal-header h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.everslice-modal-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  max-height: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.everslice-modal-empty {
+  padding: 10px 12px;
+  color: var(--text-soft);
+  font-size: 0.85rem;
+}
+
+.everslice-modal-row {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.everslice-modal-row--highlight {
+  background: linear-gradient(135deg, rgba(245, 185, 113, 0.22), rgba(245, 185, 113, 0.08));
+  border-color: rgba(245, 185, 113, 0.4);
+}
+
+.everslice-modal-row--create {
+  border-style: dashed;
+}
+
+.everslice-modal-row--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.everslice-modal-row__name {
+  color: var(--text);
+  font-weight: 500;
+}
+
 @media (max-width: 1380px) {
   .mvp-grid {
     grid-template-columns: 280px minmax(0, 1fr);

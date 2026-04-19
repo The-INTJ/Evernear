@@ -1,13 +1,13 @@
 // IPC contract symmetry. The HARNESS_CHANNELS catalog, the HarnessBridge
 // interface, the Zod input validators, and the ipcMain.handle registrations
-// in main/index.ts all need to stay in lock-step. TypeScript catches some
-// of this at compile time but not all of it (interfaces erase at runtime,
-// schemas live in a parallel const, channel constants are strings the
-// compiler does not cross-check against handler registrations).
+// in main/setupIpcHandlers.ts all need to stay in lock-step. TypeScript
+// catches some of this at compile time but not all of it (interfaces erase
+// at runtime, schemas live in a parallel const, channel constants are strings
+// the compiler does not cross-check against handler registrations).
 //
 // These tests parse the relevant files as text rather than importing them.
-// Importing main/index.ts pulls Electron into the test environment, and we
-// don't want to spin up the app to verify handler-name parity.
+// Importing the main-process sources pulls Electron into the test environment,
+// and we don't want to spin up the app to verify handler-name parity.
 
 import path from "node:path";
 import { readFileSync } from "node:fs";
@@ -19,7 +19,7 @@ import { HARNESS_CHANNELS } from "./harnessApi";
 const repoRoot = path.resolve(__dirname, "..", "..", "..");
 const harnessApiSource = readFileSync(path.join(repoRoot, "src", "shared", "contracts", "harnessApi.ts"), "utf8");
 const harnessSchemasSource = readFileSync(path.join(repoRoot, "src", "shared", "contracts", "harnessSchemas.ts"), "utf8");
-const mainIndexSource = readFileSync(path.join(repoRoot, "src", "main", "index.ts"), "utf8");
+const setupIpcHandlersSource = readFileSync(path.join(repoRoot, "src", "main", "setupIpcHandlers.ts"), "utf8");
 
 // Channels whose handler is a getter or otherwise takes no validated input
 // payload (and therefore intentionally has no Zod schema in harnessSchemas).
@@ -65,11 +65,11 @@ describe("HarnessBridge interface symmetry", () => {
   });
 });
 
-describe("ipcMain.handle registrations in src/main/index.ts", () => {
+describe("ipcMain.handle registrations in src/main/setupIpcHandlers.ts", () => {
   it("registers an ipcMain.handle for every HARNESS_CHANNELS key", () => {
     for (const channelKey of Object.keys(HARNESS_CHANNELS)) {
       const pattern = new RegExp(`ipcMain\\.handle\\(\\s*C\\.${channelKey}\\b`);
-      expect(pattern.test(mainIndexSource)).toBe(true);
+      expect(pattern.test(setupIpcHandlersSource)).toBe(true);
     }
   });
 });

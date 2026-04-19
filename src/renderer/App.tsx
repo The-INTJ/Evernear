@@ -17,6 +17,7 @@ import type { SerializedTransactionBundle } from "./editor/editorUtils";
 
 import { useEditorSelections } from "./state/useEditorSelections";
 import { useEverlinkPlacement } from "./state/useEverlinkPlacement";
+import { useEverslicePlacement } from "./state/useEverslicePlacement";
 import { useWorkspace } from "./state/useWorkspace";
 import { useWorkspaceActions } from "./state/useWorkspaceActions";
 import { useWorkspaceLookups } from "./state/useWorkspaceLookups";
@@ -36,6 +37,7 @@ import { TitleBar } from "./features/chrome/TitleBar";
 import { NavPanel } from "./features/documents/NavPanel";
 import { EditorPane } from "./features/documents/EditorPane";
 import { EverlinkPanel } from "./features/entities/EverlinkPanel";
+import { EversliceChooser } from "./features/entities/EversliceChooser";
 import { SlicePlacementPanel } from "./features/panes/SlicePlacementPanel";
 import { EntityList } from "./features/entities/EntityList";
 import { EntityDetail } from "./features/entities/EntityDetail";
@@ -61,6 +63,12 @@ export function App() {
     selections,
     lookups,
     editorRefs: { main: mainEditorRef, panel: panelEditorRef },
+  });
+
+  const everslice = useEverslicePlacement({
+    workspaceHook,
+    selections,
+    editorRef: mainEditorRef,
   });
 
   const activeProject = getActiveProject(workspace);
@@ -281,13 +289,15 @@ export function App() {
           onDeleteDocument={actions.deleteDocument}
           onOpenEverlinkChooser={() => void everlink.openChooser()}
           everlinkLabel={everlinkLabel}
+          onOpenEverslice={() => everslice.open()}
+          eversliceDisabled={selections.mainSelection.empty}
           pendingWrites={pendingWrites}
           documentsById={lookups.documentsById}
           emptyDocumentJson={emptySnapshot.contentJson}
           emptyDocumentKey={emptySnapshot.id}
           editorRules={lookups.editorRules}
           visibleBoundaries={[]}
-          pendingRange={everlink.mainPendingRange}
+          pendingRange={everlink.mainPendingRange ?? everslice.frozenPendingRange}
           onSnapshotChange={handleMainSnapshotChange}
           onSelectionChange={(selection) => everlink.handleSelectionChange("main", selection)}
           onEntityHover={handleEditorHover}
@@ -385,6 +395,15 @@ export function App() {
           onPin={handlePinHoverPreview}
         />
       ) : null}
+
+      <EversliceChooser
+        isOpen={everslice.isOpen}
+        sourceText={everslice.sourceText}
+        workspace={workspace}
+        onClose={everslice.close}
+        onConfirmExisting={(entityId) => void everslice.confirmExisting(entityId)}
+        onConfirmNew={(name) => void everslice.confirmNew(name)}
+      />
     </div>
   );
 }

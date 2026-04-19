@@ -19,12 +19,8 @@ import type {
   HarnessEditorHandle,
   PendingSliceRange,
 } from "../editor/HarnessEditor";
-import {
-  buildTextAnchorFromSelection,
-  type EditorSelectionInfo,
-} from "../editor/editorUtils";
-import type { StoredDocumentSnapshot } from "../../shared/domain/document";
-import { stringifyError, truncate } from "../utils/formatting";
+import type { EditorSelectionInfo } from "../editor/editorUtils";
+import { commitSliceWithFreshAnchor } from "./everlinkShared";
 import type {
   EverlinkSession,
   PendingSlicePlacement,
@@ -123,7 +119,6 @@ export function usePendingPlacement(input: UsePendingPlacementInput): PendingPla
     if (!workspace || !current) return;
     const activeProject = workspace.projects.find((project) => project.id === workspace.layout.activeProjectId) ?? null;
     if (!activeProject) return;
-    if (commitInFlightRef.current) return;
 
     const editor = current.surface === "main" ? editorRefs.main.current : editorRefs.panel.current;
     if (!editor) {
@@ -144,6 +139,10 @@ export function usePendingPlacement(input: UsePendingPlacementInput): PendingPla
       return;
     }
 
+    // Empty-cursor placement auto-fills with the source text so the slice
+    // has a real range to anchor against. This is Everlink's placement
+    // affordance — Everslice never hits this branch because its selection
+    // is always captured non-empty.
     if (start === end) {
       const insertedRange = editor.replaceSelection(current.sourceText);
       if (!insertedRange) {
@@ -154,65 +153,24 @@ export function usePendingPlacement(input: UsePendingPlacementInput): PendingPla
       end = insertedRange.to;
     }
 
-    setBusy(true);
-    commitInFlightRef.current = true;
+    const committed = await commitSliceWithFreshAnchor({
+      editor,
+      projectId: activeProject.id,
+      entityId: current.entityId,
+      targetDocumentId: current.targetDocumentId,
+      sourceText: current.sourceText,
+      start,
+      end,
+      workspaceRef,
+      flushPersistence,
+      applyWorkspace,
+      appendLog,
+      setBusy,
+      commitInFlightRef,
+    });
 
-    try {
-      await flushPersistence();
-
-      // Snapshot the editor and read the persisted document version
-      // synchronously, before any further await. This pair is the anchor
-      // substrate: the editor's contentJson is what start/end index into,
-      // and workspaceRef.currentVersion is what the resolver will start
-      // from when later mapping the anchor through subsequent edits.
-      const editorSnapshot = editor.getSnapshot();
-      const ws = workspaceRef.current;
-      const targetDoc = ws?.activeDocument?.id === current.targetDocumentId
-        ? ws.activeDocument
-        : ws?.panelDocument?.id === current.targetDocumentId
-          ? ws.panelDocument
-          : null;
-
-      if (!targetDoc) {
-        throw new Error("Could not find the target document for slice placement.");
-      }
-
-      const anchorSnapshot: StoredDocumentSnapshot = {
-        id: current.targetDocumentId,
-        title: targetDoc.title,
-        contentFormat: targetDoc.contentFormat,
-        contentSchemaVersion: targetDoc.contentSchemaVersion,
-        contentJson: editorSnapshot.contentJson,
-        plainText: editorSnapshot.plainText,
-        currentVersion: targetDoc.currentVersion,
-        updatedAt: targetDoc.updatedAt,
-      };
-
-      const anchor = buildTextAnchorFromSelection(anchorSnapshot, {
-        from: Math.min(start, end),
-        to: Math.max(start, end),
-        empty: false,
-        text: current.sourceText,
-      });
-
-      if (!anchor) {
-        throw new Error("Could not build an anchored slice range from the committed placement.");
-      }
-
-      const nextWorkspace = await window.evernear.createSlice({
-        projectId: activeProject.id,
-        entityId: current.entityId,
-        documentId: current.targetDocumentId,
-        title: truncate(current.sourceText.trim(), 42),
-        anchor,
-      });
-      applyWorkspace(nextWorkspace, "Committed the slice and linked it to the selected entity.");
+    if (committed) {
       setPlacement(null);
-    } catch (error) {
-      appendLog(`Slice placement failed: ${stringifyError(error)}`, "warn");
-    } finally {
-      commitInFlightRef.current = false;
-      setBusy(false);
     }
   }, [workspace, mainSelection, panelSelection, editorRefs, appendLog, applyWorkspace, flushPersistence, setBusy, commitInFlightRef, workspaceRef]);
 

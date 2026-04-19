@@ -36,6 +36,8 @@ type Props = {
   onDeleteDocument: () => void;
   onOpenEverlinkChooser: () => void;
   everlinkLabel: string;
+  onOpenEverslice: () => void;
+  eversliceDisabled: boolean;
   pendingWrites: number;
   documentsById: Map<string, DocumentSummary>;
   emptyDocumentJson: unknown;
@@ -70,6 +72,8 @@ export const EditorPane = forwardRef<HarnessEditorHandle, Props>(function Editor
     onDeleteDocument,
     onOpenEverlinkChooser,
     everlinkLabel,
+    onOpenEverslice,
+    eversliceDisabled,
     pendingWrites,
     documentsById,
     emptyDocumentJson,
@@ -120,6 +124,8 @@ export const EditorPane = forwardRef<HarnessEditorHandle, Props>(function Editor
             onReorderDocument={onReorderDocument}
             onToggleHighlights={onToggleHighlights}
             onOpenEverlinkChooser={onOpenEverlinkChooser}
+            onOpenEverslice={onOpenEverslice}
+            eversliceDisabled={eversliceDisabled}
             onDeleteDocument={onDeleteDocument}
             workspace={workspace}
             everlinkLabel={everlinkLabel}
@@ -182,6 +188,8 @@ function ToolbarButtons({
   onReorderDocument,
   onToggleHighlights,
   onOpenEverlinkChooser,
+  onOpenEverslice,
+  eversliceDisabled,
   onDeleteDocument,
   workspace,
   everlinkLabel,
@@ -192,6 +200,8 @@ function ToolbarButtons({
   onReorderDocument: (direction: "up" | "down") => void;
   onToggleHighlights: () => void;
   onOpenEverlinkChooser: () => void;
+  onOpenEverslice: () => void;
+  eversliceDisabled: boolean;
   onDeleteDocument: () => void;
   workspace: WorkspaceState | null;
   everlinkLabel: string;
@@ -217,6 +227,7 @@ function ToolbarButtons({
           {fullScreen ? "Exit Full Screen" : "Full Screen"}
         </button>
       ) : null}
+      <button className="primary-button" onClick={onOpenEverslice} type="button" disabled={eversliceDisabled}>Everslice it!</button>
       <button className="primary-button" onClick={onOpenEverlinkChooser} type="button">{everlinkLabel}</button>
       <button className="ghost-button ghost-button--danger" onClick={onDeleteDocument} type="button">
         Delete Doc
