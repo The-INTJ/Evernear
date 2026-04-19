@@ -47,6 +47,7 @@ export const EVENT_TYPES = {
 
   sliceCreated: "sliceCreated",
   sliceBoundaryAutoResolved: "sliceBoundaryAutoResolved",
+  sliceBoundaryManuallyMoved: "sliceBoundaryManuallyMoved",
 } as const;
 
 export type EventType = (typeof EVENT_TYPES)[keyof typeof EVENT_TYPES];
@@ -86,6 +87,11 @@ export type EventPayloadMap = {
     documentId: string;
   };
   sliceBoundaryAutoResolved: {
+    sliceId: string;
+    status: AnchorResolutionStatus;
+    reason: string;
+  };
+  sliceBoundaryManuallyMoved: {
     sliceId: string;
     status: AnchorResolutionStatus;
     reason: string;

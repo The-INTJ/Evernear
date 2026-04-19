@@ -72,6 +72,9 @@ const bridge: HarnessBridge = {
   async deleteSlice(input) {
     return ipcRenderer.invoke(HARNESS_CHANNELS.deleteSlice, input);
   },
+  async updateSliceBoundary(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.updateSliceBoundary, input);
+  },
   async writeCheckpoint(documentId, label) {
     await ipcRenderer.invoke(HARNESS_CHANNELS.writeCheckpoint, documentId, label);
   },

@@ -192,6 +192,61 @@ describe("transaction boundaries", () => {
   });
 });
 
+describe("slice boundary mutations", () => {
+  it("updateSliceBoundary re-captures excerpt and appends sliceBoundaryManuallyMoved", () => {
+    const state = repository.ensureWorkspaceState();
+    const projectId = state.layout.activeProjectId!;
+    const documentId = state.activeDocument!.id;
+
+    const entity = repository.createEntity({ projectId, name: "Protagonist" });
+    const entityId = entity.layout.selectedEntityId!;
+
+    const initialAnchor = {
+      documentId,
+      from: 1,
+      to: 12,
+      exact: "Hello world",
+      prefix: "",
+      suffix: "",
+      blockPath: [0],
+      versionSeen: 0,
+    };
+    const created = repository.createSlice({
+      projectId,
+      entityId,
+      documentId,
+      title: "Greeting",
+      anchor: initialAnchor,
+    });
+    const boundary = created.sliceBoundaries[0]!;
+
+    const eventsBefore = countEvents(harness, "sliceBoundary", "sliceBoundaryManuallyMoved");
+
+    const nextAnchor = {
+      ...initialAnchor,
+      from: 14,
+      to: 28,
+      exact: "Universe greets",
+      prefix: "Hello world ",
+      suffix: " back",
+    };
+    const updated = repository.updateSliceBoundary({ boundaryId: boundary.id, anchor: nextAnchor });
+
+    expect(updated.anchor.from).toBe(14);
+    expect(updated.anchor.exact).toBe("Universe greets");
+    expect(updated.resolution.status).toBe("resolved");
+    expect(updated.resolution.reason).toMatch(/manual/);
+
+    const eventsAfter = countEvents(harness, "sliceBoundary", "sliceBoundaryManuallyMoved");
+    expect(eventsAfter).toBe(eventsBefore + 1);
+
+    const projection = repository.loadWorkspace().sliceBoundaries.find((b) => b.id === boundary.id)!;
+    expect(projection.anchor.exact).toBe("Universe greets");
+    const slice = repository.loadWorkspace().slices.find((s) => s.id === boundary.sliceId)!;
+    expect(slice.excerpt).toBe("Universe greets");
+  });
+});
+
 describe("replay", () => {
   it("replayDocumentToVersion reconstructs the document at its current checkpoint", () => {
     const state = repository.ensureWorkspaceState();

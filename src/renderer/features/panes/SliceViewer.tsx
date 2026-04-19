@@ -12,7 +12,6 @@ type Props = {
 export function SliceViewer({ selectedEntity, entitySlices, onOpenSliceInPanel, onDeleteSlice }: Props) {
   return (
     <section className="panel-section panel-section--grow">
-      <p className="section-kicker">Slices</p>
       <h2>Slice Viewer</h2>
       <div className="stack-list">
         {entitySlices.length === 0 ? (

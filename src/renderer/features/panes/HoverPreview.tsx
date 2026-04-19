@@ -9,19 +9,22 @@ type Props = {
   slices: ResolvedSliceView[];
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
+  onPin?: () => void;
 };
 
-export function HoverPreview({ hover, entity, slices, onMouseEnter, onMouseLeave }: Props) {
+export function HoverPreview({ hover, entity, slices, onMouseEnter, onMouseLeave, onPin }: Props) {
   if (!entity) return null;
   return (
     <div
       className="hover-preview"
-      style={{ left: hover.x + 18, top: hover.y + 18 }}
+      style={{ left: hover.x + 12, top: hover.y + 12 }}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
+      onClick={onPin}
+      role={onPin ? "button" : undefined}
+      title={onPin ? "Click to dock as a panel" : undefined}
     >
       <div className="hover-preview__header">
-        <p className="section-kicker">Preview</p>
         <h3>{entity.name}</h3>
       </div>
       <div className="hover-preview__body">

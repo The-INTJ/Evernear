@@ -235,6 +235,18 @@ export function installDevBrowserBridge(): void {
     async deleteMatchingRule() { return snapshot(); },
     async createSlice() { return snapshot(); },
     async deleteSlice() { return snapshot(); },
+    async updateSliceBoundary(input) {
+      const existing = workspace.sliceBoundaries.find((b) => b.id === input.boundaryId);
+      if (!existing) {
+        throw new Error(`Unknown slice boundary: ${input.boundaryId}`);
+      }
+      return {
+        ...existing,
+        anchor: input.anchor,
+        resolution: { status: "resolved", reason: "manually repositioned by author", anchor: input.anchor },
+        updatedAt: new Date().toISOString(),
+      };
+    },
     async writeCheckpoint() { /* noop */ },
     async replayDocumentToVersion(documentId) {
       const active = workspace.activeDocument;

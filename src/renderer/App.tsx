@@ -32,7 +32,7 @@ import {
   selectedSlicesForEntity,
 } from "./utils/workspace";
 
-import { TopBar } from "./features/projects/TopBar";
+import { TitleBar } from "./features/chrome/TitleBar";
 import { NavPanel } from "./features/documents/NavPanel";
 import { EditorPane } from "./features/documents/EditorPane";
 import { EverlinkPanel } from "./features/entities/EverlinkPanel";
@@ -78,6 +78,7 @@ export function App() {
   const [entityNameDraft, setEntityNameDraft] = useState("");
   const [ruleForm, setRuleForm] = useState<RuleFormState>(initialRuleForm);
   const [hoverPreview, setHoverPreview] = useState<HoverPreviewState | null>(null);
+  const [editorFullScreen, setEditorFullScreen] = useState(false);
 
   useEffect(() => {
     setProjectNameDraft(activeProject?.name ?? "");
@@ -132,24 +133,9 @@ export function App() {
     return workspace.matchingRules.filter((rule) => rule.entityId === selectedEntity.id);
   }, [workspace, selectedEntity]);
 
-  const mainVisibleBoundaries = useMemo(() => {
-    if (!workspace || !activeDocument) return [];
-    const allowed = new Set<string>();
-    if (selectedEntity) {
-      workspace.entitySlices
-        .filter((link) => link.entityId === selectedEntity.id)
-        .forEach((link) => allowed.add(link.sliceId));
-    }
-    if (everlink.pendingPlacement?.entityId) {
-      workspace.entitySlices
-        .filter((link) => link.entityId === everlink.pendingPlacement!.entityId)
-        .forEach((link) => allowed.add(link.sliceId));
-    }
-    return workspace.sliceBoundaries.filter((boundary) =>
-      boundary.documentId === activeDocument.id
-      && (allowed.size === 0 || allowed.has(boundary.sliceId)));
-  }, [workspace, activeDocument, selectedEntity, everlink.pendingPlacement]);
-
+  // Slice boundaries are intentionally not painted in the main editor —
+  // it stays a pure writing surface. Boundaries only appear in the hover
+  // preview and the docked panel (PanelDocumentView).
   const panelVisibleBoundaries = useMemo(() => {
     if (!workspace || !panelDocument) return [];
     const selectedSliceIds = new Set<string>(
@@ -218,7 +204,7 @@ export function App() {
       hoverCloseTimeoutRef.current = setTimeout(() => {
         setHoverPreview(null);
         hoverCloseTimeoutRef.current = null;
-      }, 180);
+      }, 350);
       return;
     }
     clearHoverCloseTimeout();
@@ -234,35 +220,53 @@ export function App() {
     setHoverPreview(null);
   }, [clearHoverCloseTimeout]);
 
+  const handlePinHoverPreview = useCallback(() => {
+    if (!hoverPreview || !hoverEntity) return;
+    const firstSlice = hoverSlices[0];
+    const targetDocumentId = firstSlice?.boundary?.documentId
+      ?? firstSlice?.document?.id
+      ?? activeDocument?.id
+      ?? null;
+    if (targetDocumentId) {
+      actions.openSliceInPanel(targetDocumentId, hoverEntity.id);
+    } else {
+      actions.selectEntity(hoverEntity.id);
+    }
+    clearHoverCloseTimeout();
+    setHoverPreview(null);
+  }, [hoverPreview, hoverEntity, hoverSlices, activeDocument, actions, clearHoverCloseTimeout]);
+
   return (
     <div className="mvp-shell">
-      <TopBar
+      <TitleBar
         workspace={workspace}
         onProjectSwitch={actions.switchProject}
         onCreateProject={actions.createProject}
         onTogglePanel={actions.togglePanel}
       />
 
-      <main className={workspace?.layout.panelOpen ? "mvp-grid" : "mvp-grid mvp-grid--panel-closed"}>
-        <NavPanel
-          workspace={workspace}
-          activeDocument={activeDocument}
-          projectNameDraft={projectNameDraft}
-          newFolderTitle={newFolderTitle}
-          newDocumentTitle={newDocumentTitle}
-          documentsByFolder={documentsByFolder}
-          documentsById={lookups.documentsById}
-          onProjectNameChange={setProjectNameDraft}
-          onSaveProjectName={actions.saveProjectName}
-          onNewFolderTitleChange={setNewFolderTitle}
-          onCreateFolder={actions.createFolder}
-          onNewDocumentTitleChange={setNewDocumentTitle}
-          onCreateDocument={actions.createDocument}
-          onToggleFolder={actions.toggleFolder}
-          onRenameFolder={actions.renameFolder}
-          onDeleteFolder={actions.deleteFolder}
-          onOpenDocument={actions.openDocument}
-        />
+      <main className={mainGridClassName(workspace?.layout.panelOpen, editorFullScreen)}>
+        {editorFullScreen ? null : (
+          <NavPanel
+            workspace={workspace}
+            activeDocument={activeDocument}
+            projectNameDraft={projectNameDraft}
+            newFolderTitle={newFolderTitle}
+            newDocumentTitle={newDocumentTitle}
+            documentsByFolder={documentsByFolder}
+            documentsById={lookups.documentsById}
+            onProjectNameChange={setProjectNameDraft}
+            onSaveProjectName={actions.saveProjectName}
+            onNewFolderTitleChange={setNewFolderTitle}
+            onCreateFolder={actions.createFolder}
+            onNewDocumentTitleChange={setNewDocumentTitle}
+            onCreateDocument={actions.createDocument}
+            onToggleFolder={actions.toggleFolder}
+            onRenameFolder={actions.renameFolder}
+            onDeleteFolder={actions.deleteFolder}
+            onOpenDocument={actions.openDocument}
+          />
+        )}
 
         <EditorPane
           ref={mainEditorRef}
@@ -282,16 +286,17 @@ export function App() {
           emptyDocumentJson={emptySnapshot.contentJson}
           emptyDocumentKey={emptySnapshot.id}
           editorRules={lookups.editorRules}
-          visibleBoundaries={mainVisibleBoundaries}
+          visibleBoundaries={[]}
           pendingRange={everlink.mainPendingRange}
           onSnapshotChange={handleMainSnapshotChange}
           onSelectionChange={(selection) => everlink.handleSelectionChange("main", selection)}
           onEntityHover={handleEditorHover}
-          onEntityClick={actions.handleEditorClick}
           onEditorBlur={() => void everlink.handleMainBlur()}
+          fullScreen={editorFullScreen}
+          onToggleFullScreen={() => setEditorFullScreen((value) => !value)}
         />
 
-        {workspace?.layout.panelOpen ? (
+        {workspace?.layout.panelOpen && !editorFullScreen ? (
           <aside className="panel-stack">
             {everlink.everlinkSession ? (
               <EverlinkPanel
@@ -357,6 +362,7 @@ export function App() {
                         onSnapshotChange={handlePanelSnapshotChange}
                         onSelectionChange={(selection) => everlink.handleSelectionChange("panel", selection)}
                         onBlur={() => void everlink.handlePanelBlur()}
+                        onClose={actions.closePanelDocument}
                       />
                     ) : null}
                   </>
@@ -376,8 +382,14 @@ export function App() {
           slices={hoverSlices}
           onMouseEnter={handlePreviewEnter}
           onMouseLeave={handlePreviewLeave}
+          onPin={handlePinHoverPreview}
         />
       ) : null}
     </div>
   );
+}
+
+function mainGridClassName(panelOpen: boolean | undefined, fullScreen: boolean): string {
+  if (fullScreen) return "mvp-grid mvp-grid--fullscreen";
+  return panelOpen ? "mvp-grid" : "mvp-grid mvp-grid--panel-closed";
 }

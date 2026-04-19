@@ -65,7 +65,7 @@ export type WorkspaceActions = {
   deleteEntity: () => void;
   deleteSlice: (sliceId: string) => void;
   openSliceInPanel: (documentId: string, entityId: string) => void;
-  handleEditorClick: (entityId: string) => void;
+  closePanelDocument: () => void;
 };
 
 export function useWorkspaceActions(input: UseWorkspaceActionsInput): WorkspaceActions {
@@ -291,15 +291,8 @@ export function useWorkspaceActions(input: UseWorkspaceActionsInput): WorkspaceA
     })();
   }, [runMutation, applyWorkspace]);
 
-  const handleEditorClick = useCallback((entityId: string) => {
-    void runMutation(
-      () => window.evernear.updateLayout({
-        selectedEntityId: entityId,
-        panelOpen: true,
-        panelMode: "entities",
-      }),
-      "Opened the entity panel from an in-text match.",
-    );
+  const closePanelDocument = useCallback(() => {
+    void runMutation(() => window.evernear.updateLayout({ panelMode: "entities" }));
   }, [runMutation]);
 
   return {
@@ -326,6 +319,6 @@ export function useWorkspaceActions(input: UseWorkspaceActionsInput): WorkspaceA
     deleteEntity,
     deleteSlice,
     openSliceInPanel,
-    handleEditorClick,
+    closePanelDocument,
   };
 }

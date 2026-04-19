@@ -304,6 +304,11 @@ export type DeleteSliceInput = {
   sliceId: string;
 };
 
+export type UpdateSliceBoundaryInput = {
+  boundaryId: string;
+  anchor: TextAnchor;
+};
+
 export type WorkspaceDocumentReplayResult = {
   snapshot: StoredDocumentSnapshot;
   sliceBoundaries: SliceBoundaryRecord[];

@@ -7,6 +7,7 @@ import type {
   EntitySliceRecord,
   SliceBoundaryRecord,
   SliceRecord,
+  TextAnchor,
 } from "../../shared/domain/workspace";
 import { createMappingFromSteps, mapBoundaryForward } from "../../shared/anchoring";
 import type { SqliteHarness } from "../sqliteHarness";
@@ -162,6 +163,67 @@ export class SliceRepository {
     });
 
     return { sliceId, boundaryId, documentId: input.documentId, entityId: input.entityId };
+  }
+
+  // Foundation IPC for user-initiated boundary repositioning. Re-captures
+  // the resolution as `resolved`/manual move; the actual drag gesture and
+  // the renderer caller are deferred. Append-then-project inside one
+  // transaction matches the patterns in createSlice / rewriteBoundaries.
+  updateSliceBoundary(boundaryId: string, nextAnchor: TextAnchor): SliceBoundaryRecord {
+    const database = this.sqlite.getConnection();
+    const existing = database.prepare(`
+      SELECT id, slice_id, document_id, anchor_json, resolution_status, resolution_reason, created_at, updated_at
+      FROM slice_boundaries
+      WHERE id = ?
+    `).get(boundaryId) as RawSliceBoundaryRow | undefined;
+
+    if (!existing) {
+      throw new Error(`Unknown slice boundary: ${boundaryId}`);
+    }
+
+    const resolution: AnchorResolutionResult = {
+      status: "resolved",
+      reason: "manually repositioned by author",
+      anchor: nextAnchor,
+    };
+    const updatedAt = isoNow();
+    const excerpt = truncate(nextAnchor.exact, 180);
+
+    database.prepare(`
+      UPDATE slice_boundaries
+      SET
+        anchor_json = ?,
+        resolution_status = ?,
+        resolution_reason = ?,
+        updated_at = ?
+      WHERE id = ?
+    `).run(
+      JSON.stringify(nextAnchor),
+      resolution.status,
+      resolution.reason,
+      updatedAt,
+      boundaryId,
+    );
+
+    database.prepare(`
+      UPDATE slices
+      SET excerpt = ?, updated_at = ?
+      WHERE id = ?
+    `).run(excerpt, updatedAt, existing.slice_id);
+
+    this.history.appendEvent("sliceBoundary", boundaryId, "sliceBoundaryManuallyMoved", nextAnchor.versionSeen, {
+      sliceId: existing.slice_id,
+      status: resolution.status,
+      reason: resolution.reason,
+    });
+
+    const updated = database.prepare(`
+      SELECT id, slice_id, document_id, anchor_json, resolution_status, resolution_reason, created_at, updated_at
+      FROM slice_boundaries
+      WHERE id = ?
+    `).get(boundaryId) as RawSliceBoundaryRow;
+
+    return mapSliceBoundaryRow(updated);
   }
 
   deleteSlice(sliceId: string): void {

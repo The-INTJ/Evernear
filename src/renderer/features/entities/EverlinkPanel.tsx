@@ -17,7 +17,6 @@ export function EverlinkPanel(props: Props) {
 
   return (
     <section className="panel-section">
-      <p className="section-kicker">Everlink it!</p>
       <h2>{session.mode === "edit" ? "Edit Entity Linkage" : "Create or Extend an Entity"}</h2>
       <p className="section-copy">
         The current selection stays as clean manuscript text. This flow only creates or extends entity truth and then moves into slice placement.
