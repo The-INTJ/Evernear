@@ -14,6 +14,14 @@ export type EditorSelectionInfo = {
   to: number;
   empty: boolean;
   text: string;
+  anchor?: EditorSelectionAnchor | null;
+};
+
+export type EditorSelectionAnchor = {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
 };
 
 export type SerializedTransactionBundle = {

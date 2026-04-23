@@ -28,6 +28,7 @@ Read [src/renderer/README.md](../README.md) first. This folder groups user-facin
 - `annotations`: low-noise note capture built on the same anchor substrate as slice boundaries.
 - `chrome`: app-level chrome and status surfaces that don't belong to any single feature.
 - `history`: workspace-level run log and history-surface components.
+- `help`: in-app shortcut and workflow guidance opened from the custom chrome.
 
 ## Decided
 - Feature folders exist to make the product shape readable early, not to force premature micro-architecture.

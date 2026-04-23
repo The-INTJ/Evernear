@@ -11,7 +11,7 @@ import { keymap } from "prosemirror-keymap";
 import type { MarkType, Node as ProseMirrorNode, Slice } from "prosemirror-model";
 import { schema as basicSchema } from "prosemirror-schema-basic";
 import { AllSelection, EditorState, type Transaction } from "prosemirror-state";
-import { Decoration, DecorationSet, EditorView, type DecorationSource } from "prosemirror-view";
+import { DecorationSet, EditorView } from "prosemirror-view";
 
 import {
   type DocumentMetrics,
@@ -24,11 +24,11 @@ import type {
 } from "../../shared/domain/workspace";
 import {
   type EditorMatchingRule,
+  type EditorSelectionAnchor,
   type EditorSelectionInfo,
   type SerializedTransactionBundle,
-  collectMatchesForVisibleBlocks,
-  type VisibleBlockRange,
 } from "./editorUtils";
+import { decorationSource, recomputeDecorations } from "./editorDecorations";
 
 export type HarnessEditorSnapshot = {
   contentJson: JsonObject;
@@ -47,10 +47,25 @@ export type HarnessEditorHandle = {
   getSelection(): EditorSelectionInfo;
   focus(): void;
   selectAll(): void;
+  undo(): void;
+  redo(): void;
   toggleBold(): void;
   toggleItalic(): void;
   replaceSelection(text: string): { from: number; to: number } | null;
 };
+
+export type EditorContextMenuPayload = {
+  clientX: number;
+  clientY: number;
+  entityId: string | null;
+  selection: EditorSelectionInfo;
+};
+
+type EditorCommand = (
+  state: EditorState,
+  dispatch?: (transaction: Transaction) => void,
+  view?: EditorView,
+) => boolean;
 
 type HarnessEditorProps = {
   initialDocumentJson: JsonObject;
@@ -73,6 +88,7 @@ type HarnessEditorProps = {
   onMatchingBenchmark?(benchmark: MatchingBenchmark): void;
   onEntityHover?(payload: { entityId: string; clientX: number; clientY: number } | null): void;
   onEntityClick?(entityId: string): void;
+  onContextMenu?(payload: EditorContextMenuPayload): void;
   onBlur?(): void;
 };
 
@@ -86,6 +102,7 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
     const onMatchingBenchmarkRef = useRef(props.onMatchingBenchmark);
     const onEntityHoverRef = useRef(props.onEntityHover);
     const onEntityClickRef = useRef(props.onEntityClick);
+    const onContextMenuRef = useRef(props.onContextMenu);
     const onBlurRef = useRef(props.onBlur);
     // Tracks the entity id reported by the last mousemove. We only fire
     // onEntityHover(null) when the cursor *transitions* off an entity word —
@@ -104,6 +121,7 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
     onMatchingBenchmarkRef.current = props.onMatchingBenchmark;
     onEntityHoverRef.current = props.onEntityHover;
     onEntityClickRef.current = props.onEntityClick;
+    onContextMenuRef.current = props.onContextMenu;
     onBlurRef.current = props.onBlur;
     rulesRef.current = props.matchingRules ?? [];
     boundariesRef.current = props.sliceBoundaries ?? [];
@@ -139,7 +157,7 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
           );
 
           const snapshot = serializeEditorSnapshot(nextState.doc);
-          const selection = getSelectionInfo(nextState);
+          const selection = getSelectionInfo(nextState, currentView);
           onSelectionChangeRef.current(selection);
 
           onDocumentSnapshotChangeRef.current(
@@ -170,6 +188,7 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
           boundariesEditableRef.current,
           onMatchingBenchmarkRef.current,
         );
+        onSelectionChangeRef.current(getSelectionInfo(currentView.state, currentView));
       };
 
       const handleMouseMove = (event: MouseEvent) => {
@@ -201,6 +220,25 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
         }
       };
 
+      const handleContextMenu = (event: MouseEvent) => {
+        const currentView = viewRef.current;
+        if (!currentView) return;
+        const target = event.target instanceof HTMLElement
+          ? event.target.closest("[data-entity-id]") as HTMLElement | null
+          : null;
+        const entityId = target?.dataset.entityId ?? null;
+        const selection = getSelectionInfo(currentView.state, currentView);
+        if (!entityId && selection.empty) return;
+
+        event.preventDefault();
+        onContextMenuRef.current?.({
+          clientX: event.clientX,
+          clientY: event.clientY,
+          entityId,
+          selection,
+        });
+      };
+
       const handleBlur = () => {
         onBlurRef.current?.();
       };
@@ -217,7 +255,7 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
         boundariesEditableRef.current,
         onMatchingBenchmarkRef.current,
       );
-      onSelectionChangeRef.current(getSelectionInfo(view.state));
+      onSelectionChangeRef.current(getSelectionInfo(view.state, view));
       onDocumentSnapshotChangeRef.current(serializeEditorSnapshot(view.state.doc), null);
 
       const currentSurface = surfaceRef.current;
@@ -227,6 +265,7 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
       dom.addEventListener("mousemove", handleMouseMove);
       dom.addEventListener("mouseleave", handleMouseLeave);
       dom.addEventListener("click", handleClick);
+      dom.addEventListener("contextmenu", handleContextMenu);
       dom.addEventListener("focusout", handleBlur);
 
       return () => {
@@ -235,6 +274,7 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
         dom.removeEventListener("mousemove", handleMouseMove);
         dom.removeEventListener("mouseleave", handleMouseLeave);
         dom.removeEventListener("click", handleClick);
+        dom.removeEventListener("contextmenu", handleContextMenu);
         dom.removeEventListener("focusout", handleBlur);
         view.destroy();
         viewRef.current = null;
@@ -271,7 +311,7 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
       },
       getSelection() {
         const view = viewRef.current;
-        return view ? getSelectionInfo(view.state) : { from: 0, to: 0, empty: true, text: "" };
+        return view ? getSelectionInfo(view.state, view) : { from: 0, to: 0, empty: true, text: "", anchor: null };
       },
       focus() {
         viewRef.current?.focus();
@@ -284,6 +324,12 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
 
         view.dispatch(view.state.tr.setSelection(new AllSelection(view.state.doc)));
         view.focus();
+      },
+      undo() {
+        runCommandFromHandle(viewRef.current, undo);
+      },
+      redo() {
+        runCommandFromHandle(viewRef.current, redo);
       },
       toggleBold() {
         toggleMarkFromHandle(viewRef.current, basicSchema.marks.strong);
@@ -343,153 +389,6 @@ function createEditorState(documentJson: JsonObject): EditorState {
   });
 }
 
-function recomputeDecorations(
-  view: EditorView,
-  surface: HTMLDivElement | null,
-  decorationRef: React.MutableRefObject<DecorationSet>,
-  matchingRules: EditorMatchingRule[],
-  sliceBoundaries: SliceBoundaryRecord[],
-  pendingRange: PendingSliceRange | null,
-  decorationsEnabled: boolean,
-  boundariesEditable: boolean,
-  onMatchingBenchmark: ((benchmark: MatchingBenchmark) => void) | undefined,
-): void {
-  if (!decorationsEnabled || !surface) {
-    decorationRef.current = DecorationSet.empty;
-    refreshDecorations(view, decorationRef);
-    return;
-  }
-
-  const startedAt = performance.now();
-  const visibleBlocks = collectVisibleBlocks(view, surface);
-  const matchHits = collectMatchesForVisibleBlocks(matchingRules, visibleBlocks);
-  const decorations: Decoration[] = [];
-
-  for (const hit of matchHits) {
-    decorations.push(
-      Decoration.inline(hit.from, hit.to, {
-        class: "pm-match-highlight",
-        "data-entity-id": hit.entityId,
-        "data-entity-name": hit.entityName,
-      }),
-    );
-  }
-
-  for (const boundary of sliceBoundaries) {
-    const { from, to } = boundary.resolution.anchor;
-    if (from >= to) {
-      continue;
-    }
-
-    const inlineClass = boundariesEditable
-      ? `pm-slice-boundary pm-slice-boundary--${boundary.resolution.status} pm-slice-boundary--editing`
-      : `pm-slice-boundary pm-slice-boundary--${boundary.resolution.status}`;
-
-    decorations.push(Decoration.inline(from, to, {
-      class: inlineClass,
-      "data-slice-id": boundary.sliceId,
-    }, { inclusiveEnd: true }));
-
-    if (boundariesEditable) {
-      decorations.push(Decoration.widget(from, buildBoundaryHandle(boundary.sliceId, "start"), { side: -1 }));
-      decorations.push(Decoration.widget(to, buildBoundaryHandle(boundary.sliceId, "end"), { side: 1 }));
-    }
-  }
-
-  if (pendingRange) {
-    const from = Math.min(pendingRange.from, pendingRange.to);
-    const to = Math.max(pendingRange.from, pendingRange.to);
-
-    if (from === to) {
-      decorations.push(Decoration.widget(from, buildPendingMarker("pm-pending-slice-caret"), { side: -1 }));
-    } else {
-      decorations.push(Decoration.inline(from, to, { class: "pm-pending-slice-range" }));
-      decorations.push(Decoration.widget(from, buildPendingMarker("pm-pending-slice-rail"), { side: -1 }));
-      decorations.push(Decoration.widget(to, buildPendingMarker("pm-pending-slice-rail"), { side: 1 }));
-    }
-  }
-
-  decorationRef.current = DecorationSet.create(view.state.doc, decorations);
-  refreshDecorations(view, decorationRef);
-
-  const visibleFrom = visibleBlocks.length > 0 ? Math.min(...visibleBlocks.map((block) => block.from)) : 0;
-  const visibleTo = visibleBlocks.length > 0 ? Math.max(...visibleBlocks.map((block) => block.to)) : 0;
-  const visibleCharacterCount = visibleBlocks.reduce((total, block) => total + block.text.length, 0);
-
-  onMatchingBenchmark?.({
-    visibleFrom,
-    visibleTo,
-    visibleCharacterCount,
-    matchCount: matchHits.length,
-    recomputeMs: performance.now() - startedAt,
-    ruleCount: matchingRules.filter((rule) => rule.enabled).length,
-    highlightingEnabled: decorationsEnabled,
-    createdAt: new Date().toISOString(),
-  });
-}
-
-function buildPendingMarker(className: string): () => HTMLElement {
-  return () => {
-    const element = document.createElement("span");
-    element.className = className;
-    return element;
-  };
-}
-
-function buildBoundaryHandle(sliceId: string, position: "start" | "end"): () => HTMLElement {
-  return () => {
-    const element = document.createElement("span");
-    element.className = `pm-slice-handle pm-slice-handle--${position}`;
-    element.dataset.sliceId = sliceId;
-    element.dataset.handle = position;
-    return element;
-  };
-}
-
-function refreshDecorations(
-  view: EditorView,
-  decorationRef: React.MutableRefObject<DecorationSet>,
-): void {
-  view.setProps({
-    decorations: decorationSource(decorationRef),
-  });
-  view.updateState(view.state);
-}
-
-function decorationSource(
-  decorationRef: React.MutableRefObject<DecorationSet>,
-): ((state: EditorState) => DecorationSource | null) | undefined {
-  return () => decorationRef.current;
-}
-
-function collectVisibleBlocks(
-  view: EditorView,
-  surface: HTMLDivElement,
-): VisibleBlockRange[] {
-  const bounds = surface.getBoundingClientRect();
-  const visibleBlocks: VisibleBlockRange[] = [];
-
-  view.state.doc.forEach((block, offset) => {
-    const nodeDom = view.nodeDOM(offset) as HTMLElement | null;
-    if (!nodeDom) {
-      return;
-    }
-
-    const rect = nodeDom.getBoundingClientRect();
-    if (rect.bottom < bounds.top || rect.top > bounds.bottom) {
-      return;
-    }
-
-    visibleBlocks.push({
-      from: offset + 1,
-      to: offset + block.nodeSize - 1,
-      text: block.textBetween(0, block.content.size, "\n\n"),
-    });
-  });
-
-  return visibleBlocks;
-}
-
 function serializeEditorSnapshot(doc: ProseMirrorNode): HarnessEditorSnapshot {
   const plainText = serializeNodePlainText(doc);
   return {
@@ -499,14 +398,34 @@ function serializeEditorSnapshot(doc: ProseMirrorNode): HarnessEditorSnapshot {
   };
 }
 
-function getSelectionInfo(state: EditorState): EditorSelectionInfo {
+function getSelectionInfo(state: EditorState, view?: EditorView): EditorSelectionInfo {
   const { from, to, empty } = state.selection;
   return {
     from,
     to,
     empty,
     text: empty ? "" : state.doc.textBetween(from, to, "\n\n"),
+    anchor: empty || !view ? null : getSelectionAnchor(view, from, to),
   };
+}
+
+function getSelectionAnchor(view: EditorView, from: number, to: number): EditorSelectionAnchor | null {
+  try {
+    const start = view.coordsAtPos(from);
+    const end = view.coordsAtPos(to);
+    const left = Math.min(start.left, end.left);
+    const right = Math.max(start.right, end.right);
+    const top = Math.min(start.top, end.top);
+    const bottom = Math.max(start.bottom, end.bottom);
+    return {
+      left,
+      top,
+      width: Math.max(1, right - left),
+      height: Math.max(1, bottom - top),
+    };
+  } catch {
+    return null;
+  }
 }
 
 function serializeTransaction(transaction: Transaction): SerializedTransactionBundle {
@@ -531,6 +450,13 @@ function toggleMarkFromHandle(view: EditorView | null, markType: MarkType | unde
   }
 
   const command = toggleMark(markType);
+  runCommandFromHandle(view, command);
+}
+
+function runCommandFromHandle(view: EditorView | null, command: EditorCommand): void {
+  if (!view) {
+    return;
+  }
   command(view.state, view.dispatch, view);
   view.focus();
 }

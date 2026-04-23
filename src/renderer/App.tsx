@@ -16,6 +16,7 @@ import type {
 import type { SerializedTransactionBundle } from "./editor/editorUtils";
 
 import { useEditorSelections } from "./state/useEditorSelections";
+import { useEditorCommandActions } from "./state/useEditorCommandActions";
 import { useEverlinkPlacement } from "./state/useEverlinkPlacement";
 import { useEverslicePlacement } from "./state/useEverslicePlacement";
 import { useWorkspace } from "./state/useWorkspace";
@@ -35,6 +36,7 @@ import {
 
 import { TitleBar } from "./features/chrome/TitleBar";
 import { NavPanel } from "./features/documents/NavPanel";
+import { EditorActionOverlays } from "./features/documents/EditorActionOverlays";
 import { EditorPane } from "./features/documents/EditorPane";
 import { EverlinkPanel } from "./features/entities/EverlinkPanel";
 import { EversliceChooser } from "./features/entities/EversliceChooser";
@@ -45,6 +47,7 @@ import { MatchingRuleEditor } from "./features/entities/MatchingRuleEditor";
 import { SliceViewer } from "./features/panes/SliceViewer";
 import { PanelDocumentView } from "./features/panes/PanelDocumentView";
 import { HoverPreview } from "./features/panes/HoverPreview";
+import { HowToUsePage } from "./features/help/HowToUsePage";
 import { RunLog } from "./features/history/RunLog";
 import { DEBUG_PANELS } from "./utils/devFlags";
 
@@ -87,6 +90,7 @@ export function App() {
   const [ruleForm, setRuleForm] = useState<RuleFormState>(initialRuleForm);
   const [hoverPreview, setHoverPreview] = useState<HoverPreviewState | null>(null);
   const [editorFullScreen, setEditorFullScreen] = useState(false);
+  const [activeScreen, setActiveScreen] = useState<"workspace" | "shortcuts">("workspace");
 
   useEffect(() => {
     setProjectNameDraft(activeProject?.name ?? "");
@@ -244,15 +248,56 @@ export function App() {
     setHoverPreview(null);
   }, [hoverPreview, hoverEntity, hoverSlices, activeDocument, actions, clearHoverCloseTimeout]);
 
+  const clearHoverState = useCallback(() => {
+    clearHoverCloseTimeout();
+    setHoverPreview(null);
+  }, [clearHoverCloseTimeout]);
+
+  const editorCommands = useEditorCommandActions({
+    mainEditorRef,
+    selections,
+    workspace,
+    activeDocument,
+    lookups,
+    actions,
+    openEverlink: everlink.openChooser,
+    openEverslice: everslice.open,
+    handleSelectionChange: (selection) => everlink.handleSelectionChange("main", selection),
+    clearHoverState,
+  });
+
   return (
     <div className="mvp-shell">
       <TitleBar
         workspace={workspace}
+        hasActiveDocument={activeDocument !== null}
+        everlinkLabel={everlinkLabel}
+        everlinkDisabled={selections.mainSelection.empty}
+        eversliceDisabled={selections.mainSelection.empty}
+        fullScreen={editorFullScreen}
+        shortcutsActive={activeScreen === "shortcuts"}
         onProjectSwitch={actions.switchProject}
         onCreateProject={actions.createProject}
         onTogglePanel={actions.togglePanel}
+        onToggleBold={editorCommands.toggleBold}
+        onToggleItalic={editorCommands.toggleItalic}
+        onUndo={editorCommands.undo}
+        onRedo={editorCommands.redo}
+        onReorderDocument={actions.reorderDocument}
+        onToggleHighlights={actions.toggleHighlights}
+        onToggleFullScreen={() => setEditorFullScreen((value) => !value)}
+        onOpenEverslice={editorCommands.openEverslice}
+        onOpenEverlinkChooser={editorCommands.openEverlink}
+        onDeleteDocument={actions.deleteDocument}
+        onOpenShortcuts={() => {
+          editorCommands.closeEditorContextMenu();
+          setActiveScreen("shortcuts");
+        }}
       />
 
+      {activeScreen === "shortcuts" ? (
+        <HowToUsePage onBackToWorkspace={() => setActiveScreen("workspace")} />
+      ) : (
       <main className={mainGridClassName(workspace?.layout.panelOpen, editorFullScreen)}>
         {editorFullScreen ? null : (
           <NavPanel
@@ -284,13 +329,6 @@ export function App() {
           documentTitleDraft={documentTitleDraft}
           onDocumentTitleDraftChange={setDocumentTitleDraft}
           onSaveDocumentMeta={actions.saveDocumentMeta}
-          onReorderDocument={actions.reorderDocument}
-          onToggleHighlights={actions.toggleHighlights}
-          onDeleteDocument={actions.deleteDocument}
-          onOpenEverlinkChooser={() => void everlink.openChooser()}
-          everlinkLabel={everlinkLabel}
-          onOpenEverslice={() => everslice.open()}
-          eversliceDisabled={selections.mainSelection.empty}
           pendingWrites={pendingWrites}
           documentsById={lookups.documentsById}
           emptyDocumentJson={emptySnapshot.contentJson}
@@ -299,11 +337,11 @@ export function App() {
           visibleBoundaries={[]}
           pendingRange={everlink.mainPendingRange ?? everslice.frozenPendingRange}
           onSnapshotChange={handleMainSnapshotChange}
-          onSelectionChange={(selection) => everlink.handleSelectionChange("main", selection)}
+          onSelectionChange={editorCommands.handleMainSelectionChange}
           onEntityHover={handleEditorHover}
+          onEntityClick={editorCommands.openEntityContext}
+          onEditorContextMenu={editorCommands.handleEditorContextMenu}
           onEditorBlur={() => void everlink.handleMainBlur()}
-          fullScreen={editorFullScreen}
-          onToggleFullScreen={() => setEditorFullScreen((value) => !value)}
         />
 
         {workspace?.layout.panelOpen && !editorFullScreen ? (
@@ -384,8 +422,29 @@ export function App() {
           </aside>
         ) : null}
       </main>
+      )}
 
-      {hoverPreview ? (
+      {activeScreen === "workspace" ? (
+        <EditorActionOverlays
+          selection={selections.mainSelection}
+          contextMenu={editorCommands.editorContextMenu}
+          everlinkLabel={everlinkLabel}
+          eversliceDisabled={selections.mainSelection.empty}
+          highlightsEnabled={workspace?.layout.highlightsEnabled ?? false}
+          onBold={editorCommands.toggleBold}
+          onItalic={editorCommands.toggleItalic}
+          onOpenEverlink={editorCommands.openEverlink}
+          onOpenEverslice={editorCommands.openEverslice}
+          onOpenEntityContext={editorCommands.openEntityContext}
+          onSelectEntity={editorCommands.selectEntityFromMenu}
+          onToggleHighlights={editorCommands.toggleHighlightsFromMenu}
+          onCopySelection={editorCommands.copySelection}
+          onSelectAll={editorCommands.selectAll}
+          onCloseContextMenu={editorCommands.closeEditorContextMenu}
+        />
+      ) : null}
+
+      {activeScreen === "workspace" && hoverPreview ? (
         <HoverPreview
           hover={hoverPreview}
           entity={hoverEntity}

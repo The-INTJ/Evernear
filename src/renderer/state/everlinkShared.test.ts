@@ -74,6 +74,8 @@ function makeEditor(
     getSelection: () => ({ from: 0, to: 0, empty: true, text: "" }),
     focus: () => {},
     selectAll: () => {},
+    undo: () => {},
+    redo: () => {},
     toggleBold: () => {},
     toggleItalic: () => {},
     replaceSelection: () => null,

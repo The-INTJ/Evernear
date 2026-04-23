@@ -12,6 +12,7 @@ import type {
 } from "../../../shared/domain/workspace";
 import {
   HarnessEditor,
+  type EditorContextMenuPayload,
   type HarnessEditorHandle,
   type HarnessEditorSnapshot,
   type PendingSliceRange,
@@ -31,13 +32,6 @@ type Props = {
   documentTitleDraft: string;
   onDocumentTitleDraftChange: (value: string) => void;
   onSaveDocumentMeta: (folderId?: string | null) => void;
-  onReorderDocument: (direction: "up" | "down") => void;
-  onToggleHighlights: () => void;
-  onDeleteDocument: () => void;
-  onOpenEverlinkChooser: () => void;
-  everlinkLabel: string;
-  onOpenEverslice: () => void;
-  eversliceDisabled: boolean;
   pendingWrites: number;
   documentsById: Map<string, DocumentSummary>;
   emptyDocumentJson: unknown;
@@ -52,13 +46,12 @@ type Props = {
   onSelectionChange: (selection: EditorSelectionInfo) => void;
   onEntityHover: (payload: { entityId: string; clientX: number; clientY: number } | null) => void;
   onEntityClick?: (entityId: string) => void;
+  onEditorContextMenu: (payload: EditorContextMenuPayload) => void;
   onEditorBlur: () => void;
-  fullScreen?: boolean;
-  onToggleFullScreen?: () => void;
 };
 
-// Forward-ref so App.tsx can still drive bold/italic toggles and
-// replaceSelection during the slice commit flow.
+// Forward-ref so App.tsx can drive editor commands from the window bar
+// and replaceSelection during the slice commit flow.
 export const EditorPane = forwardRef<HarnessEditorHandle, Props>(function EditorPane(props, ref) {
   const {
     workspace,
@@ -67,13 +60,6 @@ export const EditorPane = forwardRef<HarnessEditorHandle, Props>(function Editor
     documentTitleDraft,
     onDocumentTitleDraftChange,
     onSaveDocumentMeta,
-    onReorderDocument,
-    onToggleHighlights,
-    onDeleteDocument,
-    onOpenEverlinkChooser,
-    everlinkLabel,
-    onOpenEverslice,
-    eversliceDisabled,
     pendingWrites,
     documentsById,
     emptyDocumentJson,
@@ -85,9 +71,8 @@ export const EditorPane = forwardRef<HarnessEditorHandle, Props>(function Editor
     onSelectionChange,
     onEntityHover,
     onEntityClick,
+    onEditorContextMenu,
     onEditorBlur,
-    fullScreen,
-    onToggleFullScreen,
   } = props;
 
   const metrics = activeDocument ? collectDocumentMetrics(activeDocument.plainText) : null;
@@ -118,21 +103,6 @@ export const EditorPane = forwardRef<HarnessEditorHandle, Props>(function Editor
             ))}
           </select>
         </label>
-        <div className="toolbar-actions">
-          <ToolbarButtons
-            forwardedRef={ref}
-            onReorderDocument={onReorderDocument}
-            onToggleHighlights={onToggleHighlights}
-            onOpenEverlinkChooser={onOpenEverlinkChooser}
-            onOpenEverslice={onOpenEverslice}
-            eversliceDisabled={eversliceDisabled}
-            onDeleteDocument={onDeleteDocument}
-            workspace={workspace}
-            everlinkLabel={everlinkLabel}
-            fullScreen={fullScreen ?? false}
-            onToggleFullScreen={onToggleFullScreen}
-          />
-        </div>
       </div>
 
       <div className={DEBUG_PANELS ? "editor-statusbar" : "editor-statusbar editor-statusbar--compact"}>
@@ -164,6 +134,7 @@ export const EditorPane = forwardRef<HarnessEditorHandle, Props>(function Editor
           onSelectionChange={onSelectionChange}
           onEntityHover={onEntityHover}
           onEntityClick={onEntityClick}
+          onContextMenu={onEditorContextMenu}
           onBlur={onEditorBlur}
         />
       </div>
@@ -177,61 +148,5 @@ function MetricCard({ label, value }: { label: string; value: string }) {
       <span className="metric-card__label">{label}</span>
       <strong className="metric-card__value">{value}</strong>
     </article>
-  );
-}
-
-// Small isolated component so we can access the forwarded ref via a
-// local handle for the bold/italic toggles. Keeps EditorPane itself
-// free of the imperative ref-call pattern.
-function ToolbarButtons({
-  forwardedRef,
-  onReorderDocument,
-  onToggleHighlights,
-  onOpenEverlinkChooser,
-  onOpenEverslice,
-  eversliceDisabled,
-  onDeleteDocument,
-  workspace,
-  everlinkLabel,
-  fullScreen,
-  onToggleFullScreen,
-}: {
-  forwardedRef: React.ForwardedRef<HarnessEditorHandle>;
-  onReorderDocument: (direction: "up" | "down") => void;
-  onToggleHighlights: () => void;
-  onOpenEverlinkChooser: () => void;
-  onOpenEverslice: () => void;
-  eversliceDisabled: boolean;
-  onDeleteDocument: () => void;
-  workspace: WorkspaceState | null;
-  everlinkLabel: string;
-  fullScreen: boolean;
-  onToggleFullScreen?: () => void;
-}) {
-  const resolveRef = (): HarnessEditorHandle | null => {
-    if (!forwardedRef || typeof forwardedRef === "function") return null;
-    return forwardedRef.current;
-  };
-
-  return (
-    <>
-      <button className="ghost-button" onClick={() => resolveRef()?.toggleBold()} type="button">Bold</button>
-      <button className="ghost-button" onClick={() => resolveRef()?.toggleItalic()} type="button">Italic</button>
-      <button className="ghost-button" onClick={() => onReorderDocument("up")} type="button">Move Up</button>
-      <button className="ghost-button" onClick={() => onReorderDocument("down")} type="button">Move Down</button>
-      <button className="ghost-button" onClick={onToggleHighlights} type="button">
-        {workspace?.layout.highlightsEnabled ? "Mute Highlights" : "Show Highlights"}
-      </button>
-      {onToggleFullScreen ? (
-        <button className="ghost-button" onClick={onToggleFullScreen} type="button">
-          {fullScreen ? "Exit Full Screen" : "Full Screen"}
-        </button>
-      ) : null}
-      <button className="primary-button" onClick={onOpenEverslice} type="button" disabled={eversliceDisabled}>Everslice it!</button>
-      <button className="primary-button" onClick={onOpenEverlinkChooser} type="button">{everlinkLabel}</button>
-      <button className="ghost-button ghost-button--danger" onClick={onDeleteDocument} type="button">
-        Delete Doc
-      </button>
-    </>
   );
 }
