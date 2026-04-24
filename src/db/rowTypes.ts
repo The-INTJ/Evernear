@@ -88,7 +88,6 @@ export type RawLayoutRow = {
   project_id: string;
   active_document_id: string | null;
   panel_document_id: string | null;
-  focused_pane_id: string | null;
   selected_entity_id: string | null;
   expanded_folder_ids_json: string;
   highlights_enabled: number;
@@ -96,17 +95,6 @@ export type RawLayoutRow = {
   panel_mode: string;
   last_focused_document_id: string | null;
   recent_target_document_ids_json: string;
-  updated_at: string;
-};
-
-export type RawWorkspacePaneRow = {
-  id: string;
-  project_id: string;
-  title: string;
-  content_json: string;
-  placement_json: string;
-  history_json: string;
-  created_at: string;
   updated_at: string;
 };
 

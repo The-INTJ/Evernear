@@ -122,7 +122,6 @@ export const UpdateLayoutInputSchema = z.object({
   activeProjectId: z.string().nullable().optional(),
   activeDocumentId: z.string().nullable().optional(),
   panelDocumentId: z.string().nullable().optional(),
-  focusedPaneId: z.string().nullable().optional(),
   selectedEntityId: z.string().nullable().optional(),
   expandedFolderIds: z.array(z.string()).optional(),
   highlightsEnabled: z.boolean().optional(),
@@ -133,97 +132,6 @@ export const UpdateLayoutInputSchema = z.object({
 }).strict();
 
 // ──────────────── document transaction ────────────────
-
-const RectSchema = z.object({
-  x: z.number(),
-  y: z.number(),
-  width: z.number().positive(),
-  height: z.number().positive(),
-});
-
-const PaneContentSchema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("projectNav") }),
-  z.object({
-    kind: z.literal("document"),
-    documentId: NonEmptyString,
-    focusSliceId: z.string().optional(),
-    focusAnchor: TextAnchorSchema.optional(),
-  }),
-  z.object({ kind: z.literal("entitySlices"), entityId: NonEmptyString }),
-  z.object({ kind: z.literal("entityDetail"), entityId: NonEmptyString }),
-  z.object({ kind: z.literal("matchingRules"), entityId: NonEmptyString }),
-]);
-
-export const PanePlacementSchema = z.discriminatedUnion("kind", [
-  z.object({
-    kind: z.literal("workspace"),
-    rect: RectSchema,
-    zIndex: z.number(),
-  }),
-  z.object({
-    kind: z.literal("docked"),
-    region: z.enum(["left", "right", "bottom"]),
-    stackId: NonEmptyString,
-    order: z.number(),
-  }),
-  z.object({
-    kind: z.literal("nativeWindow"),
-    windowId: NonEmptyString,
-    rect: RectSchema.optional(),
-  }),
-  z.object({
-    kind: z.literal("hover"),
-    anchor: z.object({ x: z.number(), y: z.number() }),
-  }),
-]);
-
-export const CreatePaneInputSchema = z.object({
-  projectId: z.string().optional(),
-  title: z.string().optional(),
-  content: PaneContentSchema,
-  placement: PanePlacementSchema.optional(),
-});
-
-export const UpdatePaneInputSchema = z.object({
-  paneId: NonEmptyString,
-  title: z.string().optional(),
-  content: PaneContentSchema.optional(),
-  placement: PanePlacementSchema.optional(),
-  history: z.array(PaneContentSchema).optional(),
-});
-
-export const ClosePaneInputSchema = z.object({
-  paneId: NonEmptyString,
-});
-
-export const FocusPaneInputSchema = z.object({
-  paneId: NonEmptyString,
-});
-
-export const ReplacePaneContentInputSchema = z.object({
-  paneId: NonEmptyString,
-  content: PaneContentSchema,
-  title: z.string().optional(),
-});
-
-export const PushPaneContentInputSchema = z.object({
-  paneId: NonEmptyString,
-  content: PaneContentSchema,
-  title: z.string().optional(),
-});
-
-export const PopPaneContentInputSchema = z.object({
-  paneId: NonEmptyString,
-});
-
-export const MovePaneInputSchema = z.object({
-  paneId: NonEmptyString,
-  placement: PanePlacementSchema,
-});
-
-export const PopOutPaneInputSchema = z.object({
-  paneId: NonEmptyString,
-});
 
 export const ApplyDocumentTransactionInputSchema = z.object({
   documentId: NonEmptyString,

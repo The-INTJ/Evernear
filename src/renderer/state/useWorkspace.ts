@@ -47,7 +47,7 @@ export type WorkspaceHook = {
 };
 
 export function useWorkspace(): WorkspaceHook {
-const workspaceRef = useRef<WorkspaceState | null>(null);
+  const workspaceRef = useRef<WorkspaceState | null>(null);
   const persistenceQueueRef = useRef<Promise<void>>(Promise.resolve());
   const documentVersionsRef = useRef(new Map<string, number>());
   const commitInFlightRef = useRef(false);
@@ -74,9 +74,6 @@ const workspaceRef = useRef<WorkspaceState | null>(null);
     }
     if (next.panelDocument) {
       documentVersionsRef.current.set(next.panelDocument.id, next.panelDocument.currentVersion);
-    }
-    for (const document of next.openDocuments) {
-      documentVersionsRef.current.set(document.id, document.currentVersion);
     }
     if (message) {
       appendLog(message, "success");
@@ -119,8 +116,6 @@ const workspaceRef = useRef<WorkspaceState | null>(null);
       documents: nextDocuments,
       activeDocument: current.activeDocument?.id === result.snapshot.id ? result.snapshot : current.activeDocument,
       panelDocument: current.panelDocument?.id === result.snapshot.id ? result.snapshot : current.panelDocument,
-      openDocuments: current.openDocuments.map((document) =>
-        document.id === result.snapshot.id ? result.snapshot : document),
       sliceBoundaries: nextBoundaries,
     });
   }, [applyWorkspace]);
@@ -182,21 +177,6 @@ const workspaceRef = useRef<WorkspaceState | null>(null);
       cancelled = true;
     };
   }, [appendLog, applyWorkspace]);
-
-  // Personal-workflow sync: pane windows are allowed to edit. Rather than
-  // removing that freedom until a full collaboration layer exists, every
-  // renderer periodically reloads the workspace projection and lets active
-  // document sessions rehydrate from the latest persisted truth.
-  useEffect(() => {
-    const intervalId = window.setInterval(() => {
-      if (commitInFlightRef.current) return;
-      void window.evernear.loadWorkspace()
-        .then((next) => applyWorkspace(next))
-        .catch((error) => appendLog(`Workspace refresh drifted: ${stringifyError(error)}`, "warn"));
-    }, 2500);
-
-    return () => window.clearInterval(intervalId);
-  }, [applyWorkspace, appendLog]);
 
   return {
     status,

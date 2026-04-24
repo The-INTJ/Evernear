@@ -47,68 +47,6 @@ describe("WorkspaceRepository bootstrap", () => {
     expect(second.projects.length).toBe(first.projects.length);
     expect(second.documents.length).toBe(first.documents.length);
   });
-
-  it("seeds project navigation and document panes on first load", () => {
-    const workspace = repository.ensureWorkspaceState();
-    expect(workspace.panes.some((pane) => pane.content.kind === "projectNav")).toBe(true);
-    expect(workspace.panes.some((pane) => pane.content.kind === "document")).toBe(true);
-    expect(workspace.openDocuments.some((document) => document.id === workspace.activeDocument?.id)).toBe(true);
-    expect(workspace.focusedPaneId).toBeTruthy();
-  });
-});
-
-describe("pane mutations", () => {
-  it("creates, focuses, moves, and closes panes without deleting domain data", () => {
-    const state = repository.ensureWorkspaceState();
-    const projectId = state.layout.activeProjectId!;
-    const entity = repository.createEntity({ projectId, name: "Pane Entity" }).entities
-      .find((candidate) => candidate.name === "Pane Entity")!;
-
-    const created = repository.createPane({
-      projectId,
-      title: "Pane Entity",
-      content: { kind: "entitySlices", entityId: entity.id },
-    });
-    const pane = created.panes.find((candidate) => candidate.content.kind === "entitySlices" && candidate.content.entityId === entity.id)!;
-    expect(created.focusedPaneId).toBe(pane.id);
-
-    const moved = repository.movePane({
-      paneId: pane.id,
-      placement: { kind: "docked", region: "bottom", stackId: "bottom", order: 0 },
-    });
-    expect(moved.panes.find((candidate) => candidate.id === pane.id)?.placement.kind).toBe("docked");
-
-    const closed = repository.closePane({ paneId: pane.id });
-    expect(closed.panes.some((candidate) => candidate.id === pane.id)).toBe(false);
-    expect(closed.entities.some((candidate) => candidate.id === entity.id)).toBe(true);
-  });
-
-  it("pushes and pops pane content history", () => {
-    const state = repository.ensureWorkspaceState();
-    const projectId = state.layout.activeProjectId!;
-    const documentId = state.activeDocument!.id;
-    const entity = repository.createEntity({ projectId, name: "History Entity" }).entities
-      .find((candidate) => candidate.name === "History Entity")!;
-    const created = repository.createPane({
-      projectId,
-      title: "History Entity",
-      content: { kind: "entitySlices", entityId: entity.id },
-    });
-    const pane = created.panes.find((candidate) => candidate.content.kind === "entitySlices" && candidate.content.entityId === entity.id)!;
-
-    const pushed = repository.pushPaneContent({
-      paneId: pane.id,
-      content: { kind: "document", documentId },
-    });
-    const documentPane = pushed.panes.find((candidate) => candidate.id === pane.id)!;
-    expect(documentPane.content.kind).toBe("document");
-    expect(documentPane.history).toHaveLength(1);
-
-    const popped = repository.popPaneContent({ paneId: pane.id });
-    const restored = popped.panes.find((candidate) => candidate.id === pane.id)!;
-    expect(restored.content.kind).toBe("entitySlices");
-    expect(restored.history).toHaveLength(0);
-  });
 });
 
 describe("project mutations", () => {

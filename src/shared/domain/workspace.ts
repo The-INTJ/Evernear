@@ -70,7 +70,6 @@ export type WorkspaceLayoutState = {
   activeProjectId: string | null;
   activeDocumentId: string | null;
   panelDocumentId: string | null;
-  focusedPaneId: string | null;
   selectedEntityId: string | null;
   expandedFolderIds: string[];
   highlightsEnabled: boolean;
@@ -78,37 +77,6 @@ export type WorkspaceLayoutState = {
   panelMode: PanelMode;
   lastFocusedDocumentId: string | null;
   recentTargetDocumentIds: string[];
-};
-
-export type Rect = {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-};
-
-export type PaneContent =
-  | { kind: "projectNav" }
-  | { kind: "document"; documentId: string; focusSliceId?: string; focusAnchor?: TextAnchor }
-  | { kind: "entitySlices"; entityId: string }
-  | { kind: "entityDetail"; entityId: string }
-  | { kind: "matchingRules"; entityId: string };
-
-export type PanePlacement =
-  | { kind: "workspace"; rect: Rect; zIndex: number }
-  | { kind: "docked"; region: "left" | "right" | "bottom"; stackId: string; order: number }
-  | { kind: "nativeWindow"; windowId: string; rect?: Rect }
-  | { kind: "hover"; anchor: { x: number; y: number } };
-
-export type WorkspacePane = {
-  id: string;
-  projectId: string;
-  title: string;
-  content: PaneContent;
-  placement: PanePlacement;
-  history: PaneContent[];
-  createdAt: string;
-  updatedAt: string;
 };
 
 export type EntityRecord = {
@@ -176,9 +144,6 @@ export type WorkspaceState = {
   documents: DocumentSummary[];
   activeDocument: StoredDocumentSnapshot | null;
   panelDocument: StoredDocumentSnapshot | null;
-  openDocuments: StoredDocumentSnapshot[];
-  panes: WorkspacePane[];
-  focusedPaneId: string | null;
   entities: EntityRecord[];
   matchingRules: MatchingRuleRecord[];
   slices: SliceRecord[];
@@ -297,54 +262,6 @@ export type OpenDocumentInput = {
 };
 
 export type UpdateLayoutInput = Partial<WorkspaceLayoutState>;
-
-export type CreatePaneInput = {
-  projectId?: string;
-  title?: string;
-  content: PaneContent;
-  placement?: PanePlacement;
-};
-
-export type UpdatePaneInput = {
-  paneId: string;
-  title?: string;
-  content?: PaneContent;
-  placement?: PanePlacement;
-  history?: PaneContent[];
-};
-
-export type ClosePaneInput = {
-  paneId: string;
-};
-
-export type FocusPaneInput = {
-  paneId: string;
-};
-
-export type ReplacePaneContentInput = {
-  paneId: string;
-  content: PaneContent;
-  title?: string;
-};
-
-export type PushPaneContentInput = {
-  paneId: string;
-  content: PaneContent;
-  title?: string;
-};
-
-export type PopPaneContentInput = {
-  paneId: string;
-};
-
-export type MovePaneInput = {
-  paneId: string;
-  placement: PanePlacement;
-};
-
-export type PopOutPaneInput = {
-  paneId: string;
-};
 
 export type CreateEntityInput = {
   projectId: string;

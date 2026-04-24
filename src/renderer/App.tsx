@@ -14,8 +14,6 @@ import type {
   HarnessEditorSnapshot,
 } from "./editor/HarnessEditor";
 import type { SerializedTransactionBundle } from "./editor/editorUtils";
-import type { StoredDocumentSnapshot } from "../shared/domain/document";
-import type { WorkspacePane } from "../shared/domain/workspace";
 
 import { useEditorSelections } from "./state/useEditorSelections";
 import { useEditorCommandActions } from "./state/useEditorCommandActions";
@@ -40,29 +38,25 @@ import { TitleBar } from "./features/chrome/TitleBar";
 import { NavPanel } from "./features/documents/NavPanel";
 import { EditorActionOverlays } from "./features/documents/EditorActionOverlays";
 import { EditorPane } from "./features/documents/EditorPane";
+import { EverlinkPanel } from "./features/entities/EverlinkPanel";
 import { EversliceChooser } from "./features/entities/EversliceChooser";
+import { SlicePlacementPanel } from "./features/panes/SlicePlacementPanel";
+import { EntityList } from "./features/entities/EntityList";
 import { EntityDetail } from "./features/entities/EntityDetail";
 import { MatchingRuleEditor } from "./features/entities/MatchingRuleEditor";
+import { SliceViewer } from "./features/panes/SliceViewer";
+import { PanelDocumentView } from "./features/panes/PanelDocumentView";
 import { HoverPreview } from "./features/panes/HoverPreview";
-import { PaneWorkspace } from "./features/panes/PaneWorkspace";
-import { EntitySlicesPane } from "./features/panes/EntitySlicesPane";
 import { HowToUsePage } from "./features/help/HowToUsePage";
-import type { ResolvedSliceView } from "./utils/workspace";
-
-const HOVER_PREVIEW_HANDOFF_DELAY_MS = 800;
-const HOVER_PREVIEW_EXIT_DELAY_MS = 180;
+import { RunLog } from "./features/history/RunLog";
+import { DEBUG_PANELS } from "./utils/devFlags";
 
 export function App() {
   const mainEditorRef = useRef<HarnessEditorHandle | null>(null);
   const panelEditorRef = useRef<HarnessEditorHandle | null>(null);
-  const paneEditorRefs = useRef(new Map<string, HarnessEditorHandle>());
 
   const workspaceHook = useWorkspace();
-  const { status, workspace, pendingWrites } = workspaceHook;
-  const nativePaneId = useMemo(() => {
-    if (typeof window === "undefined") return null;
-    return new URLSearchParams(window.location.search).get("paneId");
-  }, []);
+  const { status, workspace, pendingWrites, runLog } = workspaceHook;
 
   const selections = useEditorSelections();
   const lookups = useWorkspaceLookups(workspace);
@@ -81,39 +75,8 @@ export function App() {
   });
 
   const activeProject = getActiveProject(workspace);
-  const openDocumentsById = useMemo(() => {
-    const map = new Map<string, StoredDocumentSnapshot>();
-    for (const document of workspace?.openDocuments ?? []) {
-      map.set(document.id, document);
-    }
-    if (workspace?.activeDocument) {
-      map.set(workspace.activeDocument.id, workspace.activeDocument);
-    }
-    if (workspace?.panelDocument) {
-      map.set(workspace.panelDocument.id, workspace.panelDocument);
-    }
-    return map;
-  }, [workspace?.activeDocument, workspace?.openDocuments, workspace?.panelDocument]);
-  const focusedPaneId = workspace?.focusedPaneId ?? workspace?.layout.focusedPaneId ?? null;
-  const focusedPane = workspace?.panes.find((pane) => pane.id === focusedPaneId) ?? null;
-  const focusedDocument = focusedPane?.content.kind === "document"
-    ? openDocumentsById.get(focusedPane.content.documentId) ?? null
-    : null;
-  const renderedPanes = useMemo(() => {
-    const panes = workspace?.panes ?? [];
-    if (!nativePaneId) return panes;
-    return panes
-      .filter((pane) => pane.id === nativePaneId)
-      .map((pane) => ({
-        ...pane,
-        placement: {
-          kind: "workspace" as const,
-          rect: { x: 16, y: 16, width: 900, height: 660 },
-          zIndex: 1,
-        },
-      }));
-  }, [nativePaneId, workspace?.panes]);
-  const activeDocument = focusedDocument ?? workspace?.activeDocument ?? null;
+  const activeDocument = workspace?.activeDocument ?? null;
+  const panelDocument = workspace?.panelDocument ?? null;
   const selectedEntity = getSelectedEntity(workspace);
 
   // Draft text state — short-lived typing state that doesn't belong in
@@ -121,7 +84,6 @@ export function App() {
   // components read and write these.
   const [projectNameDraft, setProjectNameDraft] = useState("");
   const [documentTitleDraft, setDocumentTitleDraft] = useState("");
-  const [documentTitleDrafts, setDocumentTitleDrafts] = useState<Record<string, string>>({});
   const [newFolderTitle, setNewFolderTitle] = useState("");
   const [newDocumentTitle, setNewDocumentTitle] = useState("");
   const [entityNameDraft, setEntityNameDraft] = useState("");
@@ -137,18 +99,6 @@ export function App() {
   useEffect(() => {
     setDocumentTitleDraft(activeDocument?.title ?? "");
   }, [activeDocument?.id, activeDocument?.title]);
-
-  useEffect(() => {
-    setDocumentTitleDrafts((current) => {
-      const next = { ...current };
-      for (const document of openDocumentsById.values()) {
-        if (next[document.id] === undefined) {
-          next[document.id] = document.title;
-        }
-      }
-      return next;
-    });
-  }, [openDocumentsById]);
 
   useEffect(() => {
     setEntityNameDraft(selectedEntity?.name ?? "");
@@ -179,7 +129,37 @@ export function App() {
     [workspace?.documents],
   );
 
+  const selectedEntitySlices = useMemo(() => {
+    if (!selectedEntity) return [];
+    return selectedSlicesForEntity(
+      selectedEntity.id,
+      workspace,
+      lookups.slicesById,
+      lookups.boundariesBySliceId,
+      lookups.documentsById,
+    );
+  }, [workspace, selectedEntity, lookups.slicesById, lookups.boundariesBySliceId, lookups.documentsById]);
+
+  const selectedEntityRules = useMemo(() => {
+    if (!selectedEntity || !workspace) return [];
+    return workspace.matchingRules.filter((rule) => rule.entityId === selectedEntity.id);
+  }, [workspace, selectedEntity]);
+
   // Slice boundaries are intentionally not painted in the main editor —
+  // it stays a pure writing surface. Boundaries only appear in the hover
+  // preview and the docked panel (PanelDocumentView).
+  const panelVisibleBoundaries = useMemo(() => {
+    if (!workspace || !panelDocument) return [];
+    const selectedSliceIds = new Set<string>(
+      selectedEntity
+        ? workspace.entitySlices.filter((link) => link.entityId === selectedEntity.id).map((link) => link.sliceId)
+        : [],
+    );
+    return workspace.sliceBoundaries.filter((boundary) =>
+      boundary.documentId === panelDocument.id
+      && (selectedSliceIds.size === 0 || selectedSliceIds.has(boundary.sliceId)));
+  }, [workspace, panelDocument, selectedEntity]);
+
   const hoverEntity = hoverPreview ? lookups.entitiesById.get(hoverPreview.entityId) ?? null : null;
   const hoverSlices = hoverPreview && hoverEntity
     ? selectedSlicesForEntity(
@@ -194,71 +174,35 @@ export function App() {
   const everlinkLabel = everlink.exactSelectionEntityIds.length > 0 ? "Edit Everlink" : "Everlink it!";
   const emptySnapshot = createEmptyHarnessSnapshot();
 
-  const handlePaneSnapshotChange = useCallback((
-    document: StoredDocumentSnapshot,
+  const handleMainSnapshotChange = useCallback((
     snapshot: HarnessEditorSnapshot,
     transaction: SerializedTransactionBundle | null,
   ) => {
-    if (transaction) {
+    if (transaction && activeDocument) {
       workspaceHook.queueDocumentPersistence(
-        document.id,
-        documentTitleDrafts[document.id] ?? document.title,
+        activeDocument.id,
+        documentTitleDraft || activeDocument.title,
         snapshot,
         transaction,
       );
     }
-  }, [documentTitleDrafts, workspaceHook]);
+  }, [activeDocument, documentTitleDraft, workspaceHook]);
 
-  const savePaneDocumentMeta = useCallback((document: StoredDocumentSnapshot, nextFolderId?: string | null) => {
-    const title = documentTitleDrafts[document.id] ?? document.title;
-    void workspaceHook.runMutation(() => window.evernear.updateDocumentMeta({
-      documentId: document.id,
-      title,
-      folderId: nextFolderId,
-    }));
-  }, [documentTitleDrafts, workspaceHook]);
-
-  const focusPane = useCallback((paneId: string) => {
-    if (workspaceHook.workspaceRef.current?.focusedPaneId === paneId) return;
-    void workspaceHook.runMutation(() => window.evernear.focusPane({ paneId }));
-  }, [workspaceHook]);
-
-  const closePane = useCallback((paneId: string) => {
-    void workspaceHook.runMutation(() => window.evernear.closePane({ paneId }));
-  }, [workspaceHook]);
-
-  const movePane = useCallback((paneId: string, placement: WorkspacePane["placement"]) => {
-    void workspaceHook.runMutation(() => window.evernear.movePane({ paneId, placement }));
-  }, [workspaceHook]);
-
-  const backPane = useCallback((paneId: string) => {
-    void workspaceHook.runMutation(() => window.evernear.popPaneContent({ paneId }));
-  }, [workspaceHook]);
-
-  const popOutPane = useCallback((paneId: string) => {
-    void workspaceHook.runMutation(() => window.evernear.popOutPane({ paneId }));
-  }, [workspaceHook]);
-
-  const registerPaneEditor = useCallback((paneId: string, handle: HarnessEditorHandle | null) => {
-    if (handle) {
-      paneEditorRefs.current.set(paneId, handle);
-      if (workspaceHook.workspaceRef.current?.focusedPaneId === paneId) {
-        mainEditorRef.current = handle;
-      }
-    } else {
-      paneEditorRefs.current.delete(paneId);
-      if (workspaceHook.workspaceRef.current?.focusedPaneId === paneId) {
-        mainEditorRef.current = null;
-      }
+  const handlePanelSnapshotChange = useCallback((
+    snapshot: HarnessEditorSnapshot,
+    transaction: SerializedTransactionBundle | null,
+  ) => {
+    if (transaction && panelDocument) {
+      workspaceHook.queueDocumentPersistence(
+        panelDocument.id,
+        panelDocument.title,
+        snapshot,
+        transaction,
+      );
     }
-  }, [workspaceHook.workspaceRef]);
-
-  useEffect(() => {
-    mainEditorRef.current = focusedPaneId ? paneEditorRefs.current.get(focusedPaneId) ?? null : null;
-  }, [focusedPaneId]);
+  }, [panelDocument, workspaceHook]);
 
   const hoverCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hoverPreviewPointerInsideRef = useRef(false);
   const clearHoverCloseTimeout = useCallback(() => {
     if (hoverCloseTimeoutRef.current !== null) {
       clearTimeout(hoverCloseTimeoutRef.current);
@@ -266,86 +210,48 @@ export function App() {
     }
   }, []);
 
-  const scheduleHoverPreviewClose = useCallback((delayMs: number) => {
-    clearHoverCloseTimeout();
-    hoverCloseTimeoutRef.current = setTimeout(() => {
-      if (!hoverPreviewPointerInsideRef.current) {
-        setHoverPreview(null);
-      }
-      hoverCloseTimeoutRef.current = null;
-    }, delayMs);
-  }, [clearHoverCloseTimeout]);
-
-  useEffect(() => clearHoverCloseTimeout, [clearHoverCloseTimeout]);
-
   const handleEditorHover = useCallback((payload: { entityId: string; clientX: number; clientY: number } | null) => {
     if (!payload) {
-      scheduleHoverPreviewClose(HOVER_PREVIEW_HANDOFF_DELAY_MS);
+      clearHoverCloseTimeout();
+      hoverCloseTimeoutRef.current = setTimeout(() => {
+        setHoverPreview(null);
+        hoverCloseTimeoutRef.current = null;
+      }, 350);
       return;
     }
-    hoverPreviewPointerInsideRef.current = false;
     clearHoverCloseTimeout();
-    setHoverPreview((current) => {
-      if (current?.entityId === payload.entityId) {
-        return current;
-      }
-      return { entityId: payload.entityId, x: payload.clientX, y: payload.clientY };
-    });
-  }, [clearHoverCloseTimeout, scheduleHoverPreviewClose]);
+    setHoverPreview({ entityId: payload.entityId, x: payload.clientX, y: payload.clientY });
+  }, [clearHoverCloseTimeout]);
 
   const handlePreviewEnter = useCallback(() => {
-    hoverPreviewPointerInsideRef.current = true;
     clearHoverCloseTimeout();
   }, [clearHoverCloseTimeout]);
 
   const handlePreviewLeave = useCallback(() => {
-    hoverPreviewPointerInsideRef.current = false;
-    scheduleHoverPreviewClose(HOVER_PREVIEW_EXIT_DELAY_MS);
-  }, [scheduleHoverPreviewClose]);
-
-  const handlePinHoverPreview = useCallback(() => {
-    if (!hoverPreview || !hoverEntity) return;
-    void workspaceHook.runMutation(() => window.evernear.createPane({
-      title: hoverEntity.name,
-      content: { kind: "entitySlices", entityId: hoverEntity.id },
-    }), "Opened entity slices in a new pane.");
-    hoverPreviewPointerInsideRef.current = false;
-    clearHoverCloseTimeout();
-    setHoverPreview(null);
-  }, [hoverPreview, hoverEntity, workspaceHook, clearHoverCloseTimeout]);
-
-  const clearHoverState = useCallback(() => {
-    hoverPreviewPointerInsideRef.current = false;
     clearHoverCloseTimeout();
     setHoverPreview(null);
   }, [clearHoverCloseTimeout]);
 
-  const takeOverPaneWithSlice = useCallback((pane: WorkspacePane, sliceView: ResolvedSliceView) => {
-    const targetDocumentId = sliceView.boundary?.documentId ?? sliceView.document?.id ?? sliceView.slice.documentId;
-    void workspaceHook.runMutation(() => window.evernear.pushPaneContent({
-      paneId: pane.id,
-      title: sliceView.document?.title ?? "Document",
-      content: {
-        kind: "document",
-        documentId: targetDocumentId,
-        focusSliceId: sliceView.slice.id,
-        focusAnchor: sliceView.boundary?.resolution.anchor,
-      },
-    }));
-  }, [workspaceHook]);
+  const handlePinHoverPreview = useCallback(() => {
+    if (!hoverPreview || !hoverEntity) return;
+    const firstSlice = hoverSlices[0];
+    const targetDocumentId = firstSlice?.boundary?.documentId
+      ?? firstSlice?.document?.id
+      ?? activeDocument?.id
+      ?? null;
+    if (targetDocumentId) {
+      actions.openSliceInPanel(targetDocumentId, hoverEntity.id);
+    } else {
+      actions.selectEntity(hoverEntity.id);
+    }
+    clearHoverCloseTimeout();
+    setHoverPreview(null);
+  }, [hoverPreview, hoverEntity, hoverSlices, activeDocument, actions, clearHoverCloseTimeout]);
 
-  const openSliceInNewPane = useCallback((sliceView: ResolvedSliceView) => {
-    const targetDocumentId = sliceView.boundary?.documentId ?? sliceView.document?.id ?? sliceView.slice.documentId;
-    void workspaceHook.runMutation(() => window.evernear.createPane({
-      title: sliceView.document?.title ?? "Document",
-      content: {
-        kind: "document",
-        documentId: targetDocumentId,
-        focusSliceId: sliceView.slice.id,
-        focusAnchor: sliceView.boundary?.resolution.anchor,
-      },
-    }));
-  }, [workspaceHook]);
+  const clearHoverState = useCallback(() => {
+    clearHoverCloseTimeout();
+    setHoverPreview(null);
+  }, [clearHoverCloseTimeout]);
 
   const editorCommands = useEditorCommandActions({
     mainEditorRef,
@@ -359,153 +265,6 @@ export function App() {
     handleSelectionChange: (selection) => everlink.handleSelectionChange("main", selection),
     clearHoverState,
   });
-
-  const renderPane = useCallback((pane: WorkspacePane) => {
-    switch (pane.content.kind) {
-      case "projectNav":
-        return (
-          <NavPanel
-            workspace={workspace}
-            activeDocument={activeDocument}
-            projectNameDraft={projectNameDraft}
-            newFolderTitle={newFolderTitle}
-            newDocumentTitle={newDocumentTitle}
-            documentsByFolder={documentsByFolder}
-            documentsById={lookups.documentsById}
-            onProjectNameChange={setProjectNameDraft}
-            onSaveProjectName={actions.saveProjectName}
-            onNewFolderTitleChange={setNewFolderTitle}
-            onCreateFolder={actions.createFolder}
-            onNewDocumentTitleChange={setNewDocumentTitle}
-            onCreateDocument={actions.createDocument}
-            onToggleFolder={actions.toggleFolder}
-            onRenameFolder={actions.renameFolder}
-            onDeleteFolder={actions.deleteFolder}
-            onOpenDocument={actions.openDocument}
-          />
-        );
-      case "document": {
-        const content = pane.content;
-        const document = openDocumentsById.get(content.documentId);
-        if (!document) {
-          return <p className="empty-state">Document is not loaded.</p>;
-        }
-        return (
-          <EditorPane
-            ref={(handle) => registerPaneEditor(pane.id, handle)}
-            workspace={workspace}
-            activeDocument={document}
-            status={status}
-            documentTitleDraft={documentTitleDrafts[document.id] ?? document.title}
-            onDocumentTitleDraftChange={(value) => {
-              setDocumentTitleDrafts((current) => ({ ...current, [document.id]: value }));
-            }}
-            onSaveDocumentMeta={(folderId) => savePaneDocumentMeta(document, folderId)}
-            pendingWrites={pendingWrites}
-            documentsById={lookups.documentsById}
-            emptyDocumentJson={emptySnapshot.contentJson}
-            emptyDocumentKey={emptySnapshot.id}
-            editorInstanceKey={pane.id === focusedPaneId
-              ? `${pane.id}:${document.id}:focused`
-              : `${pane.id}:${document.id}:${document.currentVersion}`}
-            editorRules={lookups.editorRules}
-            visibleBoundaries={content.focusSliceId
-              ? (workspace?.sliceBoundaries ?? []).filter((boundary) => boundary.sliceId === content.focusSliceId)
-              : []}
-            pendingRange={pane.id === focusedPaneId ? everlink.mainPendingRange ?? everslice.frozenPendingRange : null}
-            onSnapshotChange={(snapshot, transaction) => handlePaneSnapshotChange(document, snapshot, transaction)}
-            onSelectionChange={(selection) => {
-              focusPane(pane.id);
-              editorCommands.handleMainSelectionChange(selection);
-            }}
-            onEntityHover={handleEditorHover}
-            onEntityClick={editorCommands.openEntityContext}
-            onEditorContextMenu={editorCommands.handleEditorContextMenu}
-            onEditorBlur={() => void everlink.handleMainBlur()}
-          />
-        );
-      }
-      case "entitySlices": {
-        const content = pane.content;
-        const entity = lookups.entitiesById.get(content.entityId) ?? null;
-        const slices = selectedSlicesForEntity(
-          content.entityId,
-          workspace,
-          lookups.slicesById,
-          lookups.boundariesBySliceId,
-          lookups.documentsById,
-        );
-        return (
-          <EntitySlicesPane
-            entity={entity}
-            slices={slices}
-            onTakeOverPane={(slice) => takeOverPaneWithSlice(pane, slice)}
-            onOpenNewPane={openSliceInNewPane}
-            onDeleteSlice={actions.deleteSlice}
-          />
-        );
-      }
-      case "entityDetail": {
-        const content = pane.content;
-        const entity = lookups.entitiesById.get(content.entityId) ?? null;
-        if (!entity) return <p className="empty-state">Entity not found.</p>;
-        return (
-          <div className="pane-section">
-            <EntityDetail
-              entityNameDraft={entity.id === selectedEntity?.id ? entityNameDraft : entity.name}
-              onEntityNameDraftChange={setEntityNameDraft}
-              onSaveEntityName={actions.saveEntityName}
-              onDeleteEntity={actions.deleteEntity}
-            />
-          </div>
-        );
-      }
-      case "matchingRules": {
-        const content = pane.content;
-        const rules = workspace?.matchingRules.filter((rule) => rule.entityId === content.entityId) ?? [];
-        return (
-          <MatchingRuleEditor
-            ruleForm={ruleForm}
-            selectedEntityRules={rules}
-            onRuleFormChange={setRuleForm}
-            onAddRule={actions.createEntityRule}
-            onToggleRule={actions.toggleRule}
-            onDeleteRule={actions.deleteRule}
-          />
-        );
-      }
-    }
-  }, [
-    actions,
-    activeDocument,
-    documentTitleDrafts,
-    documentsByFolder,
-    editorCommands,
-    emptySnapshot.contentJson,
-    emptySnapshot.id,
-    entityNameDraft,
-    everslice.frozenPendingRange,
-    everlink,
-    focusPane,
-    focusedPaneId,
-    handleEditorHover,
-    handlePaneSnapshotChange,
-    lookups,
-    newDocumentTitle,
-    newFolderTitle,
-    openDocumentsById,
-    openSliceInNewPane,
-    pendingWrites,
-    projectNameDraft,
-    registerPaneEditor,
-    ruleForm,
-    savePaneDocumentMeta,
-    selectedEntity?.id,
-    setRuleForm,
-    status,
-    takeOverPaneWithSlice,
-    workspace,
-  ]);
 
   return (
     <div className="mvp-shell">
@@ -539,16 +298,130 @@ export function App() {
       {activeScreen === "shortcuts" ? (
         <HowToUsePage onBackToWorkspace={() => setActiveScreen("workspace")} />
       ) : (
-        <PaneWorkspace
-          panes={renderedPanes}
-          focusedPaneId={nativePaneId ?? focusedPaneId}
-          renderPane={renderPane}
-          onFocusPane={focusPane}
-          onClosePane={closePane}
-          onBackPane={backPane}
-          onPopOutPane={popOutPane}
-          onMovePane={movePane}
+      <main className={mainGridClassName(workspace?.layout.panelOpen, editorFullScreen)}>
+        {editorFullScreen ? null : (
+          <NavPanel
+            workspace={workspace}
+            activeDocument={activeDocument}
+            projectNameDraft={projectNameDraft}
+            newFolderTitle={newFolderTitle}
+            newDocumentTitle={newDocumentTitle}
+            documentsByFolder={documentsByFolder}
+            documentsById={lookups.documentsById}
+            onProjectNameChange={setProjectNameDraft}
+            onSaveProjectName={actions.saveProjectName}
+            onNewFolderTitleChange={setNewFolderTitle}
+            onCreateFolder={actions.createFolder}
+            onNewDocumentTitleChange={setNewDocumentTitle}
+            onCreateDocument={actions.createDocument}
+            onToggleFolder={actions.toggleFolder}
+            onRenameFolder={actions.renameFolder}
+            onDeleteFolder={actions.deleteFolder}
+            onOpenDocument={actions.openDocument}
+          />
+        )}
+
+        <EditorPane
+          ref={mainEditorRef}
+          workspace={workspace}
+          activeDocument={activeDocument}
+          status={status}
+          documentTitleDraft={documentTitleDraft}
+          onDocumentTitleDraftChange={setDocumentTitleDraft}
+          onSaveDocumentMeta={actions.saveDocumentMeta}
+          pendingWrites={pendingWrites}
+          documentsById={lookups.documentsById}
+          emptyDocumentJson={emptySnapshot.contentJson}
+          emptyDocumentKey={emptySnapshot.id}
+          editorRules={lookups.editorRules}
+          visibleBoundaries={[]}
+          pendingRange={everlink.mainPendingRange ?? everslice.frozenPendingRange}
+          onSnapshotChange={handleMainSnapshotChange}
+          onSelectionChange={editorCommands.handleMainSelectionChange}
+          onEntityHover={handleEditorHover}
+          onEntityClick={editorCommands.openEntityContext}
+          onEditorContextMenu={editorCommands.handleEditorContextMenu}
+          onEditorBlur={() => void everlink.handleMainBlur()}
         />
+
+        {workspace?.layout.panelOpen && !editorFullScreen ? (
+          <aside className="panel-stack">
+            {everlink.everlinkSession ? (
+              <EverlinkPanel
+                session={everlink.everlinkSession}
+                workspace={workspace}
+                documentsById={lookups.documentsById}
+                onSessionChange={everlink.setSession}
+                onBeginPlacement={() => void everlink.beginPlacement()}
+                onCreateTargetDocument={() => void everlink.createTargetDocumentFromChooser()}
+                onCancel={() => void everlink.cancelFlow()}
+              />
+            ) : null}
+
+            {everlink.pendingPlacement ? (
+              <SlicePlacementPanel
+                placement={everlink.pendingPlacement}
+                documentsById={lookups.documentsById}
+                onCommit={() => void everlink.commitPendingSlice()}
+                onCancel={() => void everlink.cancelFlow()}
+              />
+            ) : null}
+
+            {!everlink.everlinkSession && !everlink.pendingPlacement ? (
+              <>
+                <EntityList
+                  workspace={workspace}
+                  selectedEntity={selectedEntity}
+                  onSelectEntity={actions.selectEntity}
+                  onCreateManualEntity={actions.createManualEntity}
+                />
+
+                {selectedEntity ? (
+                  <>
+                    <EntityDetail
+                      entityNameDraft={entityNameDraft}
+                      onEntityNameDraftChange={setEntityNameDraft}
+                      onSaveEntityName={actions.saveEntityName}
+                      onDeleteEntity={actions.deleteEntity}
+                    />
+
+                    <MatchingRuleEditor
+                      ruleForm={ruleForm}
+                      selectedEntityRules={selectedEntityRules}
+                      onRuleFormChange={setRuleForm}
+                      onAddRule={actions.createEntityRule}
+                      onToggleRule={actions.toggleRule}
+                      onDeleteRule={actions.deleteRule}
+                    />
+
+                    <SliceViewer
+                      selectedEntity={selectedEntity}
+                      entitySlices={selectedEntitySlices}
+                      onOpenSliceInPanel={actions.openSliceInPanel}
+                      onDeleteSlice={actions.deleteSlice}
+                    />
+
+                    {panelDocument ? (
+                      <PanelDocumentView
+                        ref={panelEditorRef}
+                        snapshot={panelDocument}
+                        boundaries={panelVisibleBoundaries}
+                        pendingRange={everlink.panelPendingRange}
+                        onSnapshotChange={handlePanelSnapshotChange}
+                        onSelectionChange={(selection) => everlink.handleSelectionChange("panel", selection)}
+                        onBlur={() => void everlink.handlePanelBlur()}
+                        onClose={actions.closePanelDocument}
+                      />
+                    ) : null}
+                  </>
+                ) : null}
+              </>
+            ) : null}
+
+            {DEBUG_PANELS ? <RunLog entries={runLog} /> : null}
+          </aside>
+        ) : null}
+      </main>
       )}
 
       {activeScreen === "workspace" ? (
@@ -594,3 +467,7 @@ export function App() {
   );
 }
 
+function mainGridClassName(panelOpen: boolean | undefined, fullScreen: boolean): string {
+  if (fullScreen) return "mvp-grid mvp-grid--fullscreen";
+  return panelOpen ? "mvp-grid" : "mvp-grid mvp-grid--panel-closed";
+}

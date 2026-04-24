@@ -16,12 +16,9 @@ import {
   type EntitySliceRecord,
   type MatchingRuleRecord,
   type ProjectRecord,
-  type PaneContent,
-  type PanePlacement,
   type SliceBoundaryRecord,
   type SliceRecord,
   type TextAnchor,
-  type WorkspacePane,
 } from "../shared/domain/workspace";
 import { intToBool } from "./utils";
 import type {
@@ -33,7 +30,6 @@ import type {
   RawProjectRow,
   RawSliceBoundaryRow,
   RawSliceRow,
-  RawWorkspacePaneRow,
 } from "./rowTypes";
 
 export function mapProjectRow(row: RawProjectRow): ProjectRecord {
@@ -148,19 +144,6 @@ export function mapEntitySliceRow(row: RawEntitySliceRow): EntitySliceRecord {
     entityId: row.entity_id,
     sliceId: row.slice_id,
     ordering: row.ordering,
-  };
-}
-
-export function mapWorkspacePaneRow(row: RawWorkspacePaneRow): WorkspacePane {
-  return {
-    id: row.id,
-    projectId: row.project_id,
-    title: row.title,
-    content: JSON.parse(row.content_json) as PaneContent,
-    placement: JSON.parse(row.placement_json) as PanePlacement,
-    history: JSON.parse(row.history_json) as PaneContent[],
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
   };
 }
 

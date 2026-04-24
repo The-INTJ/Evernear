@@ -24,11 +24,9 @@ import {
   DEFAULT_STORY_DOCUMENT_TITLE,
   type ApplyDocumentTransactionInput,
   type ApplyDocumentTransactionResult,
-  type ClosePaneInput,
   type CreateDocumentInput,
   type CreateEntityInput,
   type CreateFolderInput,
-  type CreatePaneInput,
   type CreateProjectInput,
   type CreateSliceInput,
   type DeleteDocumentInput,
@@ -36,12 +34,6 @@ import {
   type DeleteFolderInput,
   type DeleteMatchingRuleInput,
   type DeleteSliceInput,
-  type FocusPaneInput,
-  type MovePaneInput,
-  type PaneContent,
-  type PopPaneContentInput,
-  type PushPaneContentInput,
-  type ReplacePaneContentInput,
   type SliceBoundaryRecord,
   type UpdateSliceBoundaryInput,
   type HistorySummary,
@@ -52,7 +44,6 @@ import {
   type UpdateEntityInput,
   type UpdateFolderInput,
   type UpdateLayoutInput,
-  type UpdatePaneInput,
   type UpdateProjectInput,
   type UpsertMatchingRuleInput,
   type WorkspaceDocumentReplayResult,
@@ -66,14 +57,12 @@ import { EntityRepository } from "./EntityRepository";
 import { FolderRepository } from "./FolderRepository";
 import { HistoryRepository } from "./HistoryRepository";
 import { LayoutRepository } from "./LayoutRepository";
-import { PaneRepository } from "./PaneRepository";
 import { ProjectRepository } from "./ProjectRepository";
 import { SliceRepository } from "./SliceRepository";
 
 export class WorkspaceRepository {
   private readonly history: HistoryRepository;
   private readonly layout: LayoutRepository;
-  private readonly panes: PaneRepository;
   private readonly projects: ProjectRepository;
   private readonly folders: FolderRepository;
   private readonly documents: DocumentRepository;
@@ -83,7 +72,6 @@ export class WorkspaceRepository {
   constructor(private readonly sqlite: SqliteHarness) {
     this.history = new HistoryRepository(sqlite);
     this.layout = new LayoutRepository(sqlite);
-    this.panes = new PaneRepository(sqlite);
     this.projects = new ProjectRepository(sqlite, this.history);
     this.folders = new FolderRepository(sqlite, this.history);
     this.documents = new DocumentRepository(sqlite, this.history);
@@ -120,10 +108,6 @@ export class WorkspaceRepository {
       entities,
       (projectId) => this.folders.loadFolderIds(projectId),
     );
-    const panes = this.panes.ensureProjectPanes(activeProjectId, layout, documents, entities);
-    const focusedPaneId = panes.some((pane) => pane.id === layout.focusedPaneId)
-      ? layout.focusedPaneId
-      : panes.find((pane) => pane.content.kind === "document")?.id ?? panes[0]?.id ?? null;
 
     const activeDocument = layout.activeDocumentId
       ? this.documents.loadDocumentSnapshot(layout.activeDocumentId)
@@ -131,13 +115,6 @@ export class WorkspaceRepository {
     const panelDocument = layout.panelDocumentId
       ? this.documents.loadDocumentSnapshot(layout.panelDocumentId)
       : null;
-    const openDocuments = uniqueStrings(
-      panes
-        .map((pane) => pane.content.kind === "document" ? pane.content.documentId : null)
-        .filter((documentId): documentId is string => documentId !== null),
-    )
-      .map((documentId) => this.documents.loadDocumentSnapshot(documentId))
-      .filter((snapshot): snapshot is NonNullable<typeof snapshot> => snapshot !== null);
 
     // Stale pointers: a previous run may have referenced a document that
     // has since been deleted. Repair quietly and re-load.
@@ -163,9 +140,6 @@ export class WorkspaceRepository {
       documents,
       activeDocument,
       panelDocument,
-      openDocuments,
-      panes,
-      focusedPaneId,
       entities,
       matchingRules,
       slices,
@@ -204,7 +178,6 @@ export class WorkspaceRepository {
         activeProjectId: projectId,
         activeDocumentId: documentId,
         panelDocumentId: null,
-        focusedPaneId: null,
         selectedEntityId: null,
         expandedFolderIds: [folderId],
         highlightsEnabled: true,
@@ -286,24 +259,13 @@ export class WorkspaceRepository {
   createDocument(input: CreateDocumentInput): WorkspaceState {
     return this.sqlite.runInTransaction(() => {
       const documentId = randomUUID();
-      const snapshot = this.documents.createDocument(input, documentId);
+      this.documents.createDocument(input, documentId);
 
       const layout = this.loadLayoutWithDeps(input.projectId);
-      const pane = this.panes.createPane(
-        {
-          projectId: input.projectId,
-          title: snapshot.title,
-          content: { kind: "document", documentId },
-        },
-        randomUUID(),
-        input.projectId,
-        snapshot.title,
-      );
       this.layout.saveLayoutState(input.projectId, {
         ...layout,
         activeDocumentId: input.openInPanel ? layout.activeDocumentId : documentId,
         panelDocumentId: input.openInPanel ? documentId : layout.panelDocumentId,
-        focusedPaneId: pane.id,
         panelOpen: input.openInPanel ? true : layout.panelOpen,
         lastFocusedDocumentId: input.openInPanel ? layout.lastFocusedDocumentId : documentId,
         recentTargetDocumentIds: uniqueStrings([documentId, ...layout.recentTargetDocumentIds]).slice(0, 5),
@@ -324,11 +286,6 @@ export class WorkspaceRepository {
       const result = this.documents.deleteDocument(input);
       for (const sliceId of result.sliceIds) {
         this.slices.deleteSlice(sliceId);
-      }
-      for (const pane of this.panes.loadPanes(result.projectId)) {
-        if (pane.content.kind === "document" && pane.content.documentId === input.documentId) {
-          this.panes.closePane(pane.id);
-        }
       }
       const layout = this.loadLayoutWithDeps(result.projectId);
       const fallbackDocumentId = this.documents.loadDocumentSummaries(result.projectId)[0]?.id ?? null;
@@ -356,21 +313,10 @@ export class WorkspaceRepository {
       const projectId = row.project_id ?? DEFAULT_PROJECT_ID;
       this.layout.setActiveProjectId(projectId);
       const layout = this.loadLayoutWithDeps(projectId);
-      const pane = this.panes.createPane(
-        {
-          projectId,
-          title: row.title,
-          content: { kind: "document", documentId: input.documentId },
-        },
-        randomUUID(),
-        projectId,
-        row.title,
-      );
       this.layout.saveLayoutState(projectId, {
         ...layout,
         activeDocumentId: input.surface === "main" ? input.documentId : layout.activeDocumentId,
         panelDocumentId: input.surface === "panel" ? input.documentId : layout.panelDocumentId,
-        focusedPaneId: pane.id,
         panelOpen: input.surface === "panel" ? true : layout.panelOpen,
         panelMode: input.surface === "panel" ? "document" : layout.panelMode,
         lastFocusedDocumentId: input.surface === "main" ? input.documentId : layout.lastFocusedDocumentId,
@@ -392,132 +338,6 @@ export class WorkspaceRepository {
       if (input.activeProjectId) {
         this.layout.setActiveProjectId(input.activeProjectId);
       }
-      return this.loadWorkspace();
-    });
-  }
-
-  createPane(input: CreatePaneInput): WorkspaceState {
-    return this.sqlite.runInTransaction(() => {
-      const activeProjectId = input.projectId ?? this.layout.requireActiveProjectId();
-      const pane = this.panes.createPane(
-        input,
-        randomUUID(),
-        activeProjectId,
-        this.titleForPaneContent(input.content),
-      );
-      const layout = this.loadLayoutWithDeps(pane.projectId);
-      this.layout.saveLayoutState(pane.projectId, {
-        ...layout,
-        focusedPaneId: pane.id,
-      });
-      return this.loadWorkspace();
-    });
-  }
-
-  updatePane(input: UpdatePaneInput): WorkspaceState {
-    return this.sqlite.runInTransaction(() => {
-      const pane = this.panes.updatePane(input);
-      const layout = this.loadLayoutWithDeps(pane.projectId);
-      this.layout.saveLayoutState(pane.projectId, {
-        ...layout,
-        focusedPaneId: pane.id,
-      });
-      return this.loadWorkspace();
-    });
-  }
-
-  closePane(input: ClosePaneInput): WorkspaceState {
-    return this.sqlite.runInTransaction(() => {
-      const pane = this.panes.closePane(input.paneId);
-      if (pane) {
-        const layout = this.loadLayoutWithDeps(pane.projectId);
-        const remaining = this.panes.loadPanes(pane.projectId);
-        this.layout.saveLayoutState(pane.projectId, {
-          ...layout,
-          focusedPaneId: layout.focusedPaneId === input.paneId
-            ? remaining.at(-1)?.id ?? null
-            : layout.focusedPaneId,
-        });
-      }
-      return this.loadWorkspace();
-    });
-  }
-
-  focusPane(input: FocusPaneInput): WorkspaceState {
-    return this.sqlite.runInTransaction(() => {
-      const pane = this.panes.requirePane(input.paneId);
-      const layout = this.loadLayoutWithDeps(pane.projectId);
-      let nextPane = pane;
-      if (pane.placement.kind === "workspace") {
-        const maxZ = this.panes.loadPanes(pane.projectId).reduce((max, candidate) => (
-          candidate.placement.kind === "workspace" ? Math.max(max, candidate.placement.zIndex) : max
-        ), pane.placement.zIndex);
-        if (maxZ >= pane.placement.zIndex) {
-          nextPane = this.panes.movePane({
-            paneId: pane.id,
-            placement: {
-              ...pane.placement,
-              zIndex: maxZ + 1,
-            },
-          });
-        }
-      }
-      this.layout.saveLayoutState(nextPane.projectId, {
-        ...layout,
-        focusedPaneId: nextPane.id,
-        activeDocumentId: nextPane.content.kind === "document" ? nextPane.content.documentId : layout.activeDocumentId,
-        lastFocusedDocumentId: nextPane.content.kind === "document" ? nextPane.content.documentId : layout.lastFocusedDocumentId,
-      });
-      return this.loadWorkspace();
-    });
-  }
-
-  replacePaneContent(input: ReplacePaneContentInput): WorkspaceState {
-    return this.sqlite.runInTransaction(() => {
-      const pane = this.panes.replacePaneContent(input, this.titleForPaneContent(input.content));
-      const layout = this.loadLayoutWithDeps(pane.projectId);
-      this.layout.saveLayoutState(pane.projectId, {
-        ...layout,
-        focusedPaneId: pane.id,
-      });
-      return this.loadWorkspace();
-    });
-  }
-
-  pushPaneContent(input: PushPaneContentInput): WorkspaceState {
-    return this.sqlite.runInTransaction(() => {
-      const pane = this.panes.pushPaneContent(input, this.titleForPaneContent(input.content));
-      const layout = this.loadLayoutWithDeps(pane.projectId);
-      this.layout.saveLayoutState(pane.projectId, {
-        ...layout,
-        focusedPaneId: pane.id,
-      });
-      return this.loadWorkspace();
-    });
-  }
-
-  popPaneContent(input: PopPaneContentInput): WorkspaceState {
-    return this.sqlite.runInTransaction(() => {
-      const current = this.panes.requirePane(input.paneId);
-      const content = current.history.at(-1);
-      const pane = this.panes.popPaneContent(input, content ? this.titleForPaneContent(content) : current.title);
-      const layout = this.loadLayoutWithDeps(pane.projectId);
-      this.layout.saveLayoutState(pane.projectId, {
-        ...layout,
-        focusedPaneId: pane.id,
-      });
-      return this.loadWorkspace();
-    });
-  }
-
-  movePane(input: MovePaneInput): WorkspaceState {
-    return this.sqlite.runInTransaction(() => {
-      const pane = this.panes.movePane(input);
-      const layout = this.loadLayoutWithDeps(pane.projectId);
-      this.layout.saveLayoutState(pane.projectId, {
-        ...layout,
-        focusedPaneId: pane.id,
-      });
       return this.loadWorkspace();
     });
   }
@@ -661,19 +481,6 @@ export class WorkspaceRepository {
   loadHistorySummary(documentId: string): HistorySummary {
     const snapshot = this.documents.requireDocumentSnapshot(documentId);
     return this.history.loadHistorySummary(documentId, snapshot.currentVersion);
-  }
-
-  private titleForPaneContent(content: PaneContent): string {
-    switch (content.kind) {
-      case "projectNav":
-        return "Projects";
-      case "document":
-        return this.documents.loadDocumentSnapshot(content.documentId)?.title ?? "Document";
-      case "entitySlices":
-      case "entityDetail":
-      case "matchingRules":
-        return this.entities.loadEntity(content.entityId)?.name ?? "Entity";
-    }
   }
 
   // ═══════════════════════════════════════════════════════════════════════

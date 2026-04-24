@@ -60,7 +60,6 @@ export class LayoutRepository {
         project_id,
         active_document_id,
         panel_document_id,
-        focused_pane_id,
         selected_entity_id,
         expanded_folder_ids_json,
         highlights_enabled,
@@ -77,7 +76,6 @@ export class LayoutRepository {
       activeProjectId: projectId,
       activeDocumentId: documents[0]?.id ?? null,
       panelDocumentId: null,
-      focusedPaneId: null,
       selectedEntityId: entities[0]?.id ?? null,
       expandedFolderIds: resolveFolderIds(projectId),
       highlightsEnabled: true,
@@ -96,7 +94,6 @@ export class LayoutRepository {
       activeProjectId: projectId,
       activeDocumentId: row.active_document_id ?? defaultLayout.activeDocumentId,
       panelDocumentId: row.panel_document_id,
-      focusedPaneId: row.focused_pane_id ?? null,
       selectedEntityId: row.selected_entity_id ?? defaultLayout.selectedEntityId,
       expandedFolderIds: safeParseStringArray(row.expanded_folder_ids_json, defaultLayout.expandedFolderIds),
       highlightsEnabled: intToBool(row.highlights_enabled),
@@ -125,7 +122,6 @@ export class LayoutRepository {
         project_id,
         active_document_id,
         panel_document_id,
-        focused_pane_id,
         selected_entity_id,
         expanded_folder_ids_json,
         highlights_enabled,
@@ -135,11 +131,10 @@ export class LayoutRepository {
         recent_target_document_ids_json,
         updated_at
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(project_id) DO UPDATE SET
         active_document_id = excluded.active_document_id,
         panel_document_id = excluded.panel_document_id,
-        focused_pane_id = excluded.focused_pane_id,
         selected_entity_id = excluded.selected_entity_id,
         expanded_folder_ids_json = excluded.expanded_folder_ids_json,
         highlights_enabled = excluded.highlights_enabled,
@@ -152,7 +147,6 @@ export class LayoutRepository {
       projectId,
       layout.activeDocumentId,
       layout.panelDocumentId,
-      layout.focusedPaneId,
       layout.selectedEntityId,
       JSON.stringify(layout.expandedFolderIds),
       boolToInt(layout.highlightsEnabled),
