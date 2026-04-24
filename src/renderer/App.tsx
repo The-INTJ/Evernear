@@ -51,6 +51,9 @@ import { HowToUsePage } from "./features/help/HowToUsePage";
 import { RunLog } from "./features/history/RunLog";
 import { DEBUG_PANELS } from "./utils/devFlags";
 
+const HOVER_PREVIEW_HANDOFF_DELAY_MS = 800;
+const HOVER_PREVIEW_EXIT_DELAY_MS = 180;
+
 export function App() {
   const mainEditorRef = useRef<HarnessEditorHandle | null>(null);
   const panelEditorRef = useRef<HarnessEditorHandle | null>(null);
@@ -203,6 +206,7 @@ export function App() {
   }, [panelDocument, workspaceHook]);
 
   const hoverCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hoverPreviewPointerInsideRef = useRef(false);
   const clearHoverCloseTimeout = useCallback(() => {
     if (hoverCloseTimeoutRef.current !== null) {
       clearTimeout(hoverCloseTimeoutRef.current);
@@ -210,27 +214,42 @@ export function App() {
     }
   }, []);
 
-  const handleEditorHover = useCallback((payload: { entityId: string; clientX: number; clientY: number } | null) => {
-    if (!payload) {
-      clearHoverCloseTimeout();
-      hoverCloseTimeoutRef.current = setTimeout(() => {
-        setHoverPreview(null);
-        hoverCloseTimeoutRef.current = null;
-      }, 350);
-      return;
-    }
+  const scheduleHoverPreviewClose = useCallback((delayMs: number) => {
     clearHoverCloseTimeout();
-    setHoverPreview({ entityId: payload.entityId, x: payload.clientX, y: payload.clientY });
+    hoverCloseTimeoutRef.current = setTimeout(() => {
+      if (!hoverPreviewPointerInsideRef.current) {
+        setHoverPreview(null);
+      }
+      hoverCloseTimeoutRef.current = null;
+    }, delayMs);
   }, [clearHoverCloseTimeout]);
 
+  useEffect(() => clearHoverCloseTimeout, [clearHoverCloseTimeout]);
+
+  const handleEditorHover = useCallback((payload: { entityId: string; clientX: number; clientY: number } | null) => {
+    if (!payload) {
+      scheduleHoverPreviewClose(HOVER_PREVIEW_HANDOFF_DELAY_MS);
+      return;
+    }
+    hoverPreviewPointerInsideRef.current = false;
+    clearHoverCloseTimeout();
+    setHoverPreview((current) => {
+      if (current?.entityId === payload.entityId) {
+        return current;
+      }
+      return { entityId: payload.entityId, x: payload.clientX, y: payload.clientY };
+    });
+  }, [clearHoverCloseTimeout, scheduleHoverPreviewClose]);
+
   const handlePreviewEnter = useCallback(() => {
+    hoverPreviewPointerInsideRef.current = true;
     clearHoverCloseTimeout();
   }, [clearHoverCloseTimeout]);
 
   const handlePreviewLeave = useCallback(() => {
-    clearHoverCloseTimeout();
-    setHoverPreview(null);
-  }, [clearHoverCloseTimeout]);
+    hoverPreviewPointerInsideRef.current = false;
+    scheduleHoverPreviewClose(HOVER_PREVIEW_EXIT_DELAY_MS);
+  }, [scheduleHoverPreviewClose]);
 
   const handlePinHoverPreview = useCallback(() => {
     if (!hoverPreview || !hoverEntity) return;
@@ -244,11 +263,13 @@ export function App() {
     } else {
       actions.selectEntity(hoverEntity.id);
     }
+    hoverPreviewPointerInsideRef.current = false;
     clearHoverCloseTimeout();
     setHoverPreview(null);
   }, [hoverPreview, hoverEntity, hoverSlices, activeDocument, actions, clearHoverCloseTimeout]);
 
   const clearHoverState = useCallback(() => {
+    hoverPreviewPointerInsideRef.current = false;
     clearHoverCloseTimeout();
     setHoverPreview(null);
   }, [clearHoverCloseTimeout]);
