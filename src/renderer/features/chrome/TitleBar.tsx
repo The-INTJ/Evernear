@@ -1,8 +1,23 @@
-import type { ProjectRecord, WorkspaceState } from "../../../shared/domain/workspace";
+import {
+  collectDocumentMetrics,
+  type StoredDocumentSnapshot,
+} from "../../../shared/domain/document";
+import type {
+  DocumentSummary,
+  ProjectRecord,
+  WorkspaceState,
+  WorkspaceStatus,
+} from "../../../shared/domain/workspace";
+import { DEBUG_PANELS } from "../../utils/devFlags";
+import { formatCount } from "../../utils/formatting";
 
 type Props = {
   workspace: WorkspaceState | null;
-  hasActiveDocument: boolean;
+  activeDocument: StoredDocumentSnapshot | null;
+  status: WorkspaceStatus | null;
+  documentTitleDraft: string;
+  pendingWrites: number;
+  documentsById: Map<string, DocumentSummary>;
   everlinkLabel: string;
   everlinkDisabled: boolean;
   eversliceDisabled: boolean;
@@ -10,6 +25,8 @@ type Props = {
   shortcutsActive: boolean;
   onProjectSwitch: (projectId: string) => void;
   onCreateProject: () => void;
+  onDocumentTitleDraftChange: (value: string) => void;
+  onSaveDocumentMeta: (folderId?: string | null) => void;
   onTogglePanel: () => void;
   onToggleBold: () => void;
   onToggleItalic: () => void;
@@ -25,11 +42,15 @@ type Props = {
 };
 
 // The frameless window's drag region. Native window controls (min/max/close)
-// are painted by Electron's titleBarOverlay on the right edge — we just need
-// to keep our interactive controls outside the drag zone via `--no-drag`.
+// are painted by Electron's titleBarOverlay on the right edge, so every
+// interactive control opts out of dragging.
 export function TitleBar({
   workspace,
-  hasActiveDocument,
+  activeDocument,
+  status,
+  documentTitleDraft,
+  pendingWrites,
+  documentsById,
   everlinkLabel,
   everlinkDisabled,
   eversliceDisabled,
@@ -37,6 +58,8 @@ export function TitleBar({
   shortcutsActive,
   onProjectSwitch,
   onCreateProject,
+  onDocumentTitleDraftChange,
+  onSaveDocumentMeta,
   onTogglePanel,
   onToggleBold,
   onToggleItalic,
@@ -51,33 +74,68 @@ export function TitleBar({
   onOpenShortcuts,
 }: Props) {
   const projects: ProjectRecord[] = workspace?.projects ?? [];
-  const documentActionDisabled = !hasActiveDocument;
+  const documentActionDisabled = activeDocument === null;
+  const metrics = activeDocument ? collectDocumentMetrics(activeDocument.plainText) : null;
+  const activeFolderId = activeDocument ? documentsById.get(activeDocument.id)?.folderId ?? "" : "";
+  const syncLabel = pendingWrites > 0 ? "Saving..." : "Saved";
+
   return (
     <header className="title-bar">
       <div className="title-bar__identity">
         <div className="title-bar__brand">Evernear</div>
-        <div className="title-bar__tagline">Local writing workspace</div>
       </div>
+
       <div className="title-bar__actions">
         <div className="title-bar__group title-bar__group--project">
-          <label className="title-bar__field">
-            <span className="title-bar__field-label">Project</span>
-            <select
-              className="title-bar__select"
-              value={workspace?.layout.activeProjectId ?? ""}
-              onChange={(event) => onProjectSwitch(event.target.value)}
-            >
-              {projects.map((project) => (
-                <option key={project.id} value={project.id}>{project.name}</option>
-              ))}
-            </select>
-          </label>
+          <select
+            aria-label="Project"
+            className="title-bar__select"
+            value={workspace?.layout.activeProjectId ?? ""}
+            onChange={(event) => onProjectSwitch(event.target.value)}
+          >
+            {projects.map((project) => (
+              <option key={project.id} value={project.id}>{project.name}</option>
+            ))}
+          </select>
           <button className="title-bar__command" onClick={onCreateProject} type="button">
             New Project
           </button>
         </div>
 
-        <div className="title-bar__group" aria-label="Text formatting">
+        <div className="title-bar__group title-bar__group--document">
+          <input
+            aria-label="Document title"
+            className="title-bar__input"
+            disabled={documentActionDisabled}
+            value={documentTitleDraft}
+            onChange={(event) => onDocumentTitleDraftChange(event.target.value)}
+            onBlur={() => onSaveDocumentMeta()}
+            placeholder="No document"
+          />
+          <select
+            aria-label="Folder"
+            className="title-bar__select title-bar__select--folder"
+            disabled={documentActionDisabled}
+            value={activeFolderId}
+            onChange={(event) => onSaveDocumentMeta(event.target.value || null)}
+          >
+            <option value="">Project Root</option>
+            {(workspace?.folders ?? []).map((folder) => (
+              <option key={folder.id} value={folder.id}>{folder.title}</option>
+            ))}
+          </select>
+          <div className="title-bar__summary" aria-label="Document summary">
+            <SummaryItem label="Words" value={formatCount(metrics?.wordCount ?? 0)} />
+            <SummaryItem label="Paras" value={formatCount(metrics?.paragraphCount ?? 0)} />
+            <SummaryItem label="Chars" value={formatCount(metrics?.characterCount ?? 0)} />
+            {DEBUG_PANELS ? (
+              <SummaryItem label="Storage" value={status?.storageEngine ?? "better-sqlite3"} />
+            ) : null}
+            <SummaryItem label="Sync" value={syncLabel} />
+          </div>
+        </div>
+
+        <div className="title-bar__group title-bar__group--commands" aria-label="Text formatting">
           <button
             aria-label="Bold"
             className="title-bar__command title-bar__command--strong"
@@ -106,7 +164,7 @@ export function TitleBar({
           </button>
         </div>
 
-        <div className="title-bar__group" aria-label="Document actions">
+        <div className="title-bar__group title-bar__group--commands" aria-label="Document actions">
           <button
             className="title-bar__command"
             disabled={documentActionDisabled}
@@ -128,7 +186,7 @@ export function TitleBar({
           </button>
         </div>
 
-        <div className="title-bar__group" aria-label="Workspace view actions">
+        <div className="title-bar__group title-bar__group--commands" aria-label="Workspace view actions">
           <button className="title-bar__command" onClick={onToggleHighlights} type="button">
             {workspace?.layout.highlightsEnabled ? "Mute Highlights" : "Show Highlights"}
           </button>
@@ -140,9 +198,9 @@ export function TitleBar({
           </button>
         </div>
 
-        <div className="title-bar__group" aria-label="Selection actions">
+        <div className="title-bar__group title-bar__group--commands" aria-label="Selection actions">
           <button
-            className="title-bar__command title-bar__command--primary"
+            className="title-bar__command title-bar__command--accent"
             disabled={eversliceDisabled}
             onClick={onOpenEverslice}
             type="button"
@@ -150,7 +208,7 @@ export function TitleBar({
             Everslice
           </button>
           <button
-            className="title-bar__command title-bar__command--primary"
+            className="title-bar__command title-bar__command--accent"
             disabled={documentActionDisabled || everlinkDisabled}
             onClick={onOpenEverlinkChooser}
             type="button"
@@ -159,7 +217,7 @@ export function TitleBar({
           </button>
         </div>
 
-        <div className="title-bar__group">
+        <div className="title-bar__group title-bar__group--commands">
           <button
             aria-current={shortcutsActive ? "page" : undefined}
             className={shortcutsActive ? "title-bar__command title-bar__command--active" : "title-bar__command"}
@@ -171,5 +229,14 @@ export function TitleBar({
         </div>
       </div>
     </header>
+  );
+}
+
+function SummaryItem({ label, value }: { label: string; value: string }) {
+  return (
+    <span className="title-bar__summary-item">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </span>
   );
 }

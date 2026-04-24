@@ -29,8 +29,8 @@ type UseDocumentActionsInput = {
 };
 
 export type DocumentActions = {
-  createFolder: () => void;
-  createDocument: (folderId: string | null, openInPanel?: boolean) => void;
+  createFolder: (titleOverride?: string) => void;
+  createDocument: (folderId: string | null, openInPanel?: boolean, titleOverride?: string) => void;
   openDocument: (documentId: string) => void;
   saveDocumentMeta: (nextFolderId?: string | null) => void;
   deleteDocument: () => void;
@@ -44,10 +44,10 @@ export function useDocumentActions(input: UseDocumentActionsInput): DocumentActi
   const { workspaceHook: { runMutation, workspaceRef }, activeProject, activeDocument, drafts, setDrafts } = input;
   const currentWorkspace = (): WorkspaceState | null => workspaceRef.current;
 
-  const createFolder = useCallback(() => {
+  const createFolder = useCallback((titleOverride?: string) => {
     if (!activeProject) return;
     const ws = currentWorkspace();
-    const title = drafts.newFolderTitle.trim() || `Folder ${countForLabel(ws?.folders.length ?? 0)}`;
+    const title = titleOverride?.trim() || drafts.newFolderTitle.trim() || `Folder ${countForLabel(ws?.folders.length ?? 0)}`;
     setDrafts.setNewFolderTitle("");
     void runMutation(
       () => window.evernear.createFolder({ projectId: activeProject.id, title }),
@@ -55,10 +55,10 @@ export function useDocumentActions(input: UseDocumentActionsInput): DocumentActi
     );
   }, [runMutation, activeProject, drafts.newFolderTitle, setDrafts, workspaceRef]);
 
-  const createDocument = useCallback((folderId: string | null, openInPanel = false) => {
+  const createDocument = useCallback((folderId: string | null, openInPanel = false, titleOverride?: string) => {
     if (!activeProject) return;
     const ws = currentWorkspace();
-    const title = drafts.newDocumentTitle.trim() || `Document ${countForLabel(ws?.documents.length ?? 0)}`;
+    const title = titleOverride?.trim() || drafts.newDocumentTitle.trim() || `Document ${countForLabel(ws?.documents.length ?? 0)}`;
     setDrafts.setNewDocumentTitle("");
     void runMutation(
       () => window.evernear.createDocument({ projectId: activeProject.id, folderId, title, openInPanel }),

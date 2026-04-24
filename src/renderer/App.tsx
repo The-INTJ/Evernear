@@ -291,7 +291,11 @@ export function App() {
     <div className="mvp-shell">
       <TitleBar
         workspace={workspace}
-        hasActiveDocument={activeDocument !== null}
+        activeDocument={activeDocument}
+        status={status}
+        documentTitleDraft={documentTitleDraft}
+        pendingWrites={pendingWrites}
+        documentsById={lookups.documentsById}
         everlinkLabel={everlinkLabel}
         everlinkDisabled={selections.mainSelection.empty}
         eversliceDisabled={selections.mainSelection.empty}
@@ -299,6 +303,8 @@ export function App() {
         shortcutsActive={activeScreen === "shortcuts"}
         onProjectSwitch={actions.switchProject}
         onCreateProject={actions.createProject}
+        onDocumentTitleDraftChange={setDocumentTitleDraft}
+        onSaveDocumentMeta={actions.saveDocumentMeta}
         onTogglePanel={actions.togglePanel}
         onToggleBold={editorCommands.toggleBold}
         onToggleItalic={editorCommands.toggleItalic}
@@ -325,15 +331,11 @@ export function App() {
             workspace={workspace}
             activeDocument={activeDocument}
             projectNameDraft={projectNameDraft}
-            newFolderTitle={newFolderTitle}
-            newDocumentTitle={newDocumentTitle}
             documentsByFolder={documentsByFolder}
             documentsById={lookups.documentsById}
             onProjectNameChange={setProjectNameDraft}
             onSaveProjectName={actions.saveProjectName}
-            onNewFolderTitleChange={setNewFolderTitle}
             onCreateFolder={actions.createFolder}
-            onNewDocumentTitleChange={setNewDocumentTitle}
             onCreateDocument={actions.createDocument}
             onToggleFolder={actions.toggleFolder}
             onRenameFolder={actions.renameFolder}
@@ -346,12 +348,6 @@ export function App() {
           ref={mainEditorRef}
           workspace={workspace}
           activeDocument={activeDocument}
-          status={status}
-          documentTitleDraft={documentTitleDraft}
-          onDocumentTitleDraftChange={setDocumentTitleDraft}
-          onSaveDocumentMeta={actions.saveDocumentMeta}
-          pendingWrites={pendingWrites}
-          documentsById={lookups.documentsById}
           emptyDocumentJson={emptySnapshot.contentJson}
           emptyDocumentKey={emptySnapshot.id}
           editorRules={lookups.editorRules}
