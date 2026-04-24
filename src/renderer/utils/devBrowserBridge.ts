@@ -100,6 +100,39 @@ function buildSeedWorkspace(): { workspace: WorkspaceState; status: WorkspaceSta
       updatedAt: timestamp,
     },
     panelDocument: null,
+    openDocuments: [{
+      id: DOCUMENT_ID,
+      title: "The Harbor",
+      contentFormat: "prosemirror-basic",
+      contentSchemaVersion: 1,
+      contentJson,
+      plainText,
+      currentVersion: 1,
+      updatedAt: timestamp,
+    }],
+    panes: [
+      {
+        id: "dev-pane-nav",
+        projectId: PROJECT_ID,
+        title: "Projects",
+        content: { kind: "projectNav" },
+        placement: { kind: "docked", region: "left", stackId: "left", order: 0 },
+        history: [],
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      },
+      {
+        id: "dev-pane-document",
+        projectId: PROJECT_ID,
+        title: "The Harbor",
+        content: { kind: "document", documentId: DOCUMENT_ID },
+        placement: { kind: "workspace", rect: { x: 300, y: 96, width: 860, height: 760 }, zIndex: 1 },
+        history: [],
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      },
+    ],
+    focusedPaneId: "dev-pane-document",
     entities: [{ id: ENTITY_ID, projectId: PROJECT_ID, name: "Kaevlin", createdAt: timestamp, updatedAt: timestamp }],
     matchingRules: [{
       id: RULE_ID,
@@ -129,6 +162,7 @@ function buildSeedWorkspace(): { workspace: WorkspaceState; status: WorkspaceSta
       activeProjectId: PROJECT_ID,
       activeDocumentId: DOCUMENT_ID,
       panelDocumentId: null,
+      focusedPaneId: "dev-pane-document",
       selectedEntityId: ENTITY_ID,
       expandedFolderIds: [FOLDER_ID],
       highlightsEnabled: true,
@@ -165,7 +199,11 @@ export function installDevBrowserBridge(): void {
   const snapshot = (): WorkspaceState => workspace;
 
   const applyLayout = (patch: Parameters<HarnessBridge["updateLayout"]>[0]): WorkspaceState => {
-    workspace = { ...workspace, layout: { ...workspace.layout, ...patch } };
+    workspace = {
+      ...workspace,
+      focusedPaneId: patch.focusedPaneId ?? workspace.focusedPaneId,
+      layout: { ...workspace.layout, ...patch },
+    };
     return workspace;
   };
 
@@ -189,7 +227,12 @@ export function installDevBrowserBridge(): void {
       currentVersion: active.currentVersion + 1,
       updatedAt: now(),
     };
-    workspace = { ...workspace, activeDocument: nextSnapshot };
+    workspace = {
+      ...workspace,
+      activeDocument: nextSnapshot,
+      openDocuments: workspace.openDocuments.map((document) =>
+        document.id === nextSnapshot.id ? nextSnapshot : document),
+    };
     const summary = {
       ...workspace.documents[0],
       title: nextSnapshot.title,
@@ -227,6 +270,84 @@ export function installDevBrowserBridge(): void {
     async reorderDocument() { return snapshot(); },
     async openDocument() { return snapshot(); },
     async updateLayout(input) { return applyLayout(input); },
+    async createPane(input) {
+      const pane = {
+        id: `dev-pane-${Date.now()}`,
+        projectId: input.projectId ?? PROJECT_ID,
+        title: input.title ?? input.content.kind,
+        content: input.content,
+        placement: input.placement ?? {
+          kind: "workspace" as const,
+          rect: { x: 360, y: 140, width: 520, height: 560 },
+          zIndex: workspace.panes.length + 2,
+        },
+        history: [],
+        createdAt: now(),
+        updatedAt: now(),
+      };
+      workspace = {
+        ...workspace,
+        panes: [...workspace.panes, pane],
+        focusedPaneId: pane.id,
+        layout: { ...workspace.layout, focusedPaneId: pane.id },
+      };
+      return snapshot();
+    },
+    async updatePane(input) {
+      workspace = {
+        ...workspace,
+        panes: workspace.panes.map((pane) =>
+          pane.id === input.paneId
+            ? {
+                ...pane,
+                title: input.title ?? pane.title,
+                content: input.content ?? pane.content,
+                placement: input.placement ?? pane.placement,
+                history: input.history ?? pane.history,
+                updatedAt: now(),
+              }
+            : pane),
+      };
+      return snapshot();
+    },
+    async closePane(input) {
+      workspace = {
+        ...workspace,
+        panes: workspace.panes.filter((pane) => pane.id !== input.paneId),
+        focusedPaneId: workspace.focusedPaneId === input.paneId ? null : workspace.focusedPaneId,
+      };
+      return snapshot();
+    },
+    async focusPane(input) {
+      return applyLayout({ focusedPaneId: input.paneId });
+    },
+    async replacePaneContent(input) {
+      return this.updatePane({ paneId: input.paneId, content: input.content, title: input.title });
+    },
+    async pushPaneContent(input) {
+      const pane = workspace.panes.find((candidate) => candidate.id === input.paneId);
+      if (!pane) return snapshot();
+      return this.updatePane({
+        paneId: input.paneId,
+        content: input.content,
+        title: input.title,
+        history: [...pane.history, pane.content],
+      });
+    },
+    async popPaneContent(input) {
+      const pane = workspace.panes.find((candidate) => candidate.id === input.paneId);
+      const content = pane?.history.at(-1);
+      if (!pane || !content) return snapshot();
+      return this.updatePane({
+        paneId: input.paneId,
+        content,
+        history: pane.history.slice(0, -1),
+      });
+    },
+    async movePane(input) {
+      return this.updatePane({ paneId: input.paneId, placement: input.placement });
+    },
+    async popOutPane() { return snapshot(); },
     async applyDocumentTransaction(input) { return applyDocumentTransaction(input); },
     async createEntity() { return snapshot(); },
     async updateEntity() { return snapshot(); },

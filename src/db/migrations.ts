@@ -268,6 +268,32 @@ export const MIGRATIONS: Migration[] = [
       });
     },
   },
+  {
+    version: 4,
+    description: "first-class persisted workspace panes",
+    up(database) {
+      database.exec(`
+        CREATE TABLE IF NOT EXISTS workspace_panes (
+          id TEXT PRIMARY KEY,
+          project_id TEXT NOT NULL,
+          title TEXT NOT NULL,
+          content_json TEXT NOT NULL,
+          placement_json TEXT NOT NULL,
+          history_json TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_workspace_panes_project_updated_at
+          ON workspace_panes(project_id, updated_at DESC);
+      `);
+
+      const columns = database.prepare("PRAGMA table_info(workspace_layout_state)").all() as Array<{ name: string }>;
+      if (!columns.some((column) => column.name === "focused_pane_id")) {
+        database.exec("ALTER TABLE workspace_layout_state ADD COLUMN focused_pane_id TEXT");
+      }
+    },
+  },
 ];
 
 export const CURRENT_SCHEMA_VERSION = MIGRATIONS[MIGRATIONS.length - 1]?.version ?? 0;
@@ -345,6 +371,7 @@ function backfillLegacyColumns(database: BetterSqlite3.Database): void {
   ensureColumn(database, "documents", "folder_id", "TEXT");
   ensureColumn(database, "documents", "ordering", "INTEGER NOT NULL DEFAULT 0");
   ensureColumn(database, "documents", "created_at", "TEXT");
+  ensureColumn(database, "workspace_layout_state", "focused_pane_id", "TEXT");
   ensureColumn(database, "matching_rules", "entity_id", "TEXT");
   ensureColumn(database, "matching_rules", "created_at", "TEXT");
 }

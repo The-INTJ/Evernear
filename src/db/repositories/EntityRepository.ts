@@ -37,6 +37,15 @@ export class EntityRepository {
     return rows.map(mapEntityRow);
   }
 
+  loadEntity(entityId: string): EntityRecord | null {
+    const row = this.sqlite.getConnection().prepare(`
+      SELECT id, project_id, name, created_at, updated_at
+      FROM entities
+      WHERE id = ?
+    `).get(entityId) as RawEntityRow | undefined;
+    return row ? mapEntityRow(row) : null;
+  }
+
   loadMatchingRulesForProject(projectId: string): MatchingRuleRecord[] {
     const rows = this.sqlite.getConnection().prepare(`
       SELECT

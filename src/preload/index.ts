@@ -48,6 +48,33 @@ const bridge: HarnessBridge = {
   async updateLayout(input) {
     return ipcRenderer.invoke(HARNESS_CHANNELS.updateLayout, input);
   },
+  async createPane(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.createPane, input);
+  },
+  async updatePane(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.updatePane, input);
+  },
+  async closePane(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.closePane, input);
+  },
+  async focusPane(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.focusPane, input);
+  },
+  async replacePaneContent(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.replacePaneContent, input);
+  },
+  async pushPaneContent(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.pushPaneContent, input);
+  },
+  async popPaneContent(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.popPaneContent, input);
+  },
+  async movePane(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.movePane, input);
+  },
+  async popOutPane(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.popOutPane, input);
+  },
   async applyDocumentTransaction(input) {
     return ipcRenderer.invoke(HARNESS_CHANNELS.applyDocumentTransaction, input);
   },

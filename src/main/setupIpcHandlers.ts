@@ -12,6 +12,8 @@ import { WorkspaceRepository } from "../db/repositories/WorkspaceRepository";
 import { HARNESS_CHANNELS } from "../shared/contracts/harnessApi";
 import {
   ApplyDocumentTransactionInputSchema,
+  ClosePaneInputSchema,
+  CreatePaneInputSchema,
   CreateDocumentInputSchema,
   CreateEntityInputSchema,
   CreateFolderInputSchema,
@@ -22,25 +24,33 @@ import {
   DeleteFolderInputSchema,
   DeleteMatchingRuleInputSchema,
   DeleteSliceInputSchema,
+  FocusPaneInputSchema,
+  MovePaneInputSchema,
   UpdateSliceBoundaryInputSchema,
   OpenDocumentInputSchema,
   OpenProjectInputSchema,
   ReorderDocumentInputSchema,
+  PopPaneContentInputSchema,
+  PopOutPaneInputSchema,
+  PushPaneContentInputSchema,
+  ReplacePaneContentInputSchema,
   ReplayDocumentArgsSchema,
   UpdateDocumentMetaInputSchema,
   UpdateEntityInputSchema,
   UpdateFolderInputSchema,
   UpdateLayoutInputSchema,
+  UpdatePaneInputSchema,
   UpdateProjectInputSchema,
   UpsertMatchingRuleInputSchema,
   WriteCheckpointArgsSchema,
   parseInput,
 } from "../shared/contracts/harnessSchemas";
-import type { WorkspaceStatus } from "../shared/domain/workspace";
+import type { WorkspaceState, WorkspaceStatus } from "../shared/domain/workspace";
 
 export function setupIpcHandlers(
   repository: WorkspaceRepository,
   getStatus: () => WorkspaceStatus,
+  popOutPane?: (paneId: string) => Promise<WorkspaceState> | WorkspaceState,
 ): void {
   const C = HARNESS_CHANNELS;
 
@@ -74,6 +84,27 @@ export function setupIpcHandlers(
 
   ipcMain.handle(C.updateLayout, (_event, input) =>
     repository.updateLayout(parseInput(UpdateLayoutInputSchema, input, C.updateLayout)));
+
+  ipcMain.handle(C.createPane, (_event, input) =>
+    repository.createPane(parseInput(CreatePaneInputSchema, input, C.createPane)));
+  ipcMain.handle(C.updatePane, (_event, input) =>
+    repository.updatePane(parseInput(UpdatePaneInputSchema, input, C.updatePane)));
+  ipcMain.handle(C.closePane, (_event, input) =>
+    repository.closePane(parseInput(ClosePaneInputSchema, input, C.closePane)));
+  ipcMain.handle(C.focusPane, (_event, input) =>
+    repository.focusPane(parseInput(FocusPaneInputSchema, input, C.focusPane)));
+  ipcMain.handle(C.replacePaneContent, (_event, input) =>
+    repository.replacePaneContent(parseInput(ReplacePaneContentInputSchema, input, C.replacePaneContent)));
+  ipcMain.handle(C.pushPaneContent, (_event, input) =>
+    repository.pushPaneContent(parseInput(PushPaneContentInputSchema, input, C.pushPaneContent)));
+  ipcMain.handle(C.popPaneContent, (_event, input) =>
+    repository.popPaneContent(parseInput(PopPaneContentInputSchema, input, C.popPaneContent)));
+  ipcMain.handle(C.movePane, (_event, input) =>
+    repository.movePane(parseInput(MovePaneInputSchema, input, C.movePane)));
+  ipcMain.handle(C.popOutPane, (_event, input) => {
+    const parsed = parseInput(PopOutPaneInputSchema, input, C.popOutPane);
+    return popOutPane ? popOutPane(parsed.paneId) : repository.loadWorkspace();
+  });
 
   ipcMain.handle(C.applyDocumentTransaction, (_event, input) =>
     repository.applyDocumentTransaction(parseInput(ApplyDocumentTransactionInputSchema, input, C.applyDocumentTransaction)));

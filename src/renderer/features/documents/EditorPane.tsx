@@ -36,6 +36,7 @@ type Props = {
   documentsById: Map<string, DocumentSummary>;
   emptyDocumentJson: unknown;
   emptyDocumentKey: string;
+  editorInstanceKey?: string;
   editorRules: EditorMatchingRule[];
   visibleBoundaries: SliceBoundaryRecord[];
   pendingRange: PendingSliceRange | null;
@@ -64,6 +65,7 @@ export const EditorPane = forwardRef<HarnessEditorHandle, Props>(function Editor
     documentsById,
     emptyDocumentJson,
     emptyDocumentKey,
+    editorInstanceKey,
     editorRules,
     visibleBoundaries,
     pendingRange,
@@ -117,7 +119,7 @@ export const EditorPane = forwardRef<HarnessEditorHandle, Props>(function Editor
 
       <div className="editor-canvas">
         <HarnessEditor
-          key={activeDocument?.id ?? emptyDocumentKey}
+          key={editorInstanceKey ?? activeDocument?.id ?? emptyDocumentKey}
           ref={ref}
           initialDocumentJson={(activeDocument?.contentJson ?? emptyDocumentJson) as never}
           decorationsEnabled
