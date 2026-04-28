@@ -84,17 +84,13 @@ export function NavPanel(props: Props) {
   };
 
   const createFolderFromMenu = () => {
-    const title = promptForTitle("Folder name", "");
     setContextMenu(null);
-    if (title === null) return;
-    onCreateFolder(title);
+    onCreateFolder();
   };
 
   const createDocumentFromMenu = (folderId: string | null) => {
-    const title = promptForTitle("Document name", "");
     setContextMenu(null);
-    if (title === null) return;
-    onCreateDocument(folderId, false, title);
+    onCreateDocument(folderId, false);
   };
 
   const renameFolderFromMenu = (folder: DocumentFolderRecord) => {
@@ -228,6 +224,9 @@ function ContextMenuButton({
     <button
       className={danger ? "nav-context-menu__item nav-context-menu__item--danger" : "nav-context-menu__item"}
       onPointerDown={(event) => {
+        event.stopPropagation();
+      }}
+      onClick={(event) => {
         event.preventDefault();
         event.stopPropagation();
         onSelect();

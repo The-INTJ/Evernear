@@ -328,8 +328,22 @@ select {
 }
 
 .panel-stack {
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   overscroll-behavior: contain;
+}
+
+.panel-stack > .panel-section {
+  flex-shrink: 0;
+}
+
+.panel-stack > .panel-section--grow {
+  flex: 0 0 auto;
+  min-height: auto;
+}
+
+.panel-stack .panel-document-view {
+  min-height: 360px;
 }
 
 .editor-panel {
@@ -1278,11 +1292,45 @@ select {
 
 @media (max-width: 1380px) {
   .title-bar {
-    align-items: flex-start;
+    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+    padding-right: 16px;
   }
 
   .title-bar__actions {
-    justify-content: flex-start;
+    flex: 0 1 auto;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .title-bar__identity {
+    align-items: center;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .title-bar__group {
+    justify-content: center;
+  }
+
+  .title-bar__group--project,
+  .title-bar__group--document {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  .title-bar__group--document {
+    flex-wrap: wrap;
+  }
+
+  .title-bar__input {
+    width: min(280px, calc(100vw - 64px));
+  }
+
+  .title-bar__summary {
+    flex-wrap: wrap;
+    justify-content: center;
   }
 
   .mvp-grid {
@@ -1303,7 +1351,7 @@ select {
   .title-bar__actions,
   .title-bar__group {
     flex-direction: column;
-    align-items: stretch;
+    align-items: center;
   }
 
   .title-bar__identity,
@@ -1313,7 +1361,8 @@ select {
   }
 
   .title-bar__select {
-    flex: 1;
+    flex: 0 1 auto;
+    width: min(360px, 100%);
   }
 
   .mvp-shell > main {
