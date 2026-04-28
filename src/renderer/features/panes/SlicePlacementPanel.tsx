@@ -1,6 +1,8 @@
 import type { DocumentSummary } from "../../../shared/domain/workspace";
 import type { PendingSlicePlacement } from "../../state/sessionTypes";
 import { truncate } from "../../utils/formatting";
+import { Button, Card, PanelSection } from "../../ui";
+import styles from "./PaneContent.module.css";
 
 type Props = {
   placement: PendingSlicePlacement;
@@ -11,23 +13,29 @@ type Props = {
 
 export function SlicePlacementPanel({ placement, documentsById, onCommit, onCancel }: Props) {
   return (
-    <section className="panel-section panel-section--grow">
+    <PanelSection grow>
       <h2>Place the slice in the target document</h2>
-      <p className="section-copy">
-        Write freely in the target document, then select the passage you want to track as a slice and click Commit. If you commit with an empty cursor instead, the source selection is inserted there and becomes the slice.
+      <p className={styles.copy}>
+        Write freely in the target document, then select the passage you want to track as a slice
+        and click Commit. If you commit with an empty cursor instead, the source selection is
+        inserted there and becomes the slice.
       </p>
-      <div className="selection-card">
+      <Card variant="selection">
         <strong>Source text</strong>
         <span>{truncate(placement.sourceText, 140)}</span>
-      </div>
-      <div className="selection-card">
+      </Card>
+      <Card variant="selection">
         <strong>Target</strong>
         <span>{documentsById.get(placement.targetDocumentId)?.title ?? "Current document"}</span>
+      </Card>
+      <div className={styles.actions}>
+        <Button variant="primary" onClick={onCommit}>
+          Commit Slice
+        </Button>
+        <Button variant="secondary" onClick={onCancel}>
+          Cancel
+        </Button>
       </div>
-      <div className="toolbar-actions">
-        <button className="primary-button" onClick={onCommit} type="button">Commit Slice</button>
-        <button className="secondary-button" onClick={onCancel} type="button">Cancel</button>
-      </div>
-    </section>
+    </PanelSection>
   );
 }

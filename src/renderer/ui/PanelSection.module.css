@@ -1,0 +1,27 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.section h2 {
+  margin: 0;
+}
+
+.grow {
+  flex: 1;
+  min-height: 0;
+}
+
+.project {
+  flex: 0 0 auto;
+  gap: var(--space-4);
+}
+
+.kicker {
+  margin: 0;
+  color: var(--color-accent-strong);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}

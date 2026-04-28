@@ -1,0 +1,235 @@
+.titleBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  min-height: var(--titlebar-height);
+  padding: var(--space-3) var(--space-8);
+  padding-right: var(--window-controls-reserve);
+  border-bottom: 1px solid var(--color-border-panel);
+  background: var(--color-bg-chrome);
+  -webkit-app-region: drag;
+  user-select: none;
+}
+
+.identity {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 108px;
+}
+
+.brand {
+  color: var(--color-accent-strong);
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.actions {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2) 0;
+  -webkit-app-region: no-drag;
+}
+
+.group {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 28px;
+  padding: 0 var(--space-4);
+  border-left: 1px solid var(--color-divider);
+}
+
+.projectGroup {
+  min-width: min(250px, 100%);
+}
+
+.documentGroup {
+  flex: 1 1 520px;
+  min-width: min(520px, 100%);
+}
+
+.select {
+  height: 26px;
+  min-width: 136px;
+  border: 1px solid var(--color-border-control);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-4);
+  background: var(--color-bg-control-compact);
+  color: var(--color-text);
+  font-size: 0.82rem;
+}
+
+.folderSelect {
+  min-width: 126px;
+}
+
+.input {
+  width: min(250px, 24vw);
+  height: 26px;
+  min-width: 120px;
+  border: 1px solid var(--color-border-control);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-4);
+  background: var(--color-bg-control-compact);
+  color: var(--color-text);
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.input:disabled,
+.select:disabled {
+  opacity: 0.48;
+}
+
+.command {
+  min-height: 24px;
+  border: 0;
+  border-radius: 0;
+  padding: 0 var(--space-1);
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 0.82rem;
+  line-height: 1;
+  transition:
+    color 140ms ease,
+    opacity 140ms ease;
+}
+
+.command + .command {
+  margin-left: var(--space-1);
+  padding-left: 9px;
+  border-left: 1px solid var(--color-divider-strong);
+}
+
+.command:hover:not(:disabled) {
+  color: var(--color-accent-strong);
+}
+
+.command:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.strongCommand {
+  min-width: 18px;
+  padding-right: var(--space-2);
+  font-weight: 800;
+}
+
+.italicCommand {
+  font-style: italic;
+}
+
+.accentCommand {
+  color: var(--color-accent-strong);
+  font-weight: 650;
+}
+
+.activeCommand {
+  color: var(--color-success);
+}
+
+.summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+  color: var(--color-text-muted);
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+.summaryItem {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: 0 7px;
+  border-left: 1px solid var(--color-divider);
+}
+
+.summaryItem:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.summaryItem strong {
+  color: var(--color-text);
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+@media (max-width: 1380px) {
+  .titleBar {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-right: var(--space-8);
+  }
+
+  .actions {
+    flex: 0 1 auto;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .identity {
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .group {
+    justify-content: center;
+  }
+
+  .projectGroup,
+  .documentGroup {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  .documentGroup {
+    flex-wrap: wrap;
+  }
+
+  .input {
+    width: min(280px, calc(100vw - 64px));
+  }
+
+  .summary {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 900px) {
+  .titleBar {
+    padding-right: var(--space-8);
+  }
+
+  .titleBar,
+  .actions,
+  .group {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .identity,
+  .projectGroup {
+    min-width: 0;
+  }
+
+  .select {
+    flex: 0 1 auto;
+    width: min(360px, 100%);
+  }
+}

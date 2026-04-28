@@ -1,6 +1,8 @@
 import type { EntityRecord } from "../../../shared/domain/workspace";
 import type { ResolvedSliceView } from "../../utils/workspace";
 import { formatBoundaryReason } from "../../utils/formatting";
+import { Button, Card, PanelSection, cardStyles } from "../../ui";
+import styles from "./PaneContent.module.css";
 
 type Props = {
   selectedEntity: EntityRecord;
@@ -9,45 +11,45 @@ type Props = {
   onDeleteSlice: (sliceId: string) => void;
 };
 
-export function SliceViewer({ selectedEntity, entitySlices, onOpenSliceInPanel, onDeleteSlice }: Props) {
+export function SliceViewer({
+  selectedEntity,
+  entitySlices,
+  onOpenSliceInPanel,
+  onDeleteSlice,
+}: Props) {
   return (
-    <section className="panel-section panel-section--grow">
+    <PanelSection grow>
       <h2>Slice Viewer</h2>
-      <div className="stack-list">
+      <div className={styles.list}>
         {entitySlices.length === 0 ? (
-          <p className="empty-state">No slices linked yet. Use Everlink it! to place the first one.</p>
-        ) : entitySlices.map(({ slice, boundary, document }) => (
-          <article
-            key={slice.id}
-            className={`stack-card ${boundary ? `stack-card--${boundary.resolution.status}` : "stack-card--neutral"}`}
-          >
-            <div className="stack-card__meta">
-              <strong>{slice.title}</strong>
-              <span>{document?.title ?? "Document"}</span>
-            </div>
-            <p className="stack-card__copy">{slice.excerpt}</p>
-            <p className="stack-card__copy">
-              {boundary ? formatBoundaryReason(boundary.resolution.reason) : "Boundary record missing"}
-            </p>
-            <div className="toolbar-actions">
-              <button
-                className="ghost-button"
-                onClick={() => onOpenSliceInPanel(slice.documentId, selectedEntity.id)}
-                type="button"
-              >
-                Open in Panel
-              </button>
-              <button
-                className="ghost-button ghost-button--danger"
-                onClick={() => onDeleteSlice(slice.id)}
-                type="button"
-              >
-                Delete
-              </button>
-            </div>
-          </article>
-        ))}
+          <p className={styles.empty}>
+            No slices linked yet. Use Everlink it! to place the first one.
+          </p>
+        ) : (
+          entitySlices.map(({ slice, boundary, document }) => (
+            <Card key={slice.id} status={boundary?.resolution.status ?? "neutral"}>
+              <div className={cardStyles.meta}>
+                <strong>{slice.title}</strong>
+                <span>{document?.title ?? "Document"}</span>
+              </div>
+              <p className={cardStyles.copy}>{slice.excerpt}</p>
+              <p className={cardStyles.copy}>
+                {boundary
+                  ? formatBoundaryReason(boundary.resolution.reason)
+                  : "Boundary record missing"}
+              </p>
+              <div className={styles.actions}>
+                <Button onClick={() => onOpenSliceInPanel(slice.documentId, selectedEntity.id)}>
+                  Open in Panel
+                </Button>
+                <Button tone="danger" onClick={() => onDeleteSlice(slice.id)}>
+                  Delete
+                </Button>
+              </div>
+            </Card>
+          ))
+        )}
       </div>
-    </section>
+    </PanelSection>
   );
 }

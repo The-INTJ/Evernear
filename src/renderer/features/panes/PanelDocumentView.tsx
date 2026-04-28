@@ -8,11 +8,10 @@ import {
   type HarnessEditorSnapshot,
   type PendingSliceRange,
 } from "../../editor/HarnessEditor";
-import type {
-  EditorSelectionInfo,
-  SerializedTransactionBundle,
-} from "../../editor/editorUtils";
+import type { EditorSelectionInfo, SerializedTransactionBundle } from "../../editor/editorUtils";
 import { DEBUG_PANELS } from "../../utils/devFlags";
+import { Button, PanelSection } from "../../ui";
+import styles from "./PaneContent.module.css";
 
 type Props = {
   snapshot: StoredDocumentSnapshot;
@@ -27,50 +26,45 @@ type Props = {
   onClose?: () => void;
 };
 
-export const PanelDocumentView = forwardRef<HarnessEditorHandle, Props>(
-  function PanelDocumentView({ snapshot, boundaries, pendingRange, onSnapshotChange, onSelectionChange, onBlur, onClose }, ref) {
-    const [editingBoundaries, setEditingBoundaries] = useState(false);
+export const PanelDocumentView = forwardRef<HarnessEditorHandle, Props>(function PanelDocumentView(
+  { snapshot, boundaries, pendingRange, onSnapshotChange, onSelectionChange, onBlur, onClose },
+  ref,
+) {
+  const [editingBoundaries, setEditingBoundaries] = useState(false);
 
-    return (
-      <section className="panel-section panel-section--grow">
-        <h2>{snapshot.title}</h2>
-        <div className="panel-document-view__strip">
-          <button
-            type="button"
-            className="ghost-button"
-            onClick={() => setEditingBoundaries((value) => !value)}
-            aria-pressed={editingBoundaries}
-          >
-            {editingBoundaries ? "Done editing slices" : "Edit slices"}
-          </button>
-          {onClose ? (
-            <button type="button" className="ghost-button" onClick={onClose}>
-              Close
-            </button>
-          ) : null}
-        </div>
-        <div className="panel-document-view">
-          <HarnessEditor
-            key={snapshot.id}
-            ref={ref}
-            initialDocumentJson={snapshot.contentJson}
-            decorationsEnabled
-            matchingRules={[]}
-            sliceBoundaries={boundaries}
-            boundariesEditable={editingBoundaries}
-            pendingRange={pendingRange}
-            showLegend={DEBUG_PANELS}
-            legendLabels={{
-              match: "Panel view",
-              boundary: "Slice boundary",
-              pending: "Pending slice",
-            }}
-            onDocumentSnapshotChange={onSnapshotChange}
-            onSelectionChange={onSelectionChange}
-            onBlur={onBlur}
-          />
-        </div>
-      </section>
-    );
-  },
-);
+  return (
+    <PanelSection grow>
+      <h2>{snapshot.title}</h2>
+      <div className={styles.documentStrip}>
+        <Button
+          onClick={() => setEditingBoundaries((value) => !value)}
+          aria-pressed={editingBoundaries}
+        >
+          {editingBoundaries ? "Done editing slices" : "Edit slices"}
+        </Button>
+        {onClose ? <Button onClick={onClose}>Close</Button> : null}
+      </div>
+      <div className={styles.documentView}>
+        <HarnessEditor
+          key={snapshot.id}
+          ref={ref}
+          initialDocumentJson={snapshot.contentJson}
+          decorationsEnabled
+          matchingRules={[]}
+          sliceBoundaries={boundaries}
+          boundariesEditable={editingBoundaries}
+          pendingRange={pendingRange}
+          showLegend={DEBUG_PANELS}
+          legendLabels={{
+            match: "Panel view",
+            boundary: "Slice boundary",
+            pending: "Pending slice",
+          }}
+          onDocumentSnapshotChange={onSnapshotChange}
+          onSelectionChange={onSelectionChange}
+          onBlur={onBlur}
+        />
+      </div>
+    </PanelSection>
+  );
+});

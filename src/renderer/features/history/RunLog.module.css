@@ -1,0 +1,38 @@
+.log {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-height: 280px;
+  overflow: auto;
+}
+
+.entry {
+  padding: var(--space-6) var(--space-7);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-2xl);
+  background: var(--color-bg-subtle);
+}
+
+.success {
+  border-color: rgba(119, 214, 179, 0.28);
+}
+
+.warn {
+  border-color: rgba(245, 150, 123, 0.28);
+}
+
+.meta {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-6);
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.entry p,
+.empty {
+  margin: 0;
+  color: var(--color-text-muted);
+}

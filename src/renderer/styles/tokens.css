@@ -1,0 +1,131 @@
+:root {
+  color-scheme: dark;
+
+  --color-bg-app: #08131a;
+  --color-bg-app-top: #12252e;
+  --color-bg-chrome: rgba(14, 24, 32, 0.96);
+  --color-bg-elevated: rgba(10, 22, 30, 0.84);
+  --color-bg-soft: rgba(18, 33, 41, 0.88);
+  --color-bg-control: rgba(7, 18, 24, 0.62);
+  --color-bg-control-compact: rgba(7, 18, 24, 0.48);
+  --color-bg-float: rgba(12, 25, 33, 0.98);
+  --color-bg-float-soft: rgba(12, 25, 33, 0.96);
+  --color-bg-scrim: rgba(5, 12, 17, 0.64);
+  --color-bg-subtle: rgba(255, 255, 255, 0.05);
+  --color-bg-subtle-hover: rgba(255, 255, 255, 0.08);
+  --color-bg-row-hover: rgba(255, 255, 255, 0.07);
+
+  --color-border-panel: rgba(160, 204, 211, 0.16);
+  --color-border-control: rgba(255, 255, 255, 0.12);
+  --color-border-soft: rgba(255, 255, 255, 0.08);
+  --color-border-floating: rgba(255, 255, 255, 0.14);
+  --color-divider: rgba(255, 255, 255, 0.18);
+  --color-divider-strong: rgba(255, 255, 255, 0.2);
+
+  --color-text: #eff4ed;
+  --color-text-muted: #aabcc0;
+  --color-accent: #f5b971;
+  --color-accent-strong: #ffd29a;
+  --color-accent-ink: #241a10;
+  --color-success: #77d6b3;
+  --color-warn: #f5967b;
+  --color-danger-text: #ffd7c8;
+
+  --color-editor-paper: #f6f0e4;
+  --color-editor-ink: #2d2922;
+  --color-editor-heading: #1e3a48;
+  --color-editor-paper-border: rgba(88, 70, 44, 0.12);
+  --color-editor-paper-sheen: rgba(255, 255, 255, 0.18);
+
+  --color-highlight: rgba(245, 185, 113, 0.26);
+  --color-highlight-soft: rgba(245, 185, 113, 0.14);
+  --color-highlight-strong: rgba(245, 185, 113, 0.95);
+  --color-boundary: #2f8f83;
+  --color-boundary-soft: rgba(47, 143, 131, 0.16);
+  --color-boundary-line: rgba(47, 143, 131, 0.92);
+  --color-boundary-line-soft: rgba(47, 143, 131, 0.28);
+  --color-boundary-fill: rgba(47, 143, 131, 0.08);
+  --color-pending: #78bed0;
+  --color-pending-soft: rgba(120, 190, 208, 0.16);
+  --color-pending-fill: rgba(120, 190, 208, 0.18);
+  --color-pending-line: rgba(120, 190, 208, 0.88);
+  --color-repaired-fill: rgba(119, 214, 179, 0.16);
+  --color-ambiguous-fill: rgba(245, 185, 113, 0.2);
+  --color-invalid-fill: rgba(245, 150, 123, 0.16);
+  --color-invalid-line: rgba(245, 150, 123, 0.78);
+
+  --color-annotation-underline: rgba(170, 188, 192, 0.74);
+  --color-annotation-underline-active: rgba(245, 185, 113, 0.72);
+
+  --font-ui: "Segoe UI Variable Display", "Aptos", "Trebuchet MS", sans-serif;
+  --font-body: "Palatino Linotype", "Book Antiqua", Georgia, serif;
+
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 6px;
+  --space-4: 8px;
+  --space-5: 10px;
+  --space-6: 12px;
+  --space-7: 14px;
+  --space-8: 16px;
+  --space-9: 18px;
+  --space-10: 20px;
+  --space-12: 24px;
+  --space-14: 28px;
+  --space-16: 32px;
+  --space-18: 34px;
+  --space-24: 48px;
+  --space-editor-bottom: 120px;
+
+  --radius-xxs: 1px;
+  --radius-xs: 2px;
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+  --radius-2xl: 16px;
+  --radius-3xl: 18px;
+  --radius-4xl: 20px;
+  --radius-5xl: 22px;
+  --radius-editor: 24px;
+  --radius-pill: 999px;
+
+  --shadow-panel: 0 24px 70px rgba(0, 0, 0, 0.32);
+  --shadow-floating: 0 18px 44px rgba(0, 0, 0, 0.36);
+  --blur-panel: 18px;
+  --blur-scrim: 4px;
+
+  --z-hover-preview: 50;
+  --z-editor-scrim: 57;
+  --z-editor-menu: 58;
+  --z-modal: 60;
+  --z-context-menu: 70;
+
+  --window-controls-reserve: 158px;
+  --titlebar-height: 48px;
+  --nav-column-width: 320px;
+  --panel-column-width: 420px;
+  --nav-column-width-compact: 280px;
+  --panel-column-width-compact: 360px;
+  --shell-gap: 18px;
+  --app-max-content: 1180px;
+
+  --bg: var(--color-bg-app);
+  --bg-elevated: var(--color-bg-elevated);
+  --bg-soft: var(--color-bg-soft);
+  --panel-border: var(--color-border-panel);
+  --panel-shadow: var(--shadow-panel);
+  --text: var(--color-text);
+  --text-soft: var(--color-text-muted);
+  --accent: var(--color-accent);
+  --accent-strong: var(--color-accent-strong);
+  --success: var(--color-success);
+  --warn: var(--color-warn);
+  --highlight: var(--color-highlight);
+  --editor-paper: var(--color-editor-paper);
+  --editor-ink: var(--color-editor-ink);
+  --boundary: var(--color-boundary);
+  --pending: var(--color-pending);
+  --ui-font: var(--font-ui);
+  --body-font: var(--font-body);
+}
