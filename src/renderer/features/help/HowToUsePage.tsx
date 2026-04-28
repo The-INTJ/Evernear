@@ -1,5 +1,8 @@
 import { useEffect } from "react";
 
+import { Button, classNames } from "../../ui";
+import styles from "./HowToUsePage.module.css";
+
 type Props = {
   onBackToWorkspace: () => void;
 };
@@ -46,38 +49,38 @@ export function HowToUsePage({ onBackToWorkspace }: Props) {
   }, [onBackToWorkspace]);
 
   return (
-    <main className="how-to-page">
-      <section className="how-to-hero">
+    <main className={styles.page}>
+      <section className={styles.hero}>
         <div>
-          <span className="eyebrow">Shortcuts</span>
+          <span className={styles.kicker}>Shortcuts</span>
           <h1>How to Use Evernear</h1>
           <p>
             The window bar holds global commands. The editor keeps the actions that belong to
             selected words and entity highlights close to the prose.
           </p>
         </div>
-        <button className="primary-button how-to-hero__button" onClick={onBackToWorkspace} type="button">
+        <Button className={styles.heroButton} variant="primary" onClick={onBackToWorkspace}>
           Back to Workspace
-        </button>
+        </Button>
       </section>
 
-      <section className="how-to-grid" aria-label="Main workflows">
+      <section className={styles.grid} aria-label="Main workflows">
         {workflows.map((item) => (
-          <article className="how-to-card" key={item.title}>
+          <article className={styles.card} key={item.title}>
             <h2>{item.title}</h2>
             <p>{item.body}</p>
           </article>
         ))}
       </section>
 
-      <section className="how-to-section">
-        <div className="how-to-section__heading">
-          <span className="eyebrow">Keyboard</span>
+      <section className={styles.section}>
+        <div className={styles.sectionHeading}>
+          <span className={styles.kicker}>Keyboard</span>
           <h2>Shortcuts</h2>
         </div>
-        <div className="shortcut-grid">
+        <div className={styles.shortcutGrid}>
           {shortcuts.map(([keys, description]) => (
-            <article className="shortcut-row" key={keys}>
+            <article className={styles.shortcutRow} key={keys}>
               <kbd>{keys}</kbd>
               <span>{description}</span>
             </article>
@@ -85,15 +88,15 @@ export function HowToUsePage({ onBackToWorkspace }: Props) {
         </div>
       </section>
 
-      <section className="how-to-section how-to-section--compact">
-        <div className="how-to-section__heading">
-          <span className="eyebrow">Mouse</span>
+      <section className={classNames(styles.section, styles.sectionCompact)}>
+        <div className={styles.sectionHeading}>
+          <span className={styles.kicker}>Mouse</span>
           <h2>Selection and Right Click</h2>
         </div>
         <p>
-          Select text for the floating action bubble. Right-click selected text for the same
-          actions plus copy and select all. Right-click an entity highlight to select or open
-          that entity's context.
+          Select text for the floating action bubble. Right-click selected text for the same actions
+          plus copy and select all. Right-click an entity highlight to select or open that entity's
+          context.
         </p>
       </section>
     </main>

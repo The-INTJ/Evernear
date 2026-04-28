@@ -1,0 +1,54 @@
+.button {
+  border: 0;
+  border-radius: var(--radius-xl);
+  padding: 11px var(--space-7);
+  cursor: pointer;
+  transition:
+    transform 140ms ease,
+    opacity 140ms ease,
+    background 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
+}
+
+.button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
+}
+
+.primary {
+  background: linear-gradient(135deg, var(--color-accent), #f4d2aa);
+  color: var(--color-accent-ink);
+  font-weight: 700;
+}
+
+.secondary {
+  background: var(--color-bg-subtle-hover);
+  color: var(--color-text);
+}
+
+.ghost,
+.chip {
+  border: 1px solid var(--color-border-control);
+  background: transparent;
+  color: var(--color-text);
+}
+
+.danger {
+  border-color: rgba(245, 150, 123, 0.32);
+  color: var(--color-danger-text);
+}
+
+.chip {
+  text-align: left;
+}
+
+.chipActive {
+  border-color: rgba(245, 185, 113, 0.34);
+  background: linear-gradient(135deg, rgba(245, 185, 113, 0.24), rgba(245, 185, 113, 0.08));
+}

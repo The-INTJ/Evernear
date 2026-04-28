@@ -1,4 +1,6 @@
 import type { EntityRecord, WorkspaceState } from "../../../shared/domain/workspace";
+import { Button, PanelSection } from "../../ui";
+import styles from "./EntityPanels.module.css";
 
 type Props = {
   workspace: WorkspaceState | null;
@@ -7,35 +9,39 @@ type Props = {
   onCreateManualEntity: () => void;
 };
 
-export function EntityList({ workspace, selectedEntity, onSelectEntity, onCreateManualEntity }: Props) {
+export function EntityList({
+  workspace,
+  selectedEntity,
+  onSelectEntity,
+  onCreateManualEntity,
+}: Props) {
   const entities = workspace?.entities ?? [];
   return (
-    <section className="panel-section">
+    <PanelSection>
       <h2>Entity Library</h2>
-      <div className="entity-list">
+      <div className={styles.entityList}>
         {entities.length === 0 ? (
-          <div className="stack-list">
-            <p className="empty-state">
-              Start from a story selection with Everlink it!, or create the first entity manually here.
+          <div className={styles.list}>
+            <p className={styles.empty}>
+              Start from a story selection with Everlink it!, or create the first entity manually
+              here.
             </p>
-            <button className="ghost-button" onClick={onCreateManualEntity} type="button">Create First Entity</button>
+            <Button onClick={onCreateManualEntity}>Create First Entity</Button>
           </div>
         ) : (
           entities.map((entity) => (
-            <button
+            <Button
               key={entity.id}
-              className={entity.id === selectedEntity?.id ? "entity-chip entity-chip--active" : "entity-chip"}
+              variant="chip"
+              active={entity.id === selectedEntity?.id}
               onClick={() => onSelectEntity(entity.id)}
-              type="button"
             >
               {entity.name}
-            </button>
+            </Button>
           ))
         )}
       </div>
-      {entities.length > 0 ? (
-        <button className="ghost-button" onClick={onCreateManualEntity} type="button">New Entity</button>
-      ) : null}
-    </section>
+      {entities.length > 0 ? <Button onClick={onCreateManualEntity}>New Entity</Button> : null}
+    </PanelSection>
   );
 }

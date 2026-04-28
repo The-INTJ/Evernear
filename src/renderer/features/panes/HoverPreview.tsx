@@ -1,14 +1,11 @@
-import {
-  useLayoutEffect,
-  useRef,
-  useState,
-  type CSSProperties,
-} from "react";
+import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 
 import type { EntityRecord } from "../../../shared/domain/workspace";
 import type { HoverPreview as HoverPreviewState } from "../../state/sessionTypes";
 import type { ResolvedSliceView } from "../../utils/workspace";
 import { formatBoundaryReason } from "../../utils/formatting";
+import { Card, cardStyles, classNames } from "../../ui";
+import styles from "./HoverPreview.module.css";
 
 const POINTER_GAP_PX = 12;
 const VIEWPORT_MARGIN_PX = 24;
@@ -69,7 +66,7 @@ export function HoverPreview({ hover, entity, slices, onMouseEnter, onMouseLeave
   return (
     <div
       ref={previewRef}
-      className="hover-preview"
+      className={styles.preview}
       style={style}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
@@ -77,28 +74,34 @@ export function HoverPreview({ hover, entity, slices, onMouseEnter, onMouseLeave
       role={onPin ? "button" : undefined}
       title={onPin ? "Click to dock as a panel" : undefined}
     >
-      <div className="hover-preview__header">
+      <div className={styles.header}>
         <h3>{entity.name}</h3>
       </div>
-      <div className="hover-preview__body">
+      <div className={styles.body}>
         {slices.length === 0 ? (
-          <p className="empty-state">No linked slices yet.</p>
-        ) : slices.map(({ slice, boundary, document }) => {
-          // Prefer the boundary anchor's full captured text — `slice.excerpt`
-          // is truncated to 180 chars at DB write, which often clips the
-          // passage to a single line.
-          const body = boundary?.resolution.anchor.exact ?? slice.excerpt;
-          return (
-            <article key={slice.id} className="stack-card stack-card--neutral">
-              <div className="stack-card__meta">
-                <strong>{slice.title}</strong>
-                <span>{document?.title ?? "Document"}</span>
-              </div>
-              <p className="stack-card__copy hover-preview__excerpt">{body}</p>
-              {boundary ? <p className="stack-card__reason">{formatBoundaryReason(boundary.resolution.reason)}</p> : null}
-            </article>
-          );
-        })}
+          <p className={styles.empty}>No linked slices yet.</p>
+        ) : (
+          slices.map(({ slice, boundary, document }) => {
+            // Prefer the boundary anchor's full captured text — `slice.excerpt`
+            // is truncated to 180 chars at DB write, which often clips the
+            // passage to a single line.
+            const body = boundary?.resolution.anchor.exact ?? slice.excerpt;
+            return (
+              <Card key={slice.id}>
+                <div className={cardStyles.meta}>
+                  <strong>{slice.title}</strong>
+                  <span>{document?.title ?? "Document"}</span>
+                </div>
+                <p className={classNames(cardStyles.copy, styles.excerpt)}>{body}</p>
+                {boundary ? (
+                  <p className={cardStyles.reason}>
+                    {formatBoundaryReason(boundary.resolution.reason)}
+                  </p>
+                ) : null}
+              </Card>
+            );
+          })
+        )}
       </div>
     </div>
   );
@@ -145,10 +148,14 @@ function getPreviewPosition(
   }
 
   const preferredAboveTop = hover.y - preview.height - POINTER_GAP_PX;
-  const maxTop = Math.max(VIEWPORT_MARGIN_PX, viewport.height - preview.height - VIEWPORT_MARGIN_PX);
-  const top = preferredAboveTop >= VIEWPORT_MARGIN_PX
-    ? preferredAboveTop
-    : clamp(preferredBelowTop, VIEWPORT_MARGIN_PX, maxTop);
+  const maxTop = Math.max(
+    VIEWPORT_MARGIN_PX,
+    viewport.height - preview.height - VIEWPORT_MARGIN_PX,
+  );
+  const top =
+    preferredAboveTop >= VIEWPORT_MARGIN_PX
+      ? preferredAboveTop
+      : clamp(preferredBelowTop, VIEWPORT_MARGIN_PX, maxTop);
 
   return {
     left: Math.round(left),

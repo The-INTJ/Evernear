@@ -7,6 +7,8 @@ import type {
   DocumentSummary,
   WorkspaceState,
 } from "../../../shared/domain/workspace";
+import { Menu, MenuItem, PanelSection, TextInput, classNames } from "../../ui";
+import styles from "./NavPanel.module.css";
 
 type NavContextMenu = {
   x: number;
@@ -24,7 +26,11 @@ type Props = {
   onProjectNameChange: (value: string) => void;
   onSaveProjectName: () => void;
   onCreateFolder: (titleOverride?: string) => void;
-  onCreateDocument: (folderId: string | null, openInPanel?: boolean, titleOverride?: string) => void;
+  onCreateDocument: (
+    folderId: string | null,
+    openInPanel?: boolean,
+    titleOverride?: string,
+  ) => void;
   onToggleFolder: (folderId: string) => void;
   onRenameFolder: (folder: DocumentFolderRecord, title: string) => void;
   onDeleteFolder: (folderId: string) => void;
@@ -50,7 +56,9 @@ export function NavPanel(props: Props) {
 
   const [contextMenu, setContextMenu] = useState<NavContextMenu | null>(null);
   const rootDocuments = documentsByFolder.get(null) ?? [];
-  const activeFolderId = activeDocument ? documentsById.get(activeDocument.id)?.folderId ?? null : null;
+  const activeFolderId = activeDocument
+    ? (documentsById.get(activeDocument.id)?.folderId ?? null)
+    : null;
 
   useEffect(() => {
     if (!contextMenu) return;
@@ -102,41 +110,42 @@ export function NavPanel(props: Props) {
 
   return (
     <aside
-      className="nav-panel"
+      className={styles.navPanel}
       onContextMenu={(event) => openContextMenu(event, activeFolderId)}
     >
-      <section className="panel-section panel-section--project">
-        <p className="section-kicker">Project</p>
-        <input
-          className="text-input text-input--project"
+      <PanelSection project kicker="Project">
+        <TextInput
+          variant="project"
           value={projectNameDraft}
           onChange={(event) => onProjectNameChange(event.target.value)}
           onBlur={onSaveProjectName}
           placeholder="Project name"
         />
-      </section>
+      </PanelSection>
 
-      <section className="panel-section panel-section--grow nav-tree-section">
-        <p className="section-kicker">Explorer</p>
-        <div className="tree-list">
+      <PanelSection grow kicker="Explorer" className={styles.navTreeSection}>
+        <div className={styles.treeList}>
           {(workspace?.folders ?? []).map((folder) => {
             const expanded = workspace?.layout.expandedFolderIds.includes(folder.id) ?? false;
             const folderDocuments = documentsByFolder.get(folder.id) ?? [];
             return (
-              <div key={folder.id} className="tree-folder">
+              <div key={folder.id} className={styles.treeFolder}>
                 <button
-                  className={expanded ? "tree-folder__row tree-folder__row--expanded" : "tree-folder__row"}
+                  className={classNames(
+                    styles.treeFolderRow,
+                    expanded && styles.treeFolderRowExpanded,
+                  )}
                   onClick={() => onToggleFolder(folder.id)}
                   onContextMenu={(event) => openContextMenu(event, folder.id, folder)}
                   type="button"
                 >
-                  <span className="tree-disclosure" aria-hidden="true" />
-                  <span className="tree-folder__icon" aria-hidden="true" />
-                  <span className="tree-folder__name">{folder.title}</span>
+                  <span className={styles.treeDisclosure} aria-hidden="true" />
+                  <span className={styles.treeFolderIcon} aria-hidden="true" />
+                  <span className={styles.treeFolderName}>{folder.title}</span>
                 </button>
 
                 {expanded ? (
-                  <div className="tree-documents">
+                  <div className={styles.treeDocuments}>
                     {folderDocuments.map((document) => (
                       <DocumentRow
                         key={document.id}
@@ -153,15 +162,18 @@ export function NavPanel(props: Props) {
           })}
 
           <div
-            className="tree-folder tree-folder--root"
+            className={styles.treeFolder}
             onContextMenu={(event) => openContextMenu(event, null)}
           >
-            <div className="tree-folder__row tree-folder__row--static">
-              <span className="tree-disclosure tree-disclosure--empty" aria-hidden="true" />
-              <span className="tree-folder__icon" aria-hidden="true" />
-              <span className="tree-folder__name">Project Root</span>
+            <div className={classNames(styles.treeFolderRow, styles.treeFolderRowStatic)}>
+              <span
+                className={classNames(styles.treeDisclosure, styles.treeDisclosureEmpty)}
+                aria-hidden="true"
+              />
+              <span className={styles.treeFolderIcon} aria-hidden="true" />
+              <span className={styles.treeFolderName}>Project Root</span>
             </div>
-            <div className="tree-documents">
+            <div className={styles.treeDocuments}>
               {rootDocuments.map((document) => (
                 <DocumentRow
                   key={document.id}
@@ -174,18 +186,15 @@ export function NavPanel(props: Props) {
             </div>
           </div>
         </div>
-      </section>
+      </PanelSection>
 
       {contextMenu ? (
-        <div
-          className="nav-context-menu"
+        <Menu
           style={contextMenuStyle(contextMenu)}
           onContextMenu={(event) => event.preventDefault()}
           onPointerDown={(event) => event.stopPropagation()}
         >
-          <ContextMenuButton onSelect={createFolderFromMenu}>
-            New Folder
-          </ContextMenuButton>
+          <ContextMenuButton onSelect={createFolderFromMenu}>New Folder</ContextMenuButton>
           <ContextMenuButton onSelect={() => createDocumentFromMenu(contextMenu.folderId)}>
             New Document
           </ContextMenuButton>
@@ -205,7 +214,7 @@ export function NavPanel(props: Props) {
               </ContextMenuButton>
             </>
           ) : null}
-        </div>
+        </Menu>
       ) : null}
     </aside>
   );
@@ -221,8 +230,8 @@ function ContextMenuButton({
   onSelect: () => void;
 }) {
   return (
-    <button
-      className={danger ? "nav-context-menu__item nav-context-menu__item--danger" : "nav-context-menu__item"}
+    <MenuItem
+      danger={danger}
       onPointerDown={(event) => {
         event.stopPropagation();
       }}
@@ -234,7 +243,7 @@ function ContextMenuButton({
       type="button"
     >
       {children}
-    </button>
+    </MenuItem>
   );
 }
 
@@ -251,13 +260,13 @@ function DocumentRow({
 }) {
   return (
     <button
-      className={active ? "tree-document tree-document--active" : "tree-document"}
+      className={classNames(styles.treeDocument, active && styles.treeDocumentActive)}
       onClick={() => onOpenDocument(document.id)}
       onContextMenu={onContextMenu}
       type="button"
     >
-      <span className="tree-document__icon" aria-hidden="true" />
-      <span className="tree-document__title">{document.title}</span>
+      <span className={styles.treeDocumentIcon} aria-hidden="true" />
+      <span className={styles.treeDocumentTitle}>{document.title}</span>
     </button>
   );
 }

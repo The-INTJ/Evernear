@@ -3,6 +3,8 @@ import type { CSSProperties, MouseEvent } from "react";
 
 import type { EditorContextMenuPayload } from "../../editor/HarnessEditor";
 import type { EditorSelectionInfo } from "../../editor/editorUtils";
+import { classNames } from "../../ui";
+import styles from "./EditorActionOverlays.module.css";
 
 type Props = {
   selection: EditorSelectionInfo;
@@ -51,26 +53,41 @@ export function EditorActionOverlays(props: Props) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [contextMenu, onCloseContextMenu]);
 
-  const selectionBubble = !contextMenu && !selection.empty && selection.anchor ? (
-    <div className="editor-selection-bubble" style={bubbleStyle(selection)} onMouseDown={keepEditorSelection}>
-      <ActionButton label="B" title="Bold" onClick={onBold} strong />
-      <ActionButton label="I" title="Italic" onClick={onItalic} italic />
-      <ActionButton label={everlinkLabel} onClick={onOpenEverlink} />
-      <ActionButton label="Everslice" onClick={onOpenEverslice} disabled={eversliceDisabled} />
-    </div>
-  ) : null;
+  const selectionBubble =
+    !contextMenu && !selection.empty && selection.anchor ? (
+      <div
+        className={styles.bubble}
+        style={bubbleStyle(selection)}
+        onMouseDown={keepEditorSelection}
+      >
+        <ActionButton label="B" title="Bold" onClick={onBold} strong />
+        <ActionButton label="I" title="Italic" onClick={onItalic} italic />
+        <ActionButton label={everlinkLabel} onClick={onOpenEverlink} />
+        <ActionButton label="Everslice" onClick={onOpenEverslice} disabled={eversliceDisabled} />
+      </div>
+    ) : null;
 
   return (
     <>
       {selectionBubble}
       {contextMenu ? (
-        <div className="editor-context-menu-scrim" onMouseDown={onCloseContextMenu}>
-          <div className="editor-context-menu" style={menuStyle(contextMenu)} onMouseDown={keepEditorSelection}>
+        <div className={styles.scrim} onMouseDown={onCloseContextMenu}>
+          <div
+            className={styles.menu}
+            style={menuStyle(contextMenu)}
+            onMouseDown={keepEditorSelection}
+          >
             {contextMenu.entityId ? (
               <>
-                <div className="editor-context-menu__label">Entity highlight</div>
-                <ActionButton label="Open Context" onClick={() => onOpenEntityContext(contextMenu.entityId!)} />
-                <ActionButton label="Select Entity" onClick={() => onSelectEntity(contextMenu.entityId!)} />
+                <div className={styles.label}>Entity highlight</div>
+                <ActionButton
+                  label="Open Context"
+                  onClick={() => onOpenEntityContext(contextMenu.entityId!)}
+                />
+                <ActionButton
+                  label="Select Entity"
+                  onClick={() => onSelectEntity(contextMenu.entityId!)}
+                />
                 <ActionButton
                   label={highlightsEnabled ? "Mute Highlights" : "Show Highlights"}
                   onClick={onToggleHighlights}
@@ -79,11 +96,15 @@ export function EditorActionOverlays(props: Props) {
             ) : null}
             {!contextMenu.selection.empty ? (
               <>
-                <div className="editor-context-menu__label">Selected text</div>
+                <div className={styles.label}>Selected text</div>
                 <ActionButton label="Bold" onClick={onBold} />
                 <ActionButton label="Italic" onClick={onItalic} />
                 <ActionButton label={everlinkLabel} onClick={onOpenEverlink} />
-                <ActionButton label="Everslice" onClick={onOpenEverslice} disabled={eversliceDisabled} />
+                <ActionButton
+                  label="Everslice"
+                  onClick={onOpenEverslice}
+                  disabled={eversliceDisabled}
+                />
                 <ActionButton label="Copy" onClick={onCopySelection} />
                 <ActionButton label="Select All" onClick={onSelectAll} />
               </>
@@ -124,10 +145,7 @@ function ActionButton({
 }
 
 function actionButtonClass(strong?: boolean, italic?: boolean): string {
-  const classes = ["editor-floating-action"];
-  if (strong) classes.push("editor-floating-action--strong");
-  if (italic) classes.push("editor-floating-action--italic");
-  return classes.join(" ");
+  return classNames(styles.action, strong && styles.strong, italic && styles.italic);
 }
 
 function keepEditorSelection(event: MouseEvent<HTMLElement>) {

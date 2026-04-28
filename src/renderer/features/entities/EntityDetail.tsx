@@ -1,3 +1,6 @@
+import { Button, PanelSection, TextInput } from "../../ui";
+import styles from "./EntityPanels.module.css";
+
 type Props = {
   entityNameDraft: string;
   onEntityNameDraftChange: (value: string) => void;
@@ -12,18 +15,17 @@ export function EntityDetail({
   onDeleteEntity,
 }: Props) {
   return (
-    <section className="panel-section">
-      <input
-        className="text-input"
+    <PanelSection>
+      <TextInput
         value={entityNameDraft}
         onChange={(event) => onEntityNameDraftChange(event.target.value)}
         onBlur={onSaveEntityName}
       />
-      <div className="toolbar-actions">
-        <button className="ghost-button ghost-button--danger" onClick={onDeleteEntity} type="button">
+      <div className={styles.actions}>
+        <Button tone="danger" onClick={onDeleteEntity}>
           Delete Entity
-        </button>
+        </Button>
       </div>
-    </section>
+    </PanelSection>
   );
 }

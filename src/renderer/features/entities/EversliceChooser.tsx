@@ -16,6 +16,8 @@ import type { KeyboardEvent } from "react";
 
 import type { WorkspaceState } from "../../../shared/domain/workspace";
 import { truncate } from "../../utils/formatting";
+import { Button, Card, ModalShell, TextInput, classNames, modalShellStyles } from "../../ui";
+import styles from "./EversliceChooser.module.css";
 
 const MAX_ROWS = 50;
 
@@ -69,7 +71,9 @@ export function EversliceChooser(props: Props) {
       rulesByEntity.set(rule.entityId, bucket);
     }
 
-    const sliceTitleById = new Map(workspace.slices.map((slice) => [slice.id, slice.title.toLowerCase()]));
+    const sliceTitleById = new Map(
+      workspace.slices.map((slice) => [slice.id, slice.title.toLowerCase()]),
+    );
     const titlesByEntity = new Map<string, string[]>();
     for (const link of workspace.entitySlices) {
       const title = sliceTitleById.get(link.sliceId);
@@ -143,77 +147,86 @@ export function EversliceChooser(props: Props) {
   if (!isOpen) return null;
 
   return (
-    <div className="everslice-modal-overlay" role="dialog" aria-modal="true">
-      <div className="everslice-modal-card">
-        <header className="everslice-modal-header">
-          <span className="eyebrow">Everslice it!</span>
-          <h2>Bind selection to an entity</h2>
-        </header>
-        <div className="selection-card">
-          <strong>Selected text</strong>
-          <span>{truncate(sourceText, 240)}</span>
-        </div>
-        <input
-          ref={inputRef}
-          className="text-input"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Search entities by name, alias, or slice title..."
-        />
-        <ul className="everslice-modal-list" role="listbox">
-          {entityRows.length === 0 && query.trim().length > 0 ? (
-            <li className="everslice-modal-empty">No matches. Press Enter on the row below to create a new entity.</li>
-          ) : null}
-          {rows.map((row, index) => {
-            const isHighlighted = index === highlightIndex;
-            if (row.kind === "entity") {
-              return (
-                <li
-                  key={row.id}
-                  className={rowClass(isHighlighted, "entity")}
-                  onMouseEnter={() => setHighlightIndex(index)}
-                  onClick={() => commit(row)}
-                  role="option"
-                  aria-selected={isHighlighted}
-                >
-                  <span className="everslice-modal-row__name">{row.name}</span>
-                </li>
-              );
-            }
-            const createDisabled = row.name.length === 0;
+    <ModalShell>
+      <header className={modalShellStyles.header}>
+        <span className={styles.kicker}>Everslice it!</span>
+        <h2>Bind selection to an entity</h2>
+      </header>
+      <Card variant="selection">
+        <strong>Selected text</strong>
+        <span>{truncate(sourceText, 240)}</span>
+      </Card>
+      <TextInput
+        ref={inputRef}
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder="Search entities by name, alias, or slice title..."
+      />
+      <ul className={styles.list} role="listbox">
+        {entityRows.length === 0 && query.trim().length > 0 ? (
+          <li className={styles.empty}>
+            No matches. Press Enter on the row below to create a new entity.
+          </li>
+        ) : null}
+        {rows.map((row, index) => {
+          const isHighlighted = index === highlightIndex;
+          if (row.kind === "entity") {
             return (
               <li
-                key="__create__"
-                className={rowClass(isHighlighted, "create", createDisabled)}
-                onMouseEnter={() => {
-                  if (!createDisabled) setHighlightIndex(index);
-                }}
-                onClick={() => {
-                  if (!createDisabled) commit(row);
-                }}
+                key={row.id}
+                className={rowClass(isHighlighted, "entity")}
+                onMouseEnter={() => setHighlightIndex(index)}
+                onClick={() => commit(row)}
                 role="option"
                 aria-selected={isHighlighted}
-                aria-disabled={createDisabled}
               >
-                <span className="everslice-modal-row__name">
-                  {createDisabled ? "+ New entity (type a name above)" : `+ New entity: "${row.name}"`}
-                </span>
+                <span className={styles.rowName}>{row.name}</span>
               </li>
             );
-          })}
-        </ul>
-        <div className="toolbar-actions">
-          <button className="secondary-button" onClick={onClose} type="button">Cancel</button>
-        </div>
+          }
+          const createDisabled = row.name.length === 0;
+          return (
+            <li
+              key="__create__"
+              className={rowClass(isHighlighted, "create", createDisabled)}
+              onMouseEnter={() => {
+                if (!createDisabled) setHighlightIndex(index);
+              }}
+              onClick={() => {
+                if (!createDisabled) commit(row);
+              }}
+              role="option"
+              aria-selected={isHighlighted}
+              aria-disabled={createDisabled}
+            >
+              <span className={styles.rowName}>
+                {createDisabled
+                  ? "+ New entity (type a name above)"
+                  : `+ New entity: "${row.name}"`}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+      <div className={styles.actions}>
+        <Button variant="secondary" onClick={onClose}>
+          Cancel
+        </Button>
       </div>
-    </div>
+    </ModalShell>
   );
 }
 
-function rowClass(isHighlighted: boolean, variant: "entity" | "create", disabled?: boolean): string {
-  const parts = ["everslice-modal-row", `everslice-modal-row--${variant}`];
-  if (isHighlighted) parts.push("everslice-modal-row--highlight");
-  if (disabled) parts.push("everslice-modal-row--disabled");
-  return parts.join(" ");
+function rowClass(
+  isHighlighted: boolean,
+  variant: "entity" | "create",
+  disabled?: boolean,
+): string {
+  return classNames(
+    styles.row,
+    variant === "create" && styles.rowCreate,
+    isHighlighted && styles.rowHighlight,
+    disabled && styles.rowDisabled,
+  );
 }
