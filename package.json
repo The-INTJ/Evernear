@@ -73,6 +73,8 @@
   },
   "dependencies": {
     "@chenglou/pretext": "0.0.5",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
     "@vitejs/plugin-react": "6.0.1",
     "better-sqlite3": "12.9.0",
     "prosemirror-commands": "1.7.1",

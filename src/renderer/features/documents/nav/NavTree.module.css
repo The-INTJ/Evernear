@@ -1,0 +1,249 @@
+/* Tree-specific styles. Visual language matches the existing NavPanel
+   (folder/doc icons, hover states) — extracted here so NavPanel.module.css
+   can stay focused on the surrounding panel chrome (project header,
+   footer buttons, scroll container). */
+
+:root {
+  --nav-indent: 14px;
+}
+
+.tree {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: var(--space-1);
+  padding: var(--space-1) 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.folderBlock {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.childList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: var(--space-1) 0 var(--space-2);
+}
+
+.row {
+  position: relative;
+}
+
+.folderRow,
+.documentRow {
+  position: relative;
+  display: grid;
+  align-items: center;
+  width: 100%;
+  min-height: 24px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  padding: 3px var(--space-4);
+  background: transparent;
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    color 120ms ease,
+    opacity 120ms ease;
+}
+
+.folderRow {
+  grid-template-columns: 14px 16px minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  font-size: 0.81rem;
+  font-weight: 500;
+}
+
+.folderRowStatic {
+  cursor: default;
+}
+
+.folderRowEditing,
+.documentRowEditing {
+  cursor: text;
+}
+
+.folderRow:hover,
+.documentRow:hover {
+  background: var(--color-bg-row-hover);
+  transform: none;
+}
+
+.folderRowDropOnto {
+  background: rgba(245, 185, 113, 0.18);
+  outline: 1px dashed rgba(245, 185, 113, 0.6);
+  outline-offset: -1px;
+}
+
+.rowDragging {
+  opacity: 0.45;
+}
+
+.disclosure {
+  position: relative;
+  width: 12px;
+  height: 12px;
+}
+
+.disclosure::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  width: 0;
+  height: 0;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 6px solid var(--color-text-muted);
+  transform-origin: 3px 4px;
+  transition: transform 120ms ease;
+}
+
+.folderRowExpanded .disclosure::before {
+  transform: rotate(90deg);
+}
+
+.disclosureEmpty::before {
+  display: none;
+}
+
+.folderIcon,
+.documentIcon {
+  position: relative;
+  display: block;
+  width: 14px;
+  height: 12px;
+  opacity: 0.78;
+}
+
+.folderIcon::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 1px;
+  width: 12px;
+  height: 8px;
+  border: 1px solid rgba(245, 185, 113, 0.58);
+  border-radius: var(--radius-xs);
+  background: rgba(245, 185, 113, 0.12);
+}
+
+.folderIcon::after {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 2px;
+  width: 6px;
+  height: 3px;
+  border-radius: var(--radius-xs) var(--radius-xs) 0 0;
+  background: rgba(245, 185, 113, 0.58);
+}
+
+.documentRow {
+  grid-template-columns: 16px minmax(0, 1fr);
+  gap: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+}
+
+.documentIcon::before {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 3px;
+  width: 8px;
+  height: 10px;
+  border: 1px solid rgba(170, 188, 192, 0.62);
+  border-radius: var(--radius-xxs);
+  background: rgba(170, 188, 192, 0.09);
+}
+
+.folderName,
+.documentTitle {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.count {
+  color: var(--color-text-faint);
+  font-family: var(--font-label);
+  font-size: 0.66rem;
+}
+
+.renameInput {
+  min-width: 0;
+  width: 100%;
+  border: 1px solid rgba(245, 185, 113, 0.46);
+  border-radius: var(--radius-xs);
+  padding: 1px var(--space-2);
+  background: rgba(8, 14, 19, 0.86);
+  color: var(--color-text);
+  font: inherit;
+  outline: none;
+}
+
+.renameInput:focus {
+  border-color: rgba(245, 185, 113, 0.8);
+  box-shadow: 0 0 0 2px rgba(245, 185, 113, 0.16);
+}
+
+.documentRowActive {
+  border-color: rgba(245, 185, 113, 0.34);
+  background: rgba(245, 185, 113, 0.16);
+  color: var(--color-accent-strong);
+}
+
+/* ──────────────── DnD drop zones ────────────────
+   Three (or two) overlapping invisible droppables per row let dnd-kit
+   resolve which zone the pointer is in via collisionDetection. */
+
+.zoneAbove,
+.zoneBelow {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 50%;
+  pointer-events: none;
+}
+
+.zoneAbove { top: 0; }
+.zoneBelow { bottom: 0; }
+
+.zoneAboveFolder,
+.zoneOnto,
+.zoneBelowFolder {
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+
+.zoneAboveFolder { top: 0; height: 25%; }
+.zoneOnto { top: 25%; height: 50%; }
+.zoneBelowFolder { bottom: 0; height: 25%; }
+
+.indicatorAbove,
+.indicatorBelow {
+  position: absolute;
+  left: var(--space-4);
+  right: var(--space-3);
+  height: 2px;
+  background: var(--color-accent-strong, rgba(245, 185, 113, 0.95));
+  border-radius: 1px;
+  pointer-events: none;
+  box-shadow: 0 0 0 1px rgba(245, 185, 113, 0.35);
+}
+
+.indicatorAbove { top: -1px; }
+.indicatorBelow { bottom: -1px; }

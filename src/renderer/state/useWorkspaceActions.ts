@@ -10,6 +10,7 @@
 
 import type {
   DocumentFolderRecord,
+  DocumentSummary,
   MatchingRuleRecord,
   ProjectRecord,
 } from "../../shared/domain/workspace";
@@ -45,15 +46,19 @@ export type WorkspaceActions = {
   switchProject: (projectId: string) => void;
   createProject: () => void;
   saveProjectName: () => void;
-  createFolder: (titleOverride?: string) => void;
+  createFolder: (parentFolderId?: string | null, titleOverride?: string) => void;
   createDocument: (folderId: string | null, openInPanel?: boolean, titleOverride?: string) => void;
   openDocument: (documentId: string) => void;
   saveDocumentMeta: (nextFolderId?: string | null) => void;
   deleteDocument: () => void;
+  deleteDocumentById: (documentId: string, title: string) => void;
+  renameDocument: (document: DocumentSummary, title: string) => void;
   reorderDocument: (direction: "up" | "down") => void;
+  moveDocument: (documentId: string, newFolderId: string | null, beforeDocumentId: string | null) => void;
   toggleFolder: (folderId: string) => void;
   renameFolder: (folder: DocumentFolderRecord, title: string) => void;
   deleteFolder: (folderId: string) => void;
+  moveFolder: (folderId: string, newParentFolderId: string | null, beforeFolderId: string | null) => void;
   toggleHighlights: () => void;
   togglePanel: () => void;
   selectEntity: (entityId: string) => void;

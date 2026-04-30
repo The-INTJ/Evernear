@@ -12,6 +12,8 @@ import type {
   DeleteFolderInput,
   DeleteMatchingRuleInput,
   DeleteSliceInput,
+  MoveDocumentInput,
+  MoveFolderInput,
   SliceBoundaryRecord,
   UpdateSliceBoundaryInput,
   OpenDocumentInput,
@@ -36,11 +38,13 @@ export const HARNESS_CHANNELS = {
   openProject: "workspace:open-project",
   createFolder: "workspace:create-folder",
   updateFolder: "workspace:update-folder",
+  moveFolder: "workspace:move-folder",
   deleteFolder: "workspace:delete-folder",
   createDocument: "workspace:create-document",
   updateDocumentMeta: "workspace:update-document-meta",
   deleteDocument: "workspace:delete-document",
   reorderDocument: "workspace:reorder-document",
+  moveDocument: "workspace:move-document",
   openDocument: "workspace:open-document",
   updateLayout: "workspace:update-layout",
   applyDocumentTransaction: "workspace:apply-document-transaction",
@@ -67,11 +71,13 @@ export interface HarnessBridge {
   openProject(input: OpenProjectInput): Promise<WorkspaceState>;
   createFolder(input: CreateFolderInput): Promise<WorkspaceState>;
   updateFolder(input: UpdateFolderInput): Promise<WorkspaceState>;
+  moveFolder(input: MoveFolderInput): Promise<WorkspaceState>;
   deleteFolder(input: DeleteFolderInput): Promise<WorkspaceState>;
   createDocument(input: CreateDocumentInput): Promise<WorkspaceState>;
   updateDocumentMeta(input: UpdateDocumentMetaInput): Promise<WorkspaceState>;
   deleteDocument(input: DeleteDocumentInput): Promise<WorkspaceState>;
   reorderDocument(input: ReorderDocumentInput): Promise<WorkspaceState>;
+  moveDocument(input: MoveDocumentInput): Promise<WorkspaceState>;
   openDocument(input: OpenDocumentInput): Promise<WorkspaceState>;
   updateLayout(input: UpdateLayoutInput): Promise<WorkspaceState>;
   applyDocumentTransaction(input: ApplyDocumentTransactionInput): Promise<ApplyDocumentTransactionResult>;

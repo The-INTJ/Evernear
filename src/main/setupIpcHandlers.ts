@@ -22,6 +22,8 @@ import {
   DeleteFolderInputSchema,
   DeleteMatchingRuleInputSchema,
   DeleteSliceInputSchema,
+  MoveDocumentInputSchema,
+  MoveFolderInputSchema,
   UpdateSliceBoundaryInputSchema,
   OpenDocumentInputSchema,
   OpenProjectInputSchema,
@@ -58,6 +60,8 @@ export function setupIpcHandlers(
     repository.createFolder(parseInput(CreateFolderInputSchema, input, C.createFolder)));
   ipcMain.handle(C.updateFolder, (_event, input) =>
     repository.updateFolder(parseInput(UpdateFolderInputSchema, input, C.updateFolder)));
+  ipcMain.handle(C.moveFolder, (_event, input) =>
+    repository.moveFolder(parseInput(MoveFolderInputSchema, input, C.moveFolder)));
   ipcMain.handle(C.deleteFolder, (_event, input) =>
     repository.deleteFolder(parseInput(DeleteFolderInputSchema, input, C.deleteFolder)));
 
@@ -69,6 +73,8 @@ export function setupIpcHandlers(
     repository.deleteDocument(parseInput(DeleteDocumentInputSchema, input, C.deleteDocument)));
   ipcMain.handle(C.reorderDocument, (_event, input) =>
     repository.reorderDocument(parseInput(ReorderDocumentInputSchema, input, C.reorderDocument)));
+  ipcMain.handle(C.moveDocument, (_event, input) =>
+    repository.moveDocument(parseInput(MoveDocumentInputSchema, input, C.moveDocument)));
   ipcMain.handle(C.openDocument, (_event, input) =>
     repository.openDocument(parseInput(OpenDocumentInputSchema, input, C.openDocument)));
 

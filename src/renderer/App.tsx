@@ -24,7 +24,6 @@ import { initialRuleForm, type RuleFormState } from "./state/sessionTypes";
 import {
   getActiveProject,
   getSelectedEntity,
-  groupDocumentsByFolder,
   selectedSlicesForEntity,
 } from "./utils/workspace";
 
@@ -108,11 +107,6 @@ export function App() {
     setRuleForm,
     selectedEntity,
   });
-
-  const documentsByFolder = useMemo(
-    () => groupDocumentsByFolder(workspace?.documents ?? []),
-    [workspace?.documents],
-  );
 
   const selectedEntitySlices = useMemo(() => {
     if (!selectedEntity) return [];
@@ -236,7 +230,6 @@ export function App() {
               activeDocument={activeDocument}
               projectNameDraft={projectNameDraft}
               activeProjectId={workspace?.layout.activeProjectId ?? ""}
-              documentsByFolder={documentsByFolder}
               documentsById={lookups.documentsById}
               onProjectNameChange={setProjectNameDraft}
               onSaveProjectName={actions.saveProjectName}
@@ -247,6 +240,10 @@ export function App() {
               onToggleFolder={actions.toggleFolder}
               onRenameFolder={actions.renameFolder}
               onDeleteFolder={actions.deleteFolder}
+              onMoveFolder={actions.moveFolder}
+              onRenameDocument={actions.renameDocument}
+              onDeleteDocument={actions.deleteDocumentById}
+              onMoveDocument={actions.moveDocument}
               onOpenDocument={actions.openDocument}
             />
           )}

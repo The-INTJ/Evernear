@@ -37,6 +37,8 @@ import {
   type SliceBoundaryRecord,
   type UpdateSliceBoundaryInput,
   type HistorySummary,
+  type MoveDocumentInput,
+  type MoveFolderInput,
   type OpenDocumentInput,
   type OpenProjectInput,
   type ReorderDocumentInput,
@@ -238,6 +240,13 @@ export class WorkspaceRepository {
     });
   }
 
+  moveFolder(input: MoveFolderInput): WorkspaceState {
+    return this.sqlite.runInTransaction(() => {
+      this.folders.moveFolder(input);
+      return this.loadWorkspace();
+    });
+  }
+
   deleteFolder(input: DeleteFolderInput): WorkspaceState {
     return this.sqlite.runInTransaction(() => {
       const result = this.folders.deleteFolder(input);
@@ -303,6 +312,13 @@ export class WorkspaceRepository {
   reorderDocument(input: ReorderDocumentInput): WorkspaceState {
     return this.sqlite.runInTransaction(() => {
       this.documents.reorderDocument(input);
+      return this.loadWorkspace();
+    });
+  }
+
+  moveDocument(input: MoveDocumentInput): WorkspaceState {
+    return this.sqlite.runInTransaction(() => {
+      this.documents.moveDocument(input);
       return this.loadWorkspace();
     });
   }

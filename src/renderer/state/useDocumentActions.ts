@@ -6,6 +6,7 @@ import { useCallback } from "react";
 
 import type {
   DocumentFolderRecord,
+  DocumentSummary,
   ProjectRecord,
   WorkspaceState,
 } from "../../shared/domain/workspace";
@@ -29,28 +30,32 @@ type UseDocumentActionsInput = {
 };
 
 export type DocumentActions = {
-  createFolder: (titleOverride?: string) => void;
+  createFolder: (parentFolderId?: string | null, titleOverride?: string) => void;
   createDocument: (folderId: string | null, openInPanel?: boolean, titleOverride?: string) => void;
   openDocument: (documentId: string) => void;
   saveDocumentMeta: (nextFolderId?: string | null) => void;
   deleteDocument: () => void;
+  deleteDocumentById: (documentId: string, title: string) => void;
+  renameDocument: (document: DocumentSummary, title: string) => void;
   reorderDocument: (direction: "up" | "down") => void;
+  moveDocument: (documentId: string, newFolderId: string | null, beforeDocumentId: string | null) => void;
   toggleFolder: (folderId: string) => void;
   renameFolder: (folder: DocumentFolderRecord, title: string) => void;
   deleteFolder: (folderId: string) => void;
+  moveFolder: (folderId: string, newParentFolderId: string | null, beforeFolderId: string | null) => void;
 };
 
 export function useDocumentActions(input: UseDocumentActionsInput): DocumentActions {
   const { workspaceHook: { runMutation, workspaceRef }, activeProject, activeDocument, drafts, setDrafts } = input;
   const currentWorkspace = (): WorkspaceState | null => workspaceRef.current;
 
-  const createFolder = useCallback((titleOverride?: string) => {
+  const createFolder = useCallback((parentFolderId: string | null = null, titleOverride?: string) => {
     if (!activeProject) return;
     const ws = currentWorkspace();
     const title = titleOverride?.trim() || drafts.newFolderTitle.trim() || `Folder ${countForLabel(ws?.folders.length ?? 0)}`;
     setDrafts.setNewFolderTitle("");
     void runMutation(
-      () => window.evernear.createFolder({ projectId: activeProject.id, title }),
+      () => window.evernear.createFolder({ projectId: activeProject.id, title, parentFolderId }),
       `Created folder "${title}".`,
     );
   }, [runMutation, activeProject, drafts.newFolderTitle, setDrafts, workspaceRef]);
@@ -93,6 +98,21 @@ export function useDocumentActions(input: UseDocumentActionsInput): DocumentActi
     );
   }, [runMutation, activeDocument]);
 
+  const deleteDocumentById = useCallback((documentId: string, title: string) => {
+    void runMutation(
+      () => window.evernear.deleteDocument({ documentId }),
+      `Deleted "${title}".`,
+    );
+  }, [runMutation]);
+
+  const renameDocument = useCallback((document: DocumentSummary, title: string) => {
+    if (title.trim() === document.title) return;
+    void runMutation(
+      () => window.evernear.updateDocumentMeta({ documentId: document.id, title }),
+      "Updated document title.",
+    );
+  }, [runMutation]);
+
   const reorderDocument = useCallback((direction: "up" | "down") => {
     if (!activeDocument) return;
     void runMutation(
@@ -100,6 +120,16 @@ export function useDocumentActions(input: UseDocumentActionsInput): DocumentActi
       `Moved "${activeDocument.title}" ${direction}.`,
     );
   }, [runMutation, activeDocument]);
+
+  const moveDocument = useCallback((
+    documentId: string,
+    newFolderId: string | null,
+    beforeDocumentId: string | null,
+  ) => {
+    void runMutation(
+      () => window.evernear.moveDocument({ documentId, newFolderId, beforeDocumentId }),
+    );
+  }, [runMutation]);
 
   const toggleFolder = useCallback((folderId: string) => {
     const ws = currentWorkspace();
@@ -123,12 +153,23 @@ export function useDocumentActions(input: UseDocumentActionsInput): DocumentActi
   const deleteFolder = useCallback((folderId: string) => {
     void runMutation(
       () => window.evernear.deleteFolder({ folderId }),
-      "Deleted the folder and moved its documents to Unfiled.",
+      "Deleted the folder and reparented its contents.",
+    );
+  }, [runMutation]);
+
+  const moveFolder = useCallback((
+    folderId: string,
+    newParentFolderId: string | null,
+    beforeFolderId: string | null,
+  ) => {
+    void runMutation(
+      () => window.evernear.moveFolder({ folderId, newParentFolderId, beforeFolderId }),
     );
   }, [runMutation]);
 
   return {
     createFolder, createDocument, openDocument, saveDocumentMeta,
-    deleteDocument, reorderDocument, toggleFolder, renameFolder, deleteFolder,
+    deleteDocument, deleteDocumentById, renameDocument, reorderDocument, moveDocument,
+    toggleFolder, renameFolder, deleteFolder, moveFolder,
   };
 }
