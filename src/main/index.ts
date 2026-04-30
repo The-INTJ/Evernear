@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 
 import { app, BrowserWindow } from "electron";
@@ -15,8 +16,10 @@ let repository: WorkspaceRepository;
 let workspaceStatus: WorkspaceStatus;
 
 async function bootstrapPersistence(): Promise<void> {
-  const runtimeRoot = process.cwd();
-  const dbPath = path.join(runtimeRoot, ".local", "phase-1-harness.sqlite");
+  const storageDir = app.isPackaged ? path.join(app.getPath("userData"), "workspace") : path.join(process.cwd(), ".local");
+  fs.mkdirSync(storageDir, { recursive: true });
+
+  const dbPath = path.join(storageDir, "phase-1-harness.sqlite");
   const sqliteHarness = SqliteHarness.open(dbPath, "FULL");
 
   repository = new WorkspaceRepository(sqliteHarness);

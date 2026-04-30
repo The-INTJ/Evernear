@@ -125,7 +125,7 @@ export function TitleBar({
             value={activeFolderId}
             onChange={(event) => onSaveDocumentMeta(event.target.value || null)}
           >
-            <option value="">Project Root</option>
+            <option value="">Unfiled</option>
             {(workspace?.folders ?? []).map((folder) => (
               <option key={folder.id} value={folder.id}>
                 {folder.title}

@@ -123,7 +123,7 @@ export function useDocumentActions(input: UseDocumentActionsInput): DocumentActi
   const deleteFolder = useCallback((folderId: string) => {
     void runMutation(
       () => window.evernear.deleteFolder({ folderId }),
-      "Deleted the folder and moved its documents to the project root.",
+      "Deleted the folder and moved its documents to Unfiled.",
     );
   }, [runMutation]);
 

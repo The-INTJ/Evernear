@@ -100,8 +100,8 @@ export class FolderRepository {
       return { row: null };
     }
 
-    // Documents inside the deleted folder fall to "project root" rather
-    // than being deleted — matches how the UI presents the delete.
+    // Documents inside the deleted folder become unfiled rather than being
+    // deleted; folders are organization, not ownership.
     database.prepare(`
       UPDATE documents
       SET folder_id = NULL, updated_at = ?

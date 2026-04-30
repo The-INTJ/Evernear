@@ -69,6 +69,34 @@ describe("project mutations", () => {
   });
 });
 
+describe("folder mutations", () => {
+  it("updateFolder renames a folder and emits a folderUpdated event", () => {
+    const state = repository.ensureWorkspaceState();
+    const folderId = state.folders[0]!.id;
+
+    const before = countEvents(harness, "folder", "folderUpdated");
+    const after = repository.updateFolder({ folderId, title: "Drafts" });
+    const afterCount = countEvents(harness, "folder", "folderUpdated");
+
+    expect(after.folders.find((folder) => folder.id === folderId)?.title).toBe("Drafts");
+    expect(afterCount).toBe(before + 1);
+  });
+
+  it("deleteFolder unfiles documents and does not recreate a placeholder folder", () => {
+    const state = repository.ensureWorkspaceState();
+    const folderId = state.folders[0]!.id;
+    const documentId = state.documents.find((document) => document.folderId === folderId)!.id;
+
+    const after = repository.deleteFolder({ folderId });
+    const document = after.documents.find((candidate) => candidate.id === documentId)!;
+
+    expect(after.folders.some((folder) => folder.id === folderId)).toBe(false);
+    expect(after.folders).toHaveLength(0);
+    expect(document.folderId).toBeNull();
+    expect(after.layout.expandedFolderIds).not.toContain(folderId);
+  });
+});
+
 describe("document mutations", () => {
   it("createDocument inserts a new document and emits a documentCreated event", () => {
     const state = repository.ensureWorkspaceState();

@@ -511,24 +511,26 @@ export class WorkspaceRepository {
     const activeProjectId = this.layout.loadActiveProjectId() ?? DEFAULT_PROJECT_ID;
     this.layout.setActiveProjectId(activeProjectId);
 
-    if (!this.folders.folderExists(activeProjectId)) {
-      this.folders.insertFolder({
-        id: DEFAULT_FOLDER_ID,
-        projectId: activeProjectId,
-        parentFolderId: null,
-        title: "Story",
-        ordering: 0,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
-    }
-
     const documents = this.documents.loadDocumentSummaries(activeProjectId);
     if (documents.length === 0) {
+      let folders = this.folders.loadFolders(activeProjectId);
+      if (folders.length === 0) {
+        this.folders.insertFolder({
+          id: DEFAULT_FOLDER_ID,
+          projectId: activeProjectId,
+          parentFolderId: null,
+          title: "Story",
+          ordering: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+        folders = this.folders.loadFolders(activeProjectId);
+      }
+
       this.documents.insertDocument({
         id: DEFAULT_STORY_DOCUMENT_ID,
         projectId: activeProjectId,
-        folderId: DEFAULT_FOLDER_ID,
+        folderId: folders[0]?.id ?? DEFAULT_FOLDER_ID,
         ordering: 0,
         title: DEFAULT_STORY_DOCUMENT_TITLE,
         contentJson: buildEmptyDocumentJson() as JsonObject,

@@ -1,5 +1,10 @@
-import { useEffect, useState } from "react";
-import type { CSSProperties, MouseEvent, ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
+import type {
+  CSSProperties,
+  KeyboardEvent as ReactKeyboardEvent,
+  MouseEvent,
+  ReactNode,
+} from "react";
 
 import type { StoredDocumentSnapshot } from "../../../shared/domain/document";
 import type {
@@ -55,6 +60,11 @@ export function NavPanel(props: Props) {
   } = props;
 
   const [contextMenu, setContextMenu] = useState<NavContextMenu | null>(null);
+  const [renamingFolder, setRenamingFolder] = useState<{
+    folderId: string;
+    title: string;
+  } | null>(null);
+  const renameCancelledRef = useRef(false);
   const rootDocuments = documentsByFolder.get(null) ?? [];
   const activeFolderId = activeDocument
     ? (documentsById.get(activeDocument.id)?.folderId ?? null)
@@ -102,10 +112,43 @@ export function NavPanel(props: Props) {
   };
 
   const renameFolderFromMenu = (folder: DocumentFolderRecord) => {
-    const title = promptForTitle("Folder name", folder.title);
     setContextMenu(null);
-    if (title === null || title.trim() === "") return;
+    renameCancelledRef.current = false;
+    setRenamingFolder({ folderId: folder.id, title: folder.title });
+  };
+
+  const updateRenameDraft = (folderId: string, title: string) => {
+    setRenamingFolder((current) =>
+      current?.folderId === folderId ? { ...current, title } : current,
+    );
+  };
+
+  const commitRenameFolder = (folder: DocumentFolderRecord) => {
+    if (renameCancelledRef.current) {
+      renameCancelledRef.current = false;
+      return;
+    }
+
+    if (renamingFolder?.folderId !== folder.id) return;
+
+    const title = renamingFolder.title.trim();
+    setRenamingFolder(null);
+    if (title === "" || title === folder.title) return;
     onRenameFolder(folder, title);
+  };
+
+  const handleRenameKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      event.currentTarget.blur();
+      return;
+    }
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      renameCancelledRef.current = true;
+      setRenamingFolder(null);
+    }
   };
 
   return (
@@ -128,21 +171,46 @@ export function NavPanel(props: Props) {
           {(workspace?.folders ?? []).map((folder) => {
             const expanded = workspace?.layout.expandedFolderIds.includes(folder.id) ?? false;
             const folderDocuments = documentsByFolder.get(folder.id) ?? [];
+            const renameDraft =
+              renamingFolder?.folderId === folder.id ? renamingFolder.title : null;
+
             return (
               <div key={folder.id} className={styles.treeFolder}>
-                <button
-                  className={classNames(
-                    styles.treeFolderRow,
-                    expanded && styles.treeFolderRowExpanded,
-                  )}
-                  onClick={() => onToggleFolder(folder.id)}
-                  onContextMenu={(event) => openContextMenu(event, folder.id, folder)}
-                  type="button"
-                >
-                  <span className={styles.treeDisclosure} aria-hidden="true" />
-                  <span className={styles.treeFolderIcon} aria-hidden="true" />
-                  <span className={styles.treeFolderName}>{folder.title}</span>
-                </button>
+                {renameDraft === null ? (
+                  <button
+                    className={classNames(
+                      styles.treeFolderRow,
+                      expanded && styles.treeFolderRowExpanded,
+                    )}
+                    onClick={() => onToggleFolder(folder.id)}
+                    onContextMenu={(event) => openContextMenu(event, folder.id, folder)}
+                    type="button"
+                  >
+                    <span className={styles.treeDisclosure} aria-hidden="true" />
+                    <span className={styles.treeFolderIcon} aria-hidden="true" />
+                    <span className={styles.treeFolderName}>{folder.title}</span>
+                  </button>
+                ) : (
+                  <div
+                    className={classNames(
+                      styles.treeFolderRow,
+                      styles.treeFolderRowEditing,
+                      expanded && styles.treeFolderRowExpanded,
+                    )}
+                  >
+                    <span className={styles.treeDisclosure} aria-hidden="true" />
+                    <span className={styles.treeFolderIcon} aria-hidden="true" />
+                    <input
+                      aria-label="Folder name"
+                      autoFocus
+                      className={styles.treeFolderRenameInput}
+                      onBlur={() => commitRenameFolder(folder)}
+                      onChange={(event) => updateRenameDraft(folder.id, event.target.value)}
+                      onKeyDown={handleRenameKeyDown}
+                      value={renameDraft}
+                    />
+                  </div>
+                )}
 
                 {expanded ? (
                   <div className={styles.treeDocuments}>
@@ -161,30 +229,32 @@ export function NavPanel(props: Props) {
             );
           })}
 
-          <div
-            className={styles.treeFolder}
-            onContextMenu={(event) => openContextMenu(event, null)}
-          >
-            <div className={classNames(styles.treeFolderRow, styles.treeFolderRowStatic)}>
-              <span
-                className={classNames(styles.treeDisclosure, styles.treeDisclosureEmpty)}
-                aria-hidden="true"
-              />
-              <span className={styles.treeFolderIcon} aria-hidden="true" />
-              <span className={styles.treeFolderName}>Project Root</span>
-            </div>
-            <div className={styles.treeDocuments}>
-              {rootDocuments.map((document) => (
-                <DocumentRow
-                  key={document.id}
-                  document={document}
-                  active={document.id === activeDocument?.id}
-                  onOpenDocument={onOpenDocument}
-                  onContextMenu={(event) => openContextMenu(event, null)}
+          {rootDocuments.length > 0 ? (
+            <div
+              className={styles.treeFolder}
+              onContextMenu={(event) => openContextMenu(event, null)}
+            >
+              <div className={classNames(styles.treeFolderRow, styles.treeFolderRowStatic)}>
+                <span
+                  className={classNames(styles.treeDisclosure, styles.treeDisclosureEmpty)}
+                  aria-hidden="true"
                 />
-              ))}
+                <span className={styles.treeFolderIcon} aria-hidden="true" />
+                <span className={styles.treeFolderName}>Unfiled Documents</span>
+              </div>
+              <div className={styles.treeDocuments}>
+                {rootDocuments.map((document) => (
+                  <DocumentRow
+                    key={document.id}
+                    document={document}
+                    active={document.id === activeDocument?.id}
+                    onOpenDocument={onOpenDocument}
+                    onContextMenu={(event) => openContextMenu(event, null)}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
+          ) : null}
         </div>
       </PanelSection>
 
@@ -269,11 +339,6 @@ function DocumentRow({
       <span className={styles.treeDocumentTitle}>{document.title}</span>
     </button>
   );
-}
-
-function promptForTitle(label: string, defaultValue: string): string | null {
-  const title = window.prompt(label, defaultValue);
-  return title === null ? null : title.trim();
 }
 
 function contextMenuStyle(menu: NavContextMenu): CSSProperties {

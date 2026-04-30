@@ -3,6 +3,7 @@
   "version": "0.3.0",
   "private": true,
   "description": "Local-first writing workspace for Evernear.",
+  "author": "Evernear",
   "main": "dist-electron/main/index.js",
   "scripts": {
     "dev": "concurrently -k \"npm:dev:renderer\" \"npm:dev:electron\" \"npm:dev:app\"",
@@ -12,6 +13,10 @@
     "build": "npm run build:renderer && npm run build:electron",
     "build:renderer": "vite build",
     "build:electron": "tsup src/main/index.ts src/preload/index.ts --format cjs --out-dir dist-electron --external electron",
+    "package": "npm run build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win portable",
+    "package:win": "npm run build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win portable",
+    "package:win:installer": "npm run build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win nsis",
+    "package:mac": "npm run build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac",
     "start": "electron dist-electron/main/index.js",
     "typecheck": "tsc --noEmit",
     "test": "npm run rebuild:node && vitest run && npm run rebuild:native",
@@ -26,11 +31,50 @@
     "rebuild:node": "npm rebuild better-sqlite3 --no-save",
     "postinstall": "npm run rebuild:native"
   },
+  "build": {
+    "appId": "com.evernear.desktop",
+    "productName": "Evernear",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "node_modules/better-sqlite3/**/*"
+    ],
+    "win": {
+      "target": "portable",
+      "signAndEditExecutable": false,
+      "artifactName": "Evernear-${version}-Windows-Portable.${ext}"
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.productivity",
+      "identity": null,
+      "artifactName": "Evernear-${version}-Mac-${arch}.${ext}"
+    },
+    "portable": {
+      "artifactName": "Evernear-${version}-Windows-Portable.${ext}"
+    },
+    "nsis": {
+      "artifactName": "Evernear-${version}-Windows-Setup.${ext}",
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  },
   "dependencies": {
     "@chenglou/pretext": "0.0.5",
     "@vitejs/plugin-react": "6.0.1",
     "better-sqlite3": "12.9.0",
-    "electron": "41.2.1",
     "prosemirror-commands": "1.7.1",
     "prosemirror-history": "1.5.0",
     "prosemirror-keymap": "1.2.3",
@@ -54,6 +98,8 @@
     "@vitest/ui": "^4.1.4",
     "concurrently": "9.2.1",
     "cross-env": "10.1.0",
+    "electron": "^41.2.1",
+    "electron-builder": "^26.8.1",
     "eslint": "^10.2.1",
     "prettier": "^3.8.3",
     "tsup": "8.5.1",
