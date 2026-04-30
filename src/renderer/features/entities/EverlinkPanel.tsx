@@ -140,14 +140,16 @@ export function EverlinkPanel(props: Props) {
             }
             placeholder="New target document title"
           />
-          <Button onClick={onCreateTargetDocument}>Create Target Doc</Button>
+          <Button size="compact" onClick={onCreateTargetDocument}>
+            Create Target Doc
+          </Button>
         </div>
       ) : null}
       <div className={styles.actions}>
-        <Button variant="primary" onClick={onBeginPlacement}>
+        <Button variant="primary" size="compact" onClick={onBeginPlacement}>
           Continue to Slice Placement
         </Button>
-        <Button variant="secondary" onClick={onCancel}>
+        <Button variant="secondary" size="compact" onClick={onCancel}>
           Cancel
         </Button>
       </div>

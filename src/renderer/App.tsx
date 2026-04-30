@@ -42,7 +42,7 @@ export function App() {
   const panelEditorRef = useRef<HarnessEditorHandle | null>(null);
 
   const workspaceHook = useWorkspace();
-  const { status, workspace, pendingWrites, runLog } = workspaceHook;
+  const { workspace, pendingWrites, runLog } = workspaceHook;
 
   const selections = useEditorSelections();
   const lookups = useWorkspaceLookups(workspace);
@@ -212,30 +212,14 @@ export function App() {
       <TitleBar
         workspace={workspace}
         activeDocument={activeDocument}
-        status={status}
         documentTitleDraft={documentTitleDraft}
-        pendingWrites={pendingWrites}
-        documentsById={lookups.documentsById}
-        everlinkLabel={everlinkLabel}
-        everlinkDisabled={selections.mainSelection.empty}
-        eversliceDisabled={selections.mainSelection.empty}
         fullScreen={editorFullScreen}
         shortcutsActive={activeScreen === "shortcuts"}
-        onProjectSwitch={actions.switchProject}
-        onCreateProject={actions.createProject}
         onDocumentTitleDraftChange={setDocumentTitleDraft}
         onSaveDocumentMeta={actions.saveDocumentMeta}
         onTogglePanel={actions.togglePanel}
-        onToggleBold={editorCommands.toggleBold}
-        onToggleItalic={editorCommands.toggleItalic}
-        onUndo={editorCommands.undo}
-        onRedo={editorCommands.redo}
-        onReorderDocument={actions.reorderDocument}
         onToggleHighlights={actions.toggleHighlights}
         onToggleFullScreen={() => setEditorFullScreen((value) => !value)}
-        onOpenEverslice={editorCommands.openEverslice}
-        onOpenEverlinkChooser={editorCommands.openEverlink}
-        onDeleteDocument={actions.deleteDocument}
         onOpenShortcuts={() => {
           editorCommands.closeEditorContextMenu();
           setActiveScreen("shortcuts");
@@ -251,10 +235,13 @@ export function App() {
               workspace={workspace}
               activeDocument={activeDocument}
               projectNameDraft={projectNameDraft}
+              activeProjectId={workspace?.layout.activeProjectId ?? ""}
               documentsByFolder={documentsByFolder}
               documentsById={lookups.documentsById}
               onProjectNameChange={setProjectNameDraft}
               onSaveProjectName={actions.saveProjectName}
+              onProjectSwitch={actions.switchProject}
+              onCreateProject={actions.createProject}
               onCreateFolder={actions.createFolder}
               onCreateDocument={actions.createDocument}
               onToggleFolder={actions.toggleFolder}
@@ -271,6 +258,7 @@ export function App() {
             emptyDocumentJson={emptySnapshot.contentJson}
             emptyDocumentKey={emptySnapshot.id}
             editorRules={lookups.editorRules}
+            pendingWrites={pendingWrites}
             visibleBoundaries={[]}
             pendingRange={everlink.mainPendingRange ?? everslice.frozenPendingRange}
             onSnapshotChange={handleMainSnapshotChange}

@@ -5,9 +5,11 @@ import styles from "./Button.module.css";
 
 type ButtonVariant = "primary" | "secondary" | "ghost" | "chip";
 type ButtonTone = "default" | "danger";
+type ButtonSize = "default" | "compact";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   active?: boolean;
+  size?: ButtonSize;
   tone?: ButtonTone;
   variant?: ButtonVariant;
 };
@@ -15,6 +17,7 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 export function Button({
   active,
   className,
+  size = "default",
   tone = "default",
   type = "button",
   variant = "ghost",
@@ -25,6 +28,7 @@ export function Button({
       className={classNames(
         styles.button,
         styles[variant],
+        size === "compact" && styles.compact,
         tone === "danger" && styles.danger,
         active && styles.chipActive,
         className,

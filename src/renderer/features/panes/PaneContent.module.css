@@ -1,13 +1,13 @@
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-5);
+  gap: var(--space-3);
 }
 
 .list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-4);
 }
 
 .copy,
@@ -19,7 +19,7 @@
 .documentStrip {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-3);
   margin: var(--space-2) 0 var(--space-4);
 }
 
@@ -27,4 +27,43 @@
   flex: 1;
   min-height: 0;
   min-height: 360px;
+}
+
+.placeCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-6);
+  border: 1px solid rgba(120, 190, 208, 0.32);
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgba(120, 190, 208, 0.16), rgba(255, 255, 255, 0.04));
+}
+
+.placeHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  color: var(--color-text);
+}
+
+.placePulse {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-pending);
+  box-shadow: 0 0 0 4px var(--color-pending-soft);
+}
+
+.placeMeta {
+  color: var(--color-text-faint);
+  font-family: var(--font-label);
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.placeExcerpt {
+  margin: 0;
+  color: var(--color-text-muted);
+  line-height: 1.55;
 }

@@ -1,0 +1,23 @@
+.swatch {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+}
+
+.tone1 {
+  background: var(--color-accent);
+}
+
+.tone2 {
+  background: var(--color-pending);
+}
+
+.tone3 {
+  background: var(--color-success);
+}
+
+.tone4 {
+  background: var(--color-boundary);
+}

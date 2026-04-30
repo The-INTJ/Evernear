@@ -16,7 +16,15 @@ import type { KeyboardEvent } from "react";
 
 import type { WorkspaceState } from "../../../shared/domain/workspace";
 import { truncate } from "../../utils/formatting";
-import { Button, Card, ModalShell, TextInput, classNames, modalShellStyles } from "../../ui";
+import {
+  Button,
+  Card,
+  ModalShell,
+  Swatch,
+  TextInput,
+  classNames,
+  modalShellStyles,
+} from "../../ui";
 import styles from "./EversliceChooser.module.css";
 
 const MAX_ROWS = 50;
@@ -30,7 +38,7 @@ type Props = {
   onConfirmNew: (name: string) => void;
 };
 
-type EntityRow = { kind: "entity"; id: string; name: string };
+type EntityRow = { kind: "entity"; id: string; name: string; index: number };
 type CreateRow = { kind: "create"; name: string };
 type Row = EntityRow | CreateRow;
 
@@ -59,7 +67,7 @@ export function EversliceChooser(props: Props) {
         .slice()
         .sort((a, b) => a.name.localeCompare(b.name))
         .slice(0, MAX_ROWS)
-        .map((entity) => ({ kind: "entity", id: entity.id, name: entity.name }));
+        .map((entity, index) => ({ kind: "entity", id: entity.id, name: entity.name, index }));
     }
 
     // Build per-entity alias and slice-title lookups once so the filter
@@ -95,7 +103,7 @@ export function EversliceChooser(props: Props) {
     return matched
       .sort((a, b) => a.name.localeCompare(b.name))
       .slice(0, MAX_ROWS)
-      .map((entity) => ({ kind: "entity", id: entity.id, name: entity.name }));
+      .map((entity, index) => ({ kind: "entity", id: entity.id, name: entity.name, index }));
   }, [workspace, query]);
 
   const rows = useMemo<Row[]>(() => {
@@ -181,6 +189,7 @@ export function EversliceChooser(props: Props) {
                 role="option"
                 aria-selected={isHighlighted}
               >
+                <Swatch index={row.index} />
                 <span className={styles.rowName}>{row.name}</span>
               </li>
             );
@@ -210,7 +219,10 @@ export function EversliceChooser(props: Props) {
         })}
       </ul>
       <div className={styles.actions}>
-        <Button variant="secondary" onClick={onClose}>
+        <span className={styles.hints}>
+          <kbd>Up/Down</kbd> navigate <kbd>Enter</kbd> bind <kbd>Esc</kbd> close
+        </span>
+        <Button variant="secondary" size="compact" onClick={onClose}>
           Cancel
         </Button>
       </div>

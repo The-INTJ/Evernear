@@ -83,7 +83,9 @@ export function MatchingRuleEditor({
             />
             Allow possessive
           </label>
-          <Button onClick={onAddRule}>Add Rule</Button>
+          <Button size="compact" onClick={onAddRule}>
+            Add Rule
+          </Button>
         </div>
       </div>
       <div className={styles.list}>
@@ -98,10 +100,10 @@ export function MatchingRuleEditor({
               </div>
               <p className={cardStyles.copy}>{rule.pattern}</p>
               <div className={styles.actions}>
-                <Button onClick={() => onToggleRule(rule)}>
+                <Button size="compact" onClick={() => onToggleRule(rule)}>
                   {rule.enabled ? "Disable" : "Enable"}
                 </Button>
-                <Button tone="danger" onClick={() => onDeleteRule(rule.id)}>
+                <Button size="compact" tone="danger" onClick={() => onDeleteRule(rule.id)}>
                   Delete
                 </Button>
               </div>

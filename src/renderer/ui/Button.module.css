@@ -1,24 +1,26 @@
 .button {
   border: 0;
-  border-radius: var(--radius-xl);
-  padding: 11px var(--space-7);
+  border-radius: var(--radius-control);
+  padding: var(--space-5) var(--space-7);
   cursor: pointer;
+  font-size: 0.82rem;
+  line-height: 1.1;
   transition:
-    transform 140ms ease,
     opacity 140ms ease,
     background 140ms ease,
     border-color 140ms ease,
     color 140ms ease;
 }
 
-.button:hover:not(:disabled) {
-  transform: translateY(-1px);
+.compact {
+  min-height: var(--control-compact-height);
+  padding: 0 var(--space-5);
+  font-size: var(--control-compact-font-size);
 }
 
 .button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
-  transform: none;
 }
 
 .primary {
@@ -45,6 +47,9 @@
 }
 
 .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
   text-align: left;
 }
 

@@ -2,13 +2,51 @@
 .entityList {
   display: flex;
   flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.entityLibrary {
   gap: var(--space-5);
+}
+
+.panelTabs {
+  display: flex;
+  min-height: 28px;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.panelTab,
+.panelTabActive {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 24px;
+  padding: 0 var(--space-5);
+  border-radius: var(--radius-control);
+  color: var(--color-text-muted);
+  font-size: 0.76rem;
+}
+
+.panelTabActive {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--color-text);
+  font-weight: 650;
+}
+
+.count {
+  color: var(--color-text-faint);
+  font-family: var(--font-label);
+  font-size: 0.66rem;
 }
 
 .list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-4);
 }
 
 .copy,
@@ -24,9 +62,10 @@
 }
 
 .fieldLabel {
-  color: var(--color-accent-strong);
-  font-size: 0.72rem;
-  letter-spacing: 0.14em;
+  color: var(--color-text-faint);
+  font-family: var(--font-label);
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
@@ -43,8 +82,9 @@
 .checkboxRow {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-3);
   color: var(--color-text-muted);
+  font-size: 0.82rem;
 }
 
 .checkboxRow input {

@@ -1,15 +1,26 @@
 .navPanel {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--space-7);
   min-height: 0;
-  padding: var(--space-6);
+  padding: var(--space-7) var(--panel-padding) var(--space-6);
   overflow: hidden;
   border: 1px solid var(--color-border-panel);
-  border-radius: var(--radius-3xl);
+  border-radius: var(--radius-panel);
   background: var(--color-bg-elevated);
   box-shadow: var(--shadow-panel);
   backdrop-filter: blur(var(--blur-panel));
+}
+
+.projectControls {
+  display: flex;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.projectControls select {
+  flex: 1;
+  min-width: 0;
 }
 
 .navTreeSection {
@@ -65,9 +76,10 @@
 }
 
 .treeFolderRow {
-  grid-template-columns: 14px 16px minmax(0, 1fr);
+  grid-template-columns: 14px 16px minmax(0, 1fr) auto;
   gap: var(--space-3);
-  font-size: 0.85rem;
+  font-size: 0.81rem;
+  font-weight: 500;
 }
 
 .treeFolderRowStatic {
@@ -147,7 +159,8 @@
 .treeDocument {
   grid-template-columns: 16px minmax(0, 1fr);
   gap: var(--space-3);
-  font-size: 0.83rem;
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
 }
 
 .treeDocumentIcon::before {
@@ -170,6 +183,12 @@
   white-space: nowrap;
 }
 
+.treeCount {
+  color: var(--color-text-faint);
+  font-family: var(--font-label);
+  font-size: 0.66rem;
+}
+
 .treeFolderRenameInput {
   min-width: 0;
   width: 100%;
@@ -190,6 +209,19 @@
 .treeDocumentActive {
   border-color: rgba(245, 185, 113, 0.34);
   background: rgba(245, 185, 113, 0.16);
+  color: var(--color-accent-strong);
+}
+
+.navFoot {
+  display: flex;
+  gap: var(--space-3);
+  padding: 0 var(--space-1);
+}
+
+.navFoot button {
+  flex: 1;
+  border-style: dashed;
+  color: var(--color-text-muted);
 }
 
 @media (max-width: 900px) {

@@ -1,7 +1,7 @@
 .section {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--panel-inner-gap);
 }
 
 .section h2 {
@@ -20,8 +20,9 @@
 
 .kicker {
   margin: 0;
-  color: var(--color-accent-strong);
-  font-size: 0.72rem;
-  letter-spacing: 0.14em;
+  color: var(--color-text-faint);
+  font-family: var(--font-label);
+  font-size: 0.66rem;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
 }

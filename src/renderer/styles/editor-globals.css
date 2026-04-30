@@ -42,20 +42,20 @@
   min-height: 0;
   overflow: auto;
   overscroll-behavior: contain;
-  border: 1px solid var(--color-editor-paper-border);
-  border-radius: var(--radius-editor);
+  border: 1px solid var(--color-editor-paper-edge);
+  border-radius: var(--radius-md);
   background:
-    linear-gradient(180deg, var(--color-editor-paper-sheen), transparent 18%),
+    linear-gradient(180deg, var(--color-editor-paper-sheen), transparent 16%),
     var(--color-editor-paper);
 }
 
 .editor-prosemirror {
   min-height: 100%;
-  padding: var(--space-18) var(--space-24) var(--space-editor-bottom);
+  padding: var(--editor-padding-top) var(--editor-padding-inline) var(--editor-padding-bottom);
   color: var(--color-editor-ink);
   font-family: var(--font-body);
-  font-size: 1.08rem;
-  line-height: 1.78;
+  font-size: 1.09rem;
+  line-height: 1.72;
   outline: none;
 }
 
@@ -67,8 +67,8 @@
 .editor-prosemirror h1 {
   margin-top: 0.9em;
   color: var(--color-editor-heading);
-  font-size: 1.35rem;
-  letter-spacing: 0.03em;
+  font-size: 1.42rem;
+  letter-spacing: 0.01em;
 }
 
 .pm-match-highlight {

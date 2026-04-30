@@ -1,11 +1,11 @@
 :root {
   color-scheme: dark;
 
-  --color-bg-app: #08131a;
-  --color-bg-app-top: #12252e;
-  --color-bg-chrome: rgba(14, 24, 32, 0.96);
-  --color-bg-elevated: rgba(10, 22, 30, 0.84);
-  --color-bg-soft: rgba(18, 33, 41, 0.88);
+  --color-bg-app: #0a161d;
+  --color-bg-app-top: #11252e;
+  --color-bg-chrome: rgba(8, 18, 24, 0.84);
+  --color-bg-elevated: rgba(17, 33, 42, 0.94);
+  --color-bg-soft: rgba(22, 38, 47, 0.9);
   --color-bg-control: rgba(7, 18, 24, 0.62);
   --color-bg-control-compact: rgba(7, 18, 24, 0.48);
   --color-bg-float: rgba(12, 25, 33, 0.98);
@@ -15,7 +15,7 @@
   --color-bg-subtle-hover: rgba(255, 255, 255, 0.08);
   --color-bg-row-hover: rgba(255, 255, 255, 0.07);
 
-  --color-border-panel: rgba(160, 204, 211, 0.16);
+  --color-border-panel: rgba(170, 210, 215, 0.1);
   --color-border-control: rgba(255, 255, 255, 0.12);
   --color-border-soft: rgba(255, 255, 255, 0.08);
   --color-border-floating: rgba(255, 255, 255, 0.14);
@@ -23,7 +23,8 @@
   --color-divider-strong: rgba(255, 255, 255, 0.2);
 
   --color-text: #eff4ed;
-  --color-text-muted: #aabcc0;
+  --color-text-muted: #8ea2a6;
+  --color-text-faint: #5d7176;
   --color-accent: #f5b971;
   --color-accent-strong: #ffd29a;
   --color-accent-ink: #241a10;
@@ -31,8 +32,11 @@
   --color-warn: #f5967b;
   --color-danger-text: #ffd7c8;
 
-  --color-editor-paper: #f6f0e4;
-  --color-editor-ink: #2d2922;
+  --color-editor-paper: #f4eddf;
+  --color-editor-paper-edge: #e5dac6;
+  --color-editor-rule: #d9cdb6;
+  --color-editor-ink: #2b2620;
+  --color-editor-ink-soft: #6c6356;
   --color-editor-heading: #1e3a48;
   --color-editor-paper-border: rgba(88, 70, 44, 0.12);
   --color-editor-paper-sheen: rgba(255, 255, 255, 0.18);
@@ -57,8 +61,9 @@
   --color-annotation-underline: rgba(170, 188, 192, 0.74);
   --color-annotation-underline-active: rgba(245, 185, 113, 0.72);
 
-  --font-ui: "Segoe UI Variable Display", "Aptos", "Trebuchet MS", sans-serif;
-  --font-body: "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --font-ui: "Inter", "Segoe UI Variable Display", "Aptos", sans-serif;
+  --font-body: "Source Serif 4", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  --font-label: "JetBrains Mono", "Cascadia Mono", "IBM Plex Mono", ui-monospace, monospace;
 
   --space-1: 2px;
   --space-2: 4px;
@@ -76,6 +81,9 @@
   --space-18: 34px;
   --space-24: 48px;
   --space-editor-bottom: 120px;
+  --editor-padding-top: 54px;
+  --editor-padding-inline: 64px;
+  --editor-padding-bottom: 180px;
 
   --radius-xxs: 1px;
   --radius-xs: 2px;
@@ -88,6 +96,8 @@
   --radius-4xl: 20px;
   --radius-5xl: 22px;
   --radius-editor: 24px;
+  --radius-panel: 14px;
+  --radius-control: 6px;
   --radius-pill: 999px;
 
   --shadow-panel: 0 24px 70px rgba(0, 0, 0, 0.32);
@@ -102,13 +112,17 @@
   --z-context-menu: 70;
 
   --window-controls-reserve: 158px;
-  --titlebar-height: 48px;
-  --nav-column-width: 320px;
-  --panel-column-width: 420px;
-  --nav-column-width-compact: 280px;
+  --titlebar-height: 44px;
+  --nav-column-width: 248px;
+  --panel-column-width: 380px;
+  --nav-column-width-compact: 248px;
   --panel-column-width-compact: 360px;
-  --shell-gap: 18px;
+  --shell-gap: 14px;
   --app-max-content: 1180px;
+  --panel-padding: 10px;
+  --panel-inner-gap: 10px;
+  --control-compact-height: 26px;
+  --control-compact-font-size: 0.78rem;
 
   --bg: var(--color-bg-app);
   --bg-elevated: var(--color-bg-elevated);
@@ -117,6 +131,7 @@
   --panel-shadow: var(--shadow-panel);
   --text: var(--color-text);
   --text-soft: var(--color-text-muted);
+  --text-faint: var(--color-text-faint);
   --accent: var(--color-accent);
   --accent-strong: var(--color-accent-strong);
   --success: var(--color-success);
@@ -128,4 +143,5 @@
   --pending: var(--color-pending);
   --ui-font: var(--font-ui);
   --body-font: var(--font-body);
+  --label-font: var(--font-label);
 }

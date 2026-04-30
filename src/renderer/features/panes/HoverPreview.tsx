@@ -4,7 +4,7 @@ import type { EntityRecord } from "../../../shared/domain/workspace";
 import type { HoverPreview as HoverPreviewState } from "../../state/sessionTypes";
 import type { ResolvedSliceView } from "../../utils/workspace";
 import { formatBoundaryReason } from "../../utils/formatting";
-import { Card, cardStyles, classNames } from "../../ui";
+import { Card, Swatch, cardStyles, classNames } from "../../ui";
 import styles from "./HoverPreview.module.css";
 
 const POINTER_GAP_PX = 12;
@@ -75,7 +75,10 @@ export function HoverPreview({ hover, entity, slices, onMouseEnter, onMouseLeave
       title={onPin ? "Click to dock as a panel" : undefined}
     >
       <div className={styles.header}>
-        <h3>{entity.name}</h3>
+        <h3>
+          <Swatch seed={entity.name} />
+          {entity.name}
+        </h3>
       </div>
       <div className={styles.body}>
         {slices.length === 0 ? (

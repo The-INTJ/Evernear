@@ -3,12 +3,13 @@
   position: fixed;
   z-index: var(--z-editor-menu);
   display: inline-flex;
-  gap: var(--space-3);
-  padding: var(--space-3);
+  gap: var(--space-2);
+  padding: var(--space-2);
   border: 1px solid var(--color-border-floating);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   background: var(--color-bg-float);
   box-shadow: var(--shadow-floating);
+  backdrop-filter: blur(var(--blur-panel));
 }
 
 .bubble {
@@ -31,15 +32,16 @@
 .label {
   padding: 5px var(--space-4) var(--space-1);
   color: var(--color-text-muted);
+  font-family: var(--font-label);
   font-size: 0.7rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .action {
-  min-height: 30px;
+  min-height: 28px;
   border: 0;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-control);
   padding: 0 var(--space-5);
   background: var(--color-bg-subtle-hover);
   color: var(--color-text);
@@ -59,13 +61,13 @@
 }
 
 .strong {
-  min-width: 32px;
+  min-width: 28px;
   font-weight: 800;
   text-align: center;
 }
 
 .italic {
-  min-width: 32px;
+  min-width: 28px;
   font-style: italic;
   font-weight: 700;
   text-align: center;

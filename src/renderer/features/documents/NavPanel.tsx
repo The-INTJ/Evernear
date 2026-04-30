@@ -12,7 +12,7 @@ import type {
   DocumentSummary,
   WorkspaceState,
 } from "../../../shared/domain/workspace";
-import { Menu, MenuItem, PanelSection, TextInput, classNames } from "../../ui";
+import { Button, Menu, MenuItem, PanelSection, SelectInput, TextInput, classNames } from "../../ui";
 import styles from "./NavPanel.module.css";
 
 type NavContextMenu = {
@@ -26,10 +26,13 @@ type Props = {
   workspace: WorkspaceState | null;
   activeDocument: StoredDocumentSnapshot | null;
   projectNameDraft: string;
+  activeProjectId: string;
   documentsByFolder: Map<string | null, DocumentSummary[]>;
   documentsById: Map<string, DocumentSummary>;
   onProjectNameChange: (value: string) => void;
   onSaveProjectName: () => void;
+  onProjectSwitch: (projectId: string) => void;
+  onCreateProject: () => void;
   onCreateFolder: (titleOverride?: string) => void;
   onCreateDocument: (
     folderId: string | null,
@@ -47,10 +50,13 @@ export function NavPanel(props: Props) {
     workspace,
     activeDocument,
     projectNameDraft,
+    activeProjectId,
     documentsByFolder,
     documentsById,
     onProjectNameChange,
     onSaveProjectName,
+    onProjectSwitch,
+    onCreateProject,
     onCreateFolder,
     onCreateDocument,
     onToggleFolder,
@@ -164,6 +170,23 @@ export function NavPanel(props: Props) {
           onBlur={onSaveProjectName}
           placeholder="Project name"
         />
+        <div className={styles.projectControls}>
+          <SelectInput
+            aria-label="Switch project"
+            variant="compact"
+            value={activeProjectId}
+            onChange={(event) => onProjectSwitch(event.target.value)}
+          >
+            {(workspace?.projects ?? []).map((project) => (
+              <option key={project.id} value={project.id}>
+                {project.name}
+              </option>
+            ))}
+          </SelectInput>
+          <Button size="compact" onClick={onCreateProject}>
+            New
+          </Button>
+        </div>
       </PanelSection>
 
       <PanelSection grow kicker="Explorer" className={styles.navTreeSection}>
@@ -189,6 +212,7 @@ export function NavPanel(props: Props) {
                     <span className={styles.treeDisclosure} aria-hidden="true" />
                     <span className={styles.treeFolderIcon} aria-hidden="true" />
                     <span className={styles.treeFolderName}>{folder.title}</span>
+                    <span className={styles.treeCount}>{folderDocuments.length}</span>
                   </button>
                 ) : (
                   <div
@@ -241,6 +265,7 @@ export function NavPanel(props: Props) {
                 />
                 <span className={styles.treeFolderIcon} aria-hidden="true" />
                 <span className={styles.treeFolderName}>Unfiled Documents</span>
+                <span className={styles.treeCount}>{rootDocuments.length}</span>
               </div>
               <div className={styles.treeDocuments}>
                 {rootDocuments.map((document) => (
@@ -257,6 +282,15 @@ export function NavPanel(props: Props) {
           ) : null}
         </div>
       </PanelSection>
+
+      <div className={styles.navFoot}>
+        <Button size="compact" onClick={() => onCreateFolder()}>
+          + Folder
+        </Button>
+        <Button size="compact" onClick={() => onCreateDocument(activeFolderId, false)}>
+          + Document
+        </Button>
+      </div>
 
       {contextMenu ? (
         <Menu

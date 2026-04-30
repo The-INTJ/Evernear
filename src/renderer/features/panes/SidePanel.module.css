@@ -1,14 +1,14 @@
 .sidePanel {
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
+  gap: var(--panel-inner-gap);
   min-height: 0;
-  padding: var(--space-6);
+  padding: var(--panel-padding);
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   border: 1px solid var(--color-border-panel);
-  border-radius: var(--radius-3xl);
+  border-radius: var(--radius-panel);
   background: var(--color-bg-elevated);
   box-shadow: var(--shadow-panel);
   backdrop-filter: blur(var(--blur-panel));

@@ -9,7 +9,7 @@
 .mvp-shell > main {
   flex: 1;
   min-height: 0;
-  padding: var(--space-9) var(--space-12) var(--space-12);
+  padding: var(--shell-gap);
   overflow: hidden;
 }
 
@@ -26,23 +26,6 @@
 
 .mvp-grid--fullscreen {
   grid-template-columns: minmax(0, 1fr);
-}
-
-.editor-panel {
-  display: flex;
-  min-height: 0;
-  padding: var(--space-6);
-  overflow: hidden;
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border-panel);
-  border-radius: var(--radius-3xl);
-  box-shadow: var(--shadow-panel);
-  backdrop-filter: blur(var(--blur-panel));
-}
-
-.editor-canvas {
-  flex: 1;
-  min-height: 0;
 }
 
 @media (max-width: 1380px) {

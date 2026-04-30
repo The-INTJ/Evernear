@@ -64,6 +64,7 @@ export function EditorActionOverlays(props: Props) {
         <ActionButton label="I" title="Italic" onClick={onItalic} italic />
         <ActionButton label={everlinkLabel} onClick={onOpenEverlink} />
         <ActionButton label="Everslice" onClick={onOpenEverslice} disabled={eversliceDisabled} />
+        <ActionButton label="Copy" onClick={onCopySelection} />
       </div>
     ) : null;
 

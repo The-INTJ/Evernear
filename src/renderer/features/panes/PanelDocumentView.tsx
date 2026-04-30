@@ -37,12 +37,17 @@ export const PanelDocumentView = forwardRef<HarnessEditorHandle, Props>(function
       <h2>{snapshot.title}</h2>
       <div className={styles.documentStrip}>
         <Button
+          size="compact"
           onClick={() => setEditingBoundaries((value) => !value)}
           aria-pressed={editingBoundaries}
         >
           {editingBoundaries ? "Done editing slices" : "Edit slices"}
         </Button>
-        {onClose ? <Button onClick={onClose}>Close</Button> : null}
+        {onClose ? (
+          <Button size="compact" onClick={onClose}>
+            Close
+          </Button>
+        ) : null}
       </div>
       <div className={styles.documentView}>
         <HarnessEditor

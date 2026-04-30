@@ -39,10 +39,13 @@ export function SliceViewer({
                   : "Boundary record missing"}
               </p>
               <div className={styles.actions}>
-                <Button onClick={() => onOpenSliceInPanel(slice.documentId, selectedEntity.id)}>
+                <Button
+                  size="compact"
+                  onClick={() => onOpenSliceInPanel(slice.documentId, selectedEntity.id)}
+                >
                   Open in Panel
                 </Button>
-                <Button tone="danger" onClick={() => onDeleteSlice(slice.id)}>
+                <Button size="compact" tone="danger" onClick={() => onDeleteSlice(slice.id)}>
                   Delete
                 </Button>
               </div>

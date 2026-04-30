@@ -22,7 +22,7 @@ export function EntityDetail({
         onBlur={onSaveEntityName}
       />
       <div className={styles.actions}>
-        <Button tone="danger" onClick={onDeleteEntity}>
+        <Button size="compact" tone="danger" onClick={onDeleteEntity}>
           Delete Entity
         </Button>
       </div>

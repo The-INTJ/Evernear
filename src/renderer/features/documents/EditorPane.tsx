@@ -1,10 +1,10 @@
 import { forwardRef } from "react";
 
-import type { StoredDocumentSnapshot } from "../../../shared/domain/document";
-import type {
-  SliceBoundaryRecord,
-  WorkspaceState,
-} from "../../../shared/domain/workspace";
+import {
+  collectDocumentMetrics,
+  type StoredDocumentSnapshot,
+} from "../../../shared/domain/document";
+import type { SliceBoundaryRecord, WorkspaceState } from "../../../shared/domain/workspace";
 import {
   HarnessEditor,
   type EditorContextMenuPayload,
@@ -18,6 +18,9 @@ import type {
   SerializedTransactionBundle,
 } from "../../editor/editorUtils";
 import { DEBUG_PANELS } from "../../utils/devFlags";
+import { formatCount } from "../../utils/formatting";
+import { classNames } from "../../ui";
+import styles from "./EditorPane.module.css";
 
 type Props = {
   workspace: WorkspaceState | null;
@@ -25,6 +28,7 @@ type Props = {
   emptyDocumentJson: unknown;
   emptyDocumentKey: string;
   editorRules: EditorMatchingRule[];
+  pendingWrites: number;
   visibleBoundaries: SliceBoundaryRecord[];
   pendingRange: PendingSliceRange | null;
   onSnapshotChange: (
@@ -47,6 +51,7 @@ export const EditorPane = forwardRef<HarnessEditorHandle, Props>(function Editor
     emptyDocumentJson,
     emptyDocumentKey,
     editorRules,
+    pendingWrites,
     visibleBoundaries,
     pendingRange,
     onSnapshotChange,
@@ -57,9 +62,21 @@ export const EditorPane = forwardRef<HarnessEditorHandle, Props>(function Editor
     onEditorBlur,
   } = props;
 
+  const metrics = activeDocument ? collectDocumentMetrics(activeDocument.plainText) : null;
+
   return (
-    <section className="editor-panel">
-      <div className="editor-canvas">
+    <section className={styles.panel}>
+      <div className={styles.head}>
+        <div className={styles.stats} aria-label="Document metrics">
+          <Metric label="Words" value={formatCount(metrics?.wordCount ?? 0)} />
+          <Metric label="Paras" value={formatCount(metrics?.paragraphCount ?? 0)} />
+          <Metric label="Chars" value={formatCount(metrics?.characterCount ?? 0)} />
+        </div>
+        <div className={classNames(styles.sync, pendingWrites > 0 && styles.saving)}>
+          {pendingWrites > 0 ? "Saving..." : "Saved"}
+        </div>
+      </div>
+      <div className={styles.canvas}>
         <HarnessEditor
           key={activeDocument?.id ?? emptyDocumentKey}
           ref={ref}
@@ -85,3 +102,12 @@ export const EditorPane = forwardRef<HarnessEditorHandle, Props>(function Editor
     </section>
   );
 });
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <span className={styles.metric}>
+      {label}
+      <strong>{value}</strong>
+    </span>
+  );
+}

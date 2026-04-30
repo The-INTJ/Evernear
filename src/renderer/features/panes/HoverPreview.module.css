@@ -3,12 +3,12 @@
   z-index: var(--z-hover-preview);
   display: flex;
   flex-direction: column;
-  gap: var(--space-6);
-  width: min(420px, calc(100vw - 48px));
+  gap: var(--space-5);
+  width: min(360px, calc(100vw - 48px));
   max-height: min(520px, calc(100vh - 48px));
-  padding: var(--space-8);
+  padding: var(--space-7);
   border: 1px solid var(--color-border-panel);
-  border-radius: var(--radius-5xl);
+  border-radius: var(--radius-panel);
   background: var(--color-bg-float-soft);
   box-shadow: var(--shadow-panel);
   backdrop-filter: blur(var(--blur-panel));
@@ -23,13 +23,17 @@
 }
 
 .header h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
   margin: 0;
+  font-size: 0.96rem;
 }
 
 .body {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-4);
   min-height: 0;
   padding-right: var(--space-2);
   overflow-y: auto;
