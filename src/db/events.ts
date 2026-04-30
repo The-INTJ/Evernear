@@ -32,11 +32,13 @@ export const EVENT_TYPES = {
 
   folderCreated: "folderCreated",
   folderUpdated: "folderUpdated",
+  folderMoved: "folderMoved",
   folderDeleted: "folderDeleted",
 
   documentCreated: "documentCreated",
   documentMetaUpdated: "documentMetaUpdated",
   documentReordered: "documentReordered",
+  documentMoved: "documentMoved",
   documentDeleted: "documentDeleted",
 
   entityCreated: "entityCreated",
@@ -60,6 +62,11 @@ export type EventPayloadMap = {
 
   folderCreated: { title: string };
   folderUpdated: { title: string };
+  folderMoved: {
+    fromParentFolderId: string | null;
+    toParentFolderId: string | null;
+    ordering: number;
+  };
   folderDeleted: { title: string };
 
   documentCreated: { title: string; folderId: string | null };
@@ -71,6 +78,11 @@ export type EventPayloadMap = {
     swapDocumentId: string;
     swapFromOrdering: number;
     swapToOrdering: number;
+  };
+  documentMoved: {
+    fromFolderId: string | null;
+    toFolderId: string | null;
+    ordering: number;
   };
   documentDeleted: { title: string };
 

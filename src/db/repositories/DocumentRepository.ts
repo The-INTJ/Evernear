@@ -9,6 +9,7 @@ import type {
   CreateDocumentInput,
   DeleteDocumentInput,
   DocumentSummary,
+  MoveDocumentInput,
   ReorderDocumentInput,
   UpdateDocumentMetaInput,
 } from "../../shared/domain/workspace";
@@ -42,6 +43,8 @@ export type DeletedDocument = {
   currentVersion: number;
   sliceIds: string[];
 };
+
+const ORDERING_STEP = 1024;
 
 export class DocumentRepository {
   constructor(
@@ -149,7 +152,7 @@ export class DocumentRepository {
       WHERE project_id = ?
         AND folder_id IS ?
     `).get(projectId, folderId) as { ordering: number };
-    return row.ordering + 1;
+    return row.ordering < 0 ? 0 : row.ordering + ORDERING_STEP;
   }
 
   // ──────────────── mutations ────────────────
@@ -226,6 +229,38 @@ export class DocumentRepository {
       currentVersion: row.current_version,
       sliceIds: sliceRows.map((slice) => slice.id),
     };
+  }
+
+  // Reparent + reorder in one mutation. Sibling ordering uses sparse INTs
+  // with lazy recompaction when the gap shrinks to <= 1. Distinct from
+  // reorderDocument (up/down keyboard swap) which stays unchanged for
+  // keyboard accessibility.
+  moveDocument(input: MoveDocumentInput): DocumentSummary {
+    const row = this.requireDocumentRow(input.documentId);
+    const projectId = row.project_id ?? DEFAULT_PROJECT_ID;
+    const newFolderId = input.newFolderId;
+
+    const ordering = this.computeMoveOrdering(
+      projectId,
+      newFolderId,
+      input.documentId,
+      input.beforeDocumentId,
+    );
+
+    const now = isoNow();
+    this.sqlite.getConnection().prepare(`
+      UPDATE documents
+      SET folder_id = ?, ordering = ?, updated_at = ?
+      WHERE id = ?
+    `).run(newFolderId, ordering, now, input.documentId);
+
+    this.history.appendEvent("document", input.documentId, "documentMoved", row.current_version, {
+      fromFolderId: row.folder_id,
+      toFolderId: newFolderId,
+      ordering,
+    });
+
+    return this.requireDocumentSummary(input.documentId);
   }
 
   reorderDocument(input: ReorderDocumentInput): RawDocumentRow | null {
@@ -317,6 +352,77 @@ export class DocumentRepository {
   }
 
   // ──────────────── private ────────────────
+
+  // Sparse-with-lazy-recompaction (mirror of FolderRepository's helper).
+  // Common case: 1 row update + the documentMoved event. Recompaction
+  // only fires when an insert gap shrinks to <= 1.
+  private computeMoveOrdering(
+    projectId: string,
+    folderId: string | null,
+    movingDocumentId: string,
+    beforeDocumentId: string | null,
+  ): number {
+    const siblings = this.loadSiblingsForOrdering(projectId, folderId, movingDocumentId);
+    if (siblings.length === 0) return 0;
+
+    if (beforeDocumentId === null) {
+      return siblings[siblings.length - 1].ordering + ORDERING_STEP;
+    }
+
+    const idx = siblings.findIndex((sibling) => sibling.id === beforeDocumentId);
+    if (idx === -1) {
+      return siblings[siblings.length - 1].ordering + ORDERING_STEP;
+    }
+
+    if (idx === 0) {
+      return siblings[0].ordering - ORDERING_STEP;
+    }
+
+    const prev = siblings[idx - 1];
+    const next = siblings[idx];
+    if (next.ordering - prev.ordering > 1) {
+      return Math.floor((prev.ordering + next.ordering) / 2);
+    }
+
+    this.recompactSiblings(projectId, folderId);
+    const recompacted = this.loadSiblingsForOrdering(projectId, folderId, movingDocumentId);
+    const newIdx = recompacted.findIndex((sibling) => sibling.id === beforeDocumentId);
+    if (newIdx <= 0) return recompacted[0].ordering - ORDERING_STEP;
+    const recompactedPrev = recompacted[newIdx - 1];
+    const recompactedNext = recompacted[newIdx];
+    return Math.floor((recompactedPrev.ordering + recompactedNext.ordering) / 2);
+  }
+
+  private loadSiblingsForOrdering(
+    projectId: string,
+    folderId: string | null,
+    excludeDocumentId: string,
+  ): Array<{ id: string; ordering: number }> {
+    return this.sqlite.getConnection().prepare(`
+      SELECT id, ordering
+      FROM documents
+      WHERE project_id = ?
+        AND folder_id IS ?
+        AND id != ?
+      ORDER BY ordering ASC
+    `).all(projectId, folderId, excludeDocumentId) as Array<{ id: string; ordering: number }>;
+  }
+
+  private recompactSiblings(projectId: string, folderId: string | null): void {
+    const rows = this.sqlite.getConnection().prepare(`
+      SELECT id
+      FROM documents
+      WHERE project_id = ?
+        AND folder_id IS ?
+      ORDER BY ordering ASC, updated_at DESC
+    `).all(projectId, folderId) as Array<{ id: string }>;
+    const stmt = this.sqlite.getConnection().prepare(`
+      UPDATE documents SET ordering = ? WHERE id = ?
+    `);
+    rows.forEach((row, index) => {
+      stmt.run(index * ORDERING_STEP, row.id);
+    });
+  }
 
   insertDocument(input: DocumentInsertInput): void {
     const now = isoNow();

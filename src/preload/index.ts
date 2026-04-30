@@ -27,6 +27,9 @@ const bridge: HarnessBridge = {
   async updateFolder(input) {
     return ipcRenderer.invoke(HARNESS_CHANNELS.updateFolder, input);
   },
+  async moveFolder(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.moveFolder, input);
+  },
   async deleteFolder(input) {
     return ipcRenderer.invoke(HARNESS_CHANNELS.deleteFolder, input);
   },
@@ -41,6 +44,9 @@ const bridge: HarnessBridge = {
   },
   async reorderDocument(input) {
     return ipcRenderer.invoke(HARNESS_CHANNELS.reorderDocument, input);
+  },
+  async moveDocument(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.moveDocument, input);
   },
   async openDocument(input) {
     return ipcRenderer.invoke(HARNESS_CHANNELS.openDocument, input);

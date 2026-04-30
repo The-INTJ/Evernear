@@ -59,17 +59,3 @@ export function selectedSlicesForEntity(
     });
 }
 
-export function groupDocumentsByFolder(
-  documents: DocumentSummary[],
-): Map<string | null, DocumentSummary[]> {
-  const groups = new Map<string | null, DocumentSummary[]>();
-  for (const doc of documents) {
-    const existing = groups.get(doc.folderId);
-    if (existing) {
-      existing.push(doc);
-    } else {
-      groups.set(doc.folderId, [doc]);
-    }
-  }
-  return groups;
-}

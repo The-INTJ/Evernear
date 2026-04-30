@@ -95,6 +95,112 @@ describe("folder mutations", () => {
     expect(document.folderId).toBeNull();
     expect(after.layout.expandedFolderIds).not.toContain(folderId);
   });
+
+  it("moveFolder reparents a folder and emits a folderMoved event", () => {
+    const state = repository.ensureWorkspaceState();
+    const projectId = state.layout.activeProjectId!;
+    const movingTitle = "Moving";
+    const targetTitle = "TargetParent";
+
+    repository.createFolder({ projectId, title: movingTitle, parentFolderId: null });
+    const afterCreate = repository.createFolder({
+      projectId,
+      title: targetTitle,
+      parentFolderId: null,
+    });
+    const moving = afterCreate.folders.find((f) => f.title === movingTitle)!;
+    const target = afterCreate.folders.find((f) => f.title === targetTitle)!;
+
+    const before = countEvents(harness, "folder", "folderMoved");
+    const after = repository.moveFolder({
+      folderId: moving.id,
+      newParentFolderId: target.id,
+      beforeFolderId: null,
+    });
+    const afterCount = countEvents(harness, "folder", "folderMoved");
+
+    expect(afterCount).toBe(before + 1);
+    const reloaded = after.folders.find((f) => f.id === moving.id)!;
+    expect(reloaded.parentFolderId).toBe(target.id);
+  });
+
+  it("moveFolder rejects moving a folder into itself", () => {
+    const state = repository.ensureWorkspaceState();
+    const projectId = state.layout.activeProjectId!;
+    const after = repository.createFolder({ projectId, title: "Solo", parentFolderId: null });
+    const folder = after.folders.find((f) => f.title === "Solo")!;
+
+    expect(() =>
+      repository.moveFolder({
+        folderId: folder.id,
+        newParentFolderId: folder.id,
+        beforeFolderId: null,
+      }),
+    ).toThrow();
+  });
+
+  it("moveFolder rejects moving a folder into one of its descendants", () => {
+    const state = repository.ensureWorkspaceState();
+    const projectId = state.layout.activeProjectId!;
+    const afterParent = repository.createFolder({
+      projectId,
+      title: "Parent",
+      parentFolderId: null,
+    });
+    const parent = afterParent.folders.find((f) => f.title === "Parent")!;
+    const afterChild = repository.createFolder({
+      projectId,
+      title: "Child",
+      parentFolderId: parent.id,
+    });
+    const child = afterChild.folders.find((f) => f.title === "Child")!;
+
+    expect(() =>
+      repository.moveFolder({
+        folderId: parent.id,
+        newParentFolderId: child.id,
+        beforeFolderId: null,
+      }),
+    ).toThrow();
+  });
+
+  it("deleteFolder reparents nested children to the deleted folder's parent", () => {
+    const state = repository.ensureWorkspaceState();
+    const projectId = state.layout.activeProjectId!;
+    const grandparentState = repository.createFolder({
+      projectId,
+      title: "Grand",
+      parentFolderId: null,
+    });
+    const grandparent = grandparentState.folders.find((f) => f.title === "Grand")!;
+    const parentState = repository.createFolder({
+      projectId,
+      title: "Parent",
+      parentFolderId: grandparent.id,
+    });
+    const parent = parentState.folders.find((f) => f.title === "Parent")!;
+    const childState = repository.createFolder({
+      projectId,
+      title: "Child",
+      parentFolderId: parent.id,
+    });
+    const child = childState.folders.find((f) => f.title === "Child")!;
+    const docState = repository.createDocument({
+      projectId,
+      folderId: parent.id,
+      title: "InsideParent",
+    });
+    const doc = docState.documents.find((d) => d.title === "InsideParent")!;
+
+    repository.deleteFolder({ folderId: parent.id });
+
+    const after = repository.loadWorkspace();
+    const movedChild = after.folders.find((f) => f.id === child.id)!;
+    const movedDoc = after.documents.find((d) => d.id === doc.id)!;
+    expect(movedChild.parentFolderId).toBe(grandparent.id);
+    expect(movedDoc.folderId).toBe(grandparent.id);
+    expect(after.folders.some((f) => f.id === parent.id)).toBe(false);
+  });
 });
 
 describe("document mutations", () => {

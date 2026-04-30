@@ -256,6 +256,18 @@ export type ReorderDocumentInput = {
   direction: "up" | "down";
 };
 
+export type MoveFolderInput = {
+  folderId: string;
+  newParentFolderId: string | null;
+  beforeFolderId: string | null;
+};
+
+export type MoveDocumentInput = {
+  documentId: string;
+  newFolderId: string | null;
+  beforeDocumentId: string | null;
+};
+
 export type OpenDocumentInput = {
   documentId: string;
   surface: "main" | "panel";

@@ -369,6 +369,110 @@ describe("DocumentRepository.reorderDocument", () => {
   });
 });
 
+describe("DocumentRepository.moveDocument", () => {
+  it("appends one documentMoved event when moving across folders", () => {
+    const state = repository.ensureWorkspaceState();
+    const projectId = state.layout.activeProjectId!;
+    const sourceFolder = state.folders[0]!;
+    const targetState = repository.createFolder({
+      projectId,
+      title: "Target",
+      parentFolderId: null,
+    });
+    const targetFolder = targetState.folders.find((f) => f.title === "Target")!;
+    const created = repository.createDocument({
+      projectId,
+      folderId: sourceFolder.id,
+      title: "Mover",
+    });
+    const docId = created.documents.find((d) => d.title === "Mover")!.id;
+
+    const before = countEvents(harness, "document", "documentMoved");
+    repository.moveDocument({
+      documentId: docId,
+      newFolderId: targetFolder.id,
+      beforeDocumentId: null,
+    });
+    const after = countEvents(harness, "document", "documentMoved");
+
+    expect(after).toBe(before + 1);
+    const payload = latestEventPayload(harness, "document", "documentMoved");
+    expect(payload.fromFolderId).toBe(sourceFolder.id);
+    expect(payload.toFolderId).toBe(targetFolder.id);
+
+    const reloaded = repository.loadWorkspace().documents.find((d) => d.id === docId)!;
+    expect(reloaded.folderId).toBe(targetFolder.id);
+  });
+
+  it("computes a midpoint ordering when inserting between two siblings", () => {
+    const state = repository.ensureWorkspaceState();
+    const projectId = state.layout.activeProjectId!;
+    const folderId = state.folders[0]!.id;
+
+    repository.createDocument({ projectId, folderId, title: "Alpha" });
+    repository.createDocument({ projectId, folderId, title: "Bravo" });
+    const after = repository.createDocument({ projectId, folderId, title: "Charlie" });
+
+    const docs = after.documents.filter((d) => d.folderId === folderId).sort(
+      (left, right) => left.ordering - right.ordering,
+    );
+    const first = docs[0]!;
+    const last = docs[docs.length - 1]!;
+    const middle = docs[1]!;
+
+    repository.moveDocument({
+      documentId: last.id,
+      newFolderId: folderId,
+      beforeDocumentId: middle.id,
+    });
+
+    const reloaded = repository.loadWorkspace().documents
+      .filter((d) => d.folderId === folderId)
+      .sort((left, right) => left.ordering - right.ordering);
+    const lastIndex = reloaded.findIndex((d) => d.id === last.id);
+    const firstIndex = reloaded.findIndex((d) => d.id === first.id);
+    const middleIndex = reloaded.findIndex((d) => d.id === middle.id);
+    expect(lastIndex).toBeLessThan(middleIndex);
+    expect(lastIndex).toBeGreaterThan(firstIndex);
+  });
+
+  it("recompacts and re-inserts when neighbor gap is too small", () => {
+    const state = repository.ensureWorkspaceState();
+    const projectId = state.layout.activeProjectId!;
+    const folderId = state.folders[0]!.id;
+
+    repository.createDocument({ projectId, folderId, title: "A" });
+    repository.createDocument({ projectId, folderId, title: "B" });
+    const after = repository.createDocument({ projectId, folderId, title: "C" });
+
+    const docs = after.documents.filter((d) => d.folderId === folderId).sort(
+      (left, right) => left.ordering - right.ordering,
+    );
+    const a = docs[0]!;
+    const b = docs[1]!;
+
+    // Force a tight gap by collapsing two siblings to consecutive integers.
+    harness.getConnection().prepare("UPDATE documents SET ordering = ? WHERE id = ?")
+      .run(10, a.id);
+    harness.getConnection().prepare("UPDATE documents SET ordering = ? WHERE id = ?")
+      .run(11, b.id);
+
+    const c = docs[2]!;
+    repository.moveDocument({
+      documentId: c.id,
+      newFolderId: folderId,
+      beforeDocumentId: b.id,
+    });
+
+    const reloaded = repository.loadWorkspace().documents
+      .filter((d) => d.folderId === folderId)
+      .sort((left, right) => left.ordering - right.ordering);
+    const order = reloaded.map((d) => d.id);
+    expect(order.indexOf(c.id)).toBeGreaterThan(order.indexOf(a.id));
+    expect(order.indexOf(c.id)).toBeLessThan(order.indexOf(b.id));
+  });
+});
+
 function countDocumentSteps(h: SqliteHarness, documentId: string): number {
   const row = h.getConnection()
     .prepare("SELECT COUNT(*) AS count FROM document_steps WHERE document_id = ?")

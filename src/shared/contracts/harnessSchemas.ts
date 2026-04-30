@@ -109,6 +109,18 @@ export const ReorderDocumentInputSchema = z.object({
   direction: z.enum(["up", "down"]),
 });
 
+export const MoveFolderInputSchema = z.object({
+  folderId: NonEmptyString,
+  newParentFolderId: z.string().nullable(),
+  beforeFolderId: z.string().nullable(),
+});
+
+export const MoveDocumentInputSchema = z.object({
+  documentId: NonEmptyString,
+  newFolderId: z.string().nullable(),
+  beforeDocumentId: z.string().nullable(),
+});
+
 export const OpenDocumentInputSchema = z.object({
   documentId: NonEmptyString,
   surface: z.enum(["main", "panel"]),
