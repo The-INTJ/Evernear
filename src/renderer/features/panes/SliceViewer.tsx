@@ -18,7 +18,7 @@ export function SliceViewer({
   onDeleteSlice,
 }: Props) {
   return (
-    <PanelSection grow>
+    <PanelSection className={styles.sliceViewer}>
       <h2>Slice Viewer</h2>
       <div className={styles.list}>
         {entitySlices.length === 0 ? (

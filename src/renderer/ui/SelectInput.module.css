@@ -5,13 +5,14 @@
   padding: var(--space-5) var(--space-6);
   background: var(--color-bg-control);
   color: var(--color-text);
+  font-size: 0.95rem;
 }
 
 .compact {
-  height: 26px;
+  height: var(--control-compact-height);
   min-width: 136px;
   border-radius: var(--radius-control);
   padding: 0 var(--space-4);
   background: var(--color-bg-control-compact);
-  font-size: 0.82rem;
+  font-size: var(--control-compact-font-size);
 }

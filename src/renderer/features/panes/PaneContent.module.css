@@ -10,6 +10,11 @@
   gap: var(--space-4);
 }
 
+.panelDocument,
+.sliceViewer {
+  flex: 0 0 auto;
+}
+
 .copy,
 .empty {
   margin: 0;
@@ -24,9 +29,8 @@
 }
 
 .documentView {
-  flex: 1;
-  min-height: 0;
-  min-height: 360px;
+  height: clamp(340px, 44vh, 520px);
+  min-height: 340px;
 }
 
 .placeCard {

@@ -121,8 +121,8 @@
   --app-max-content: 1180px;
   --panel-padding: 10px;
   --panel-inner-gap: 10px;
-  --control-compact-height: 26px;
-  --control-compact-font-size: 0.78rem;
+  --control-compact-height: 30px;
+  --control-compact-font-size: 0.88rem;
 
   --bg: var(--color-bg-app);
   --bg-elevated: var(--color-bg-elevated);

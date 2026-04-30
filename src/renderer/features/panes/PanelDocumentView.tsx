@@ -33,8 +33,7 @@ export const PanelDocumentView = forwardRef<HarnessEditorHandle, Props>(function
   const [editingBoundaries, setEditingBoundaries] = useState(false);
 
   return (
-    <PanelSection grow>
-      <h2>{snapshot.title}</h2>
+    <PanelSection className={styles.panelDocument} aria-label={`${snapshot.title} document panel`}>
       <div className={styles.documentStrip}>
         <Button
           size="compact"

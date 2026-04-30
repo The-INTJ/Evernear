@@ -5,6 +5,7 @@
   padding: var(--space-5) var(--space-6);
   background: var(--color-bg-control);
   color: var(--color-text);
+  font-size: 0.95rem;
 }
 
 .title {
@@ -15,6 +16,6 @@
 .project {
   border-radius: 7px;
   padding: var(--space-4) var(--space-5);
-  font-size: 0.86rem;
+  font-size: 0.94rem;
   font-weight: 600;
 }

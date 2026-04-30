@@ -28,6 +28,8 @@ export function MatchingRuleEditor({
   onToggleRule,
   onDeleteRule,
 }: Props) {
+  const canAddRule = ruleForm.label.trim().length > 0 && ruleForm.pattern.trim().length > 0;
+
   return (
     <PanelSection>
       <h2>Matching Rules</h2>
@@ -83,7 +85,7 @@ export function MatchingRuleEditor({
             />
             Allow possessive
           </label>
-          <Button size="compact" onClick={onAddRule}>
+          <Button size="compact" disabled={!canAddRule} onClick={onAddRule}>
             Add Rule
           </Button>
         </div>

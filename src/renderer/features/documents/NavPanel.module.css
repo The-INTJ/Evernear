@@ -61,7 +61,7 @@
   display: grid;
   align-items: center;
   width: 100%;
-  min-height: 24px;
+  min-height: 28px;
   border: 0;
   border-radius: var(--radius-sm);
   padding: 3px var(--space-4);
@@ -78,7 +78,7 @@
 .treeFolderRow {
   grid-template-columns: 14px 16px minmax(0, 1fr) auto;
   gap: var(--space-3);
-  font-size: 0.81rem;
+  font-size: 0.9rem;
   font-weight: 500;
 }
 
@@ -160,7 +160,7 @@
   grid-template-columns: 16px minmax(0, 1fr);
   gap: var(--space-3);
   color: var(--color-text-muted);
-  font-size: 0.78rem;
+  font-size: 0.86rem;
 }
 
 .treeDocumentIcon::before {
@@ -186,7 +186,7 @@
 .treeCount {
   color: var(--color-text-faint);
   font-family: var(--font-label);
-  font-size: 0.66rem;
+  font-size: 0.72rem;
 }
 
 .treeFolderRenameInput {
