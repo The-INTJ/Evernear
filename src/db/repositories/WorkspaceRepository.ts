@@ -512,7 +512,7 @@ export class WorkspaceRepository {
   //
   // If a future feature needs the initial state to be fully derivable from
   // logs + checkpoints (e.g. cross-device replay, tamper detection), append
-  // synthetic *Materialized events here instead. See src/db/db-docs.html#src-db-readme
+  // synthetic *Materialized events here instead. See src/db/db-docs.html#src-db-orientation
   // ("Bootstrap precondition vs. event-derived state") for the policy.
   //
   // The one operation here that CAN run on a non-empty database is

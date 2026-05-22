@@ -41,24 +41,21 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 .index-row > div { padding: 10px 14px; border-top: 1px solid var(--line); min-width: 0; }
 .index-row:first-child > div { border-top: 0; }
 .index-range { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 0.86rem; color: var(--accent); white-space: nowrap; }
-.source-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-.source-pill { border: 1px solid var(--accent-line); background: var(--accent-soft); color: var(--ink); border-radius: 999px; padding: 5px 9px; font-size: 0.82rem; font-weight: 700; }
-.doc-source, .map-section { margin-top: 18px; border: 1px solid var(--line); background: var(--paper); border-radius: 8px; overflow: clip; }
-.source-header, .section-header { padding: 16px 18px; border-bottom: 1px solid var(--line); background: #fbfbf9; }
-.source-header h2, .section-header h2 { margin: 3px 0 0; font-size: 1.35rem; letter-spacing: 0; overflow-wrap: anywhere; }
-.source-header p, .section-header p { margin: 0; color: var(--muted); }
-.source-path { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 0.78rem; color: var(--muted); overflow-wrap: anywhere; }
-.md-content { padding: 18px; }
-.md-content h1 { font-size: 2rem; line-height: 1.08; margin: 0 0 14px; overflow-wrap: anywhere; }
-.md-content h2 { margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 1.25rem; overflow-wrap: anywhere; }
-.md-content h3 { margin-top: 20px; font-size: 1.06rem; overflow-wrap: anywhere; }
-.md-content p, .md-content ul, .md-content ol { max-width: 86ch; }
-.md-content table, .dense-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.94rem; }
-.md-content th, .md-content td, .dense-table th, .dense-table td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
-.md-content th, .dense-table th { background: var(--soft); color: #30363d; }
-.md-content code:not(pre code) { background: var(--soft); border: 1px solid var(--line); border-radius: 5px; padding: 0.08rem 0.28rem; font-size: 0.9em; }
-.md-content pre, pre.code-block { background: var(--code-bg); color: var(--code-ink); border-radius: 8px; overflow: auto; padding: 14px; }
-.md-content pre code { color: inherit; background: transparent; border: 0; padding: 0; }
+.doc-panel, .map-section { margin-top: 18px; border: 1px solid var(--line); background: var(--paper); border-radius: 8px; overflow: clip; }
+.doc-header, .section-header { padding: 16px 18px; border-bottom: 1px solid var(--line); background: #fbfbf9; }
+.doc-header h2, .section-header h2 { margin: 3px 0 0; font-size: 1.35rem; letter-spacing: 0; overflow-wrap: anywhere; }
+.doc-header p, .section-header p { margin: 0; color: var(--muted); }
+.section-content { padding: 18px; }
+.section-content h1 { font-size: 2rem; line-height: 1.08; margin: 0 0 14px; overflow-wrap: anywhere; }
+.section-content h2 { margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 1.25rem; overflow-wrap: anywhere; }
+.section-content h3 { margin-top: 20px; font-size: 1.06rem; overflow-wrap: anywhere; }
+.section-content p, .section-content ul, .section-content ol { max-width: 86ch; }
+.section-content table, .dense-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.94rem; }
+.section-content th, .section-content td, .dense-table th, .dense-table td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+.section-content th, .dense-table th { background: var(--soft); color: #30363d; }
+.section-content code:not(pre code) { background: var(--soft); border: 1px solid var(--line); border-radius: 5px; padding: 0.08rem 0.28rem; font-size: 0.9em; }
+.section-content pre, pre.code-block { background: var(--code-bg); color: var(--code-ink); border-radius: 8px; overflow: auto; padding: 14px; }
+.section-content pre code { color: inherit; background: transparent; border: 0; padding: 0; }
 .compact-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
 .compact-card { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 12px; min-width: 0; }
 .compact-card h3 { margin: 0 0 6px; font-size: 1rem; }
@@ -74,7 +71,6 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 .entity-node strong { display: block; }
 .entity-node span { display: block; color: var(--muted); font-size: 0.88rem; margin-top: 4px; }
 .note { border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 12px 14px; border-radius: 0 8px 8px 0; }
-.footer { margin-top: 22px; color: var(--muted); font-size: 0.88rem; }
 @media (max-width: 860px) {
   .doc-shell { width: min(100% - 20px, 1180px); padding-top: 12px; }
   .doc-hero { padding: 18px; }
@@ -83,39 +79,34 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
   .index-row > div { border-top: 0; padding: 6px 14px; }
   .index-row { display: block; border-top: 1px solid var(--line); padding: 8px 0; }
   .context-index header { display: block; }
-  .md-content { padding: 14px; overflow-x: auto; }
+  .section-content { padding: 14px; overflow-x: auto; }
 }</style>
 </head>
 <body style="--accent: #0369a1;">
 <div class="doc-shell">
 <header class="doc-hero">
-<p class="eyebrow">Evernear HTML documentation</p>
+<p class="eyebrow">Evernear documentation</p>
 <h1>Refine Code</h1>
 <p class="subtitle">Codebase conventions, extraction targets, and review checklist.</p>
 <div class="meta-grid">
 <div class="meta-card"><strong>Audience</strong><span>Agents and maintainers preparing code changes.</span></div>
-<div class="meta-card"><strong>Format</strong><span>Standalone HTML, browser-openable</span></div>
+<div class="meta-card"><strong>Format</strong><span>Standalone reference, browser-openable</span></div>
 <div class="meta-card"><strong>Agent Use</strong><span>Use the line ranges below before ingesting whole files.</span></div>
-</div>
-<div class="source-list">
-<span class="source-pill">refineCode.md</span>
 </div>
 </header>
 <nav class="context-index" aria-label="Agent Context Index">
 <header><h2>Agent Context Index</h2><p>Line ranges point into this HTML file.</p></header>
 <div class="index-grid">
-<a class="index-row" href="#refinecode"><div><strong>refineCode.md</strong></div><div class="index-range">L111-L305</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#refinecode"><div><strong>refineCode</strong></div><div class="index-range">L104-L296</div><div>Use this section for refineCode context.</div></a>
 </div>
 </nav>
 <main>
-<article id="refinecode" class="doc-source" data-source="refineCode.md">
-<header class="source-header">
-<p class="source-path">Former source: refineCode.md</p>
-<h2>refineCode.md</h2>
-<p>Converted from the former Markdown source.</p>
+<article id="refinecode" class="doc-panel">
+<header class="doc-header">
+<h2>refineCode</h2>
 </header>
-<div class="md-content">
-<h1>refineCode.md</h1>
+<div class="section-content">
+<h1>refineCode</h1>
 <p>Coding practices for Evernear. Grounded in the MVP as it stands today (v0.3.0, ~5.5k LOC across <a href="src">src/</a>). The goal is a codebase that can survive the next 10x in size without a rewrite.</p>
 <p>Read <a href="CLAUDE.md">CLAUDE.md</a> first for invariants. This doc is the next layer down: conventions, what to preserve, what to change, what to add.</p>
 <h2>Status</h2>
@@ -124,7 +115,7 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <h2>Parent reads</h2>
 <ul>
 <li><a href="CLAUDE.md">CLAUDE.md</a> — non-negotiable invariants</li>
-<li><a href="FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a> — architecture and domain vocabulary</li>
+<li><a href="FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a> — architecture and domain vocabulary</li>
 <li><a href="docs/adr">docs/adr/</a> — durable decisions</li>
 </ul>
 <hr />
@@ -133,7 +124,7 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <ol>
 <li><strong>Does it preserve the load-bearing invariants?</strong> Entities are truth, documents are projection surfaces, no stored matches, event-sourced, shared <code>TextAnchor</code> substrate, clean clipboard, local-first. (<a href="CLAUDE.md">CLAUDE.md</a>)</li>
 <li><strong>Does it respect the runtime boundary it sits in?</strong> Renderer never sees SQL; preload carries no business logic; main is the trust boundary; shared holds contracts and domain types only.</li>
-<li><strong>Can the next person delete or replace this without archaeology?</strong> If a reader needs to reconstruct your intent from git blame, the code or a README is missing a load-bearing sentence.</li>
+<li><strong>Can the next person delete or replace this without archaeology?</strong> If a reader needs to reconstruct your intent from git blame, the code or an orientation note is missing a load-bearing sentence.</li>
 </ol>
 <hr />
 <h2>What to preserve (codify as convention)</h2>
@@ -150,12 +141,12 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <h3>4. Append-then-project inside one transaction</h3>
 <p>Every mutation in <a href="src/db/repositories">src/db/repositories/</a> is wrapped in <code>sqliteHarness.runInTransaction(...)</code>. Inside: update projections and call <code>history.appendEvent(...)</code> in the same callback. See <a href="src/db/repositories/ProjectRepository.ts">ProjectRepository.createProject</a>, <a href="src/db/repositories/FolderRepository.ts">FolderRepository.updateFolder</a>, <a href="src/db/repositories/DocumentRepository.ts">DocumentRepository.applyDocumentTransaction</a>. Cross-aggregate writes compose through <a href="src/db/repositories/WorkspaceRepository.ts">WorkspaceRepository</a>.</p>
 <p><strong>Rule:</strong> a public repository method either runs in a transaction or returns a pure read. No mutation escapes <code>runInTransaction</code>. No event is appended without its projection update. Reviewers should block any PR that calls <code>appendEvent</code> outside a transaction or updates a projection without appending an event.</p>
-<h3>5. Folder README convention</h3>
-<p>Every folder under <a href="src">src/</a> and <a href="docs">docs/</a> has a README with the sections: Status / If you landed here first / Parent reads / Owns / Does not own / Key relationships / Decided / Open / Deferred.</p>
-<p><strong>Rule:</strong> new folder → new README in that shape. No exceptions. This is the chain-up rule that keeps the repo navigable by someone who lands cold.</p>
+<h3>5. Folder Orientation Section Convention</h3>
+<p>Every substantial folder area represented in the HTML docs has an orientation section with the sections: Status / If you landed here first / Parent reads / Owns / Does not own / Key relationships / Decided / Open / Deferred.</p>
+<p><strong>Rule:</strong> new folder → add or update the appropriate HTML orientation section in that shape. No exceptions. This is the chain-up rule that keeps the repo navigable by someone who lands cold.</p>
 <h3>6. Domain vocabulary is canonical</h3>
-<p><code>Entity</code>, <code>Slice</code>, <code>TextAnchor</code>, <code>DocumentStep</code>, <code>MatchingRule</code>, <code>EntitySlice</code>, <code>PendingEverlinkSession</code> — these names come from <a href="FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a>. The code already uses them.</p>
-<p><strong>Rule:</strong> don't invent synonyms. If you feel a new concept emerging, add it to the vocabulary table in <code>FOR_HUMAN_CODE--DOC.md</code> <em>before</em> you name the type. Reviewers should reject types whose names aren't in the vocabulary.</p>
+<p><code>Entity</code>, <code>Slice</code>, <code>TextAnchor</code>, <code>DocumentStep</code>, <code>MatchingRule</code>, <code>EntitySlice</code>, <code>PendingEverlinkSession</code> — these names come from <a href="FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a>. The code already uses them.</p>
+<p><strong>Rule:</strong> don't invent synonyms. If you feel a new concept emerging, add it to the vocabulary table in <code>FOR_HUMAN_CODE--DOC</code> <em>before</em> you name the type. Reviewers should reject types whose names aren't in the vocabulary.</p>
 <h3>7. Strict TypeScript, no <code>any</code>, minimal <code>unknown</code></h3>
 <p>Current <code>unknown</code> usage is confined to error-catch sites and one internal JSON utility. <code>any</code> does not appear.</p>
 <p><strong>Rule:</strong> <code>any</code> is banned outside <code>.d.ts</code> shims for untyped dependencies. <code>unknown</code> is acceptable at system boundaries (error handlers, untyped external input) but must be narrowed before flowing inward. If you need either, write a one-line comment on why.</p>
@@ -169,12 +160,12 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <p><strong>Plan (no behavior change):</strong></p>
 <ul>
 <li>Extract custom hooks: <code>useWorkspace</code> (status, workspace state, persistence queue), <code>useEverlinkSession</code>, <code>usePendingPlacement</code>, <code>useRunLog</code>, <code>useClipboardAudit</code>.</li>
-<li>Extract components per feature area into the already-pre-declared folders <a href="src/renderer/features/projects">src/renderer/features/projects/</a>, <a href="src/renderer/features/documents">documents/</a>, <a href="src/renderer/features/entities">entities/</a>, <a href="src/renderer/features/panes">panes/</a>, <a href="src/renderer/features/annotations">annotations/</a>, <a href="src/renderer/features/history">history/</a>. The READMEs are already written — only the code is missing.</li>
+<li>Extract components per feature area into the already-pre-declared folders <a href="src/renderer/features/projects">src/renderer/features/projects/</a>, <a href="src/renderer/features/documents">documents/</a>, <a href="src/renderer/features/entities">entities/</a>, <a href="src/renderer/features/panes">panes/</a>, <a href="src/renderer/features/annotations">annotations/</a>, <a href="src/renderer/features/history">history/</a>. The orientation sections are already written — only the code is missing.</li>
 <li>App.tsx should end up as a shell that composes features, not a god component. Target: under 300 lines.</li>
 </ul>
 <p><strong>Rule going forward:</strong> no renderer file exceeds ~400 lines without a justification in the PR description. At 600 lines it must be split before merge.</p>
 <h3>C2. Split <code>src/db/workbenchRepository.ts</code> (historical path; now removed) along the already-declared seams — DONE</h3>
-<p><a href="src/db/db-docs.html#src-db-repositories-readme">src/db/repositories/README.md:25-32</a> already names the aggregates: <code>ProjectRepository</code>, <code>DocumentRepository</code>, <code>EntityRepository</code>, <code>SliceRepository</code>, <code>AnnotationRepository</code>, <code>HistoryRepository</code>, <code>WorkspaceRepository</code>. Today they all live in one file as one class.</p>
+<p><a href="src/db/db-docs.html#src-db-repositories">Repositories</a> already names the aggregates: <code>ProjectRepository</code>, <code>DocumentRepository</code>, <code>EntityRepository</code>, <code>SliceRepository</code>, <code>AnnotationRepository</code>, <code>HistoryRepository</code>, <code>WorkspaceRepository</code>. Today they all live in one file as one class.</p>
 <p><strong>Plan:</strong> move each aggregate's public methods and private helpers into its own file under <a href="src/db/repositories">src/db/repositories/</a>. Keep one thin <code>WorkspaceRepository</code> that composes the others for cross-aggregate reads (loadWorkspace). Transaction boundaries and event-append discipline stay identical — this is a mechanical extraction.</p>
 <h3>C3. Validate at the IPC trust boundary, not before it — DONE</h3>
 <p><a href="src/preload/index.ts">src/preload/index.ts</a> forwards whatever the renderer passes. <a href="src/main/index.ts">src/main/index.ts:37-66</a> trusts the typed input, but at runtime this is just <code>unknown</code> JSON crossing a process boundary. A bug in the renderer can corrupt persistent state.</p>
@@ -219,8 +210,8 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <p>Today errors surface via <code>console.error(&quot;Failed to start Evernear.&quot;, error)</code> (<a href="src/main/index.ts">main/index.ts:106</a>) and <code>stringifyError</code> in the renderer run log. For a local-first app, errors must be actionable to the user, not swallowed.</p>
 <p><strong>Plan:</strong> a small <code>AppError</code> class with a <code>code</code> enum (<code>DB_LOCKED</code>, <code>ANCHOR_UNRESOLVABLE</code>, <code>MIGRATION_FAILED</code>, …) and a user-facing message. Repository methods throw typed errors; main catches at the IPC boundary and returns <code>{ ok: false, code, message }</code> to the renderer. The renderer's run log becomes the one place error UX is centralized.</p>
 <h3>A5. A migrations mechanism (see C7)</h3>
-<h3>A6. An <code>ARCHITECTURE.md</code> or expand <a href="FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a> — DONE</h3>
-<p><a href="FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a> now has a &quot;Current implementation map&quot; section listing where every domain concept lives in code. Update it whenever a concept moves.</p>
+<h3>A6. An <code>ARCHITECTURE</code> or expand <a href="FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a> — DONE</h3>
+<p><a href="FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a> now has a &quot;Current implementation map&quot; section listing where every domain concept lives in code. Update it whenever a concept moves.</p>
 <h3>A7. CLAUDE.md correction — DONE</h3>
 <p><a href="CLAUDE.md">CLAUDE.md</a> now correctly reflects the Phase 1.5 foundation-hardened state, the post-split god-file status, and the real command surface.</p>
 <hr />
@@ -274,10 +265,10 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <ul>
 <li>[ ] No invariant from <a href="CLAUDE.md">CLAUDE.md</a> is violated (entities-as-truth, append-then-project, clean clipboard, etc.).</li>
 <li>[ ] Runtime boundary is respected — no renderer-side SQL, no DB-side JSX, no business logic in preload.</li>
-<li>[ ] Domain terms match the <a href="FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a> vocabulary.</li>
+<li>[ ] Domain terms match the <a href="FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a> vocabulary.</li>
 <li>[ ] Every mutation is inside <code>runInTransaction</code> and appends a domain event.</li>
 <li>[ ] Every new IPC operation updates: channel constant, <code>HarnessBridge</code> method, preload forwarder, main handler, and (future) runtime validator.</li>
-<li>[ ] New folder → new README in the canonical shape.</li>
+<li>[ ] New folder → add or update the appropriate HTML orientation section in the canonical shape.</li>
 <li>[ ] No <code>any</code>; <code>unknown</code> only at boundaries with narrowing.</li>
 <li>[ ] File size budgets respected, or the PR explains why not.</li>
 <li>[ ] Tests cover behavior that would be expensive to debug from a user's corrupt project file (anchor resolution, replay, migrations).</li>
@@ -298,13 +289,12 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <h2>Deferred</h2>
 <ul>
 <li>Performance-driven rewrites (C6 delta sync, C8 decoration diffing) — wait for a profiler to complain.</li>
-<li>Plugin-style internal feature system (mentioned in <a href="src/renderer/renderer-docs.html#src-renderer-features-readme">src/renderer/features/README.md</a>).</li>
+<li>Plugin-style internal feature system (mentioned in <a href="src/renderer/renderer-docs.html#src-renderer-features">Features</a>).</li>
 <li>Anything CRDT-shaped — local-first single-user is a load-bearing invariant, not a Phase 2 detail.</li>
 </ul>
 </div>
 </article><!-- /refinecode -->
 </main>
-<p class="footer">Generated from repo-authored Markdown during the HTML documentation migration. AGENT.md and CLAUDE.md remain Markdown bootstrap files by design.</p>
 </div>
 </body>
 </html>

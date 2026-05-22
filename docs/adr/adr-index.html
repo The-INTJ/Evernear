@@ -41,24 +41,21 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 .index-row > div { padding: 10px 14px; border-top: 1px solid var(--line); min-width: 0; }
 .index-row:first-child > div { border-top: 0; }
 .index-range { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 0.86rem; color: var(--accent); white-space: nowrap; }
-.source-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-.source-pill { border: 1px solid var(--accent-line); background: var(--accent-soft); color: var(--ink); border-radius: 999px; padding: 5px 9px; font-size: 0.82rem; font-weight: 700; }
-.doc-source, .map-section { margin-top: 18px; border: 1px solid var(--line); background: var(--paper); border-radius: 8px; overflow: clip; }
-.source-header, .section-header { padding: 16px 18px; border-bottom: 1px solid var(--line); background: #fbfbf9; }
-.source-header h2, .section-header h2 { margin: 3px 0 0; font-size: 1.35rem; letter-spacing: 0; overflow-wrap: anywhere; }
-.source-header p, .section-header p { margin: 0; color: var(--muted); }
-.source-path { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 0.78rem; color: var(--muted); overflow-wrap: anywhere; }
-.md-content { padding: 18px; }
-.md-content h1 { font-size: 2rem; line-height: 1.08; margin: 0 0 14px; overflow-wrap: anywhere; }
-.md-content h2 { margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 1.25rem; overflow-wrap: anywhere; }
-.md-content h3 { margin-top: 20px; font-size: 1.06rem; overflow-wrap: anywhere; }
-.md-content p, .md-content ul, .md-content ol { max-width: 86ch; }
-.md-content table, .dense-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.94rem; }
-.md-content th, .md-content td, .dense-table th, .dense-table td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
-.md-content th, .dense-table th { background: var(--soft); color: #30363d; }
-.md-content code:not(pre code) { background: var(--soft); border: 1px solid var(--line); border-radius: 5px; padding: 0.08rem 0.28rem; font-size: 0.9em; }
-.md-content pre, pre.code-block { background: var(--code-bg); color: var(--code-ink); border-radius: 8px; overflow: auto; padding: 14px; }
-.md-content pre code { color: inherit; background: transparent; border: 0; padding: 0; }
+.doc-panel, .map-section { margin-top: 18px; border: 1px solid var(--line); background: var(--paper); border-radius: 8px; overflow: clip; }
+.doc-header, .section-header { padding: 16px 18px; border-bottom: 1px solid var(--line); background: #fbfbf9; }
+.doc-header h2, .section-header h2 { margin: 3px 0 0; font-size: 1.35rem; letter-spacing: 0; overflow-wrap: anywhere; }
+.doc-header p, .section-header p { margin: 0; color: var(--muted); }
+.section-content { padding: 18px; }
+.section-content h1 { font-size: 2rem; line-height: 1.08; margin: 0 0 14px; overflow-wrap: anywhere; }
+.section-content h2 { margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 1.25rem; overflow-wrap: anywhere; }
+.section-content h3 { margin-top: 20px; font-size: 1.06rem; overflow-wrap: anywhere; }
+.section-content p, .section-content ul, .section-content ol { max-width: 86ch; }
+.section-content table, .dense-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.94rem; }
+.section-content th, .section-content td, .dense-table th, .dense-table td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+.section-content th, .dense-table th { background: var(--soft); color: #30363d; }
+.section-content code:not(pre code) { background: var(--soft); border: 1px solid var(--line); border-radius: 5px; padding: 0.08rem 0.28rem; font-size: 0.9em; }
+.section-content pre, pre.code-block { background: var(--code-bg); color: var(--code-ink); border-radius: 8px; overflow: auto; padding: 14px; }
+.section-content pre code { color: inherit; background: transparent; border: 0; padding: 0; }
 .compact-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
 .compact-card { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 12px; min-width: 0; }
 .compact-card h3 { margin: 0 0 6px; font-size: 1rem; }
@@ -74,7 +71,6 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 .entity-node strong { display: block; }
 .entity-node span { display: block; color: var(--muted); font-size: 0.88rem; margin-top: 4px; }
 .note { border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 12px 14px; border-radius: 0 8px 8px 0; }
-.footer { margin-top: 22px; color: var(--muted); font-size: 0.88rem; }
 @media (max-width: 860px) {
   .doc-shell { width: min(100% - 20px, 1180px); padding-top: 12px; }
   .doc-hero { padding: 18px; }
@@ -83,62 +79,50 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
   .index-row > div { border-top: 0; padding: 6px 14px; }
   .index-row { display: block; border-top: 1px solid var(--line); padding: 8px 0; }
   .context-index header { display: block; }
-  .md-content { padding: 14px; overflow-x: auto; }
+  .section-content { padding: 14px; overflow-x: auto; }
 }</style>
 </head>
 <body style="--accent: #4338ca;">
 <div class="doc-shell">
 <header class="doc-hero">
-<p class="eyebrow">Evernear HTML documentation</p>
+<p class="eyebrow">Evernear documentation</p>
 <h1>Architecture Decision Records</h1>
 <p class="subtitle">All durable architectural decisions compressed into one indexed ADR atlas.</p>
 <div class="meta-grid">
 <div class="meta-card"><strong>Audience</strong><span>Agents checking invariants before changing architecture; humans reviewing decision history.</span></div>
-<div class="meta-card"><strong>Format</strong><span>Consolidated HTML, browser-openable</span></div>
+<div class="meta-card"><strong>Format</strong><span>Consolidated reference, browser-openable</span></div>
 <div class="meta-card"><strong>Agent Use</strong><span>Use the line ranges below before ingesting whole files.</span></div>
-</div>
-<div class="source-list">
-<span class="source-pill">docs/adr/README.md</span>
-<span class="source-pill">docs/adr/ADR-001-stack-and-shell-baseline.md</span>
-<span class="source-pill">docs/adr/ADR-002-sqlite-first-with-portability.md</span>
-<span class="source-pill">docs/adr/ADR-003-document-persistence-and-editor-state.md</span>
-<span class="source-pill">docs/adr/ADR-004-prove-load-bearing-editor-risks-before-phase-2.md</span>
-<span class="source-pill">docs/adr/ADR-005-editor-foundation-locked-to-prosemirror.md</span>
-<span class="source-pill">docs/adr/ADR-006-event-sourced-document-and-metadata-history.md</span>
-<span class="source-pill">docs/adr/ADR-007-workbench-storage-engine-for-phase-1-proof.md</span>
 </div>
 </header>
 <nav class="context-index" aria-label="Agent Context Index">
 <header><h2>Agent Context Index</h2><p>Line ranges point into this HTML file.</p></header>
 <div class="index-grid">
-<a class="index-row" href="#docs-adr-readme"><div><strong>ADR Folder Orientation</strong></div><div class="index-range">L125-L176</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#docs-adr-adr-001-stack-and-shell-baseline"><div><strong>ADR-001 Stack And Shell Baseline</strong></div><div class="index-range">L177-L234</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#docs-adr-adr-002-sqlite-first-with-portability"><div><strong>ADR-002 SQLite First With Portability</strong></div><div class="index-range">L235-L281</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#docs-adr-adr-003-document-persistence-and-editor-state"><div><strong>ADR-003 Document Persistence And Editor State</strong></div><div class="index-range">L282-L359</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#docs-adr-adr-004-prove-load-bearing-editor-risks-before-phase-2"><div><strong>ADR-004 Prove Load-Bearing Editor Risks Before Phase 2</strong></div><div class="index-range">L360-L419</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#docs-adr-adr-005-editor-foundation-locked-to-prosemirror"><div><strong>ADR-005 Editor Foundation Locked To ProseMirror</strong></div><div class="index-range">L420-L468</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#docs-adr-adr-006-event-sourced-document-and-metadata-history"><div><strong>ADR-006 Event-Sourced Document And Metadata History</strong></div><div class="index-range">L469-L543</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#docs-adr-adr-007-workbench-storage-engine-for-phase-1-proof"><div><strong>ADR-007 Workbench Storage Engine For Phase 1 Proof</strong></div><div class="index-range">L544-L588</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#docs-adr-orientation"><div><strong>ADR Folder Orientation</strong></div><div class="index-range">L111-L160</div><div>Use this section for ownership, parent reads, and navigation context.</div></a>
+<a class="index-row" href="#docs-adr-adr-001-stack-and-shell-baseline"><div><strong>ADR-001 Stack And Shell Baseline</strong></div><div class="index-range">L161-L216</div><div>Use this section for the decision, rationale, and consequences.</div></a>
+<a class="index-row" href="#docs-adr-adr-002-sqlite-first-with-portability"><div><strong>ADR-002 SQLite First With Portability</strong></div><div class="index-range">L217-L261</div><div>Use this section for the decision, rationale, and consequences.</div></a>
+<a class="index-row" href="#docs-adr-adr-003-document-persistence-and-editor-state"><div><strong>ADR-003 Document Persistence And Editor State</strong></div><div class="index-range">L262-L337</div><div>Use this section for the decision, rationale, and consequences.</div></a>
+<a class="index-row" href="#docs-adr-adr-004-prove-load-bearing-editor-risks-before-phase-2"><div><strong>ADR-004 Prove Load-Bearing Editor Risks Before Phase 2</strong></div><div class="index-range">L338-L395</div><div>Use this section for the decision, rationale, and consequences.</div></a>
+<a class="index-row" href="#docs-adr-adr-005-editor-foundation-locked-to-prosemirror"><div><strong>ADR-005 Editor Foundation Locked To ProseMirror</strong></div><div class="index-range">L396-L442</div><div>Use this section for the decision, rationale, and consequences.</div></a>
+<a class="index-row" href="#docs-adr-adr-006-event-sourced-document-and-metadata-history"><div><strong>ADR-006 Event-Sourced Document And Metadata History</strong></div><div class="index-range">L443-L515</div><div>Use this section for the decision, rationale, and consequences.</div></a>
+<a class="index-row" href="#docs-adr-adr-007-workbench-storage-engine-for-phase-1-proof"><div><strong>ADR-007 Workbench Storage Engine For Phase 1 Proof</strong></div><div class="index-range">L516-L558</div><div>Use this section for the decision, rationale, and consequences.</div></a>
 </div>
 </nav>
 <main>
-<article id="docs-adr-readme" class="doc-source" data-source="docs/adr/README.md">
-<header class="source-header">
-<p class="source-path">Former source: docs/adr/README.md</p>
+<article id="docs-adr-orientation" class="doc-panel">
+<header class="doc-header">
 <h2>ADR Folder Orientation</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>Architecture Decision Records</h1>
 <h2>Status</h2>
 <p>MVP now</p>
 <h2>If you landed here first</h2>
-<p>Read <a href="../docs-index.html#docs-readme">docs/README.md</a> first, then <a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a>. This folder holds the decisions that should stay stable enough to reference later.</p>
+<p>Read <a href="../docs-index.html#docs-orientation">Docs Folder Orientation</a> first, then <a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a>. This folder holds the decisions that should stay stable enough to reference later.</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="../docs-index.html#docs-readme">docs/README.md</a></li>
-<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
-<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a></li>
+<li><a href="../docs-index.html#docs-orientation">Docs Folder Orientation</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a></li>
+<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC</a></li>
 </ul>
 <h2>Owns</h2>
 <ul>
@@ -173,14 +157,12 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <li>A heavyweight RFC process.</li>
 </ul>
 </div>
-</article><!-- /docs-adr-readme -->
-<article id="docs-adr-adr-001-stack-and-shell-baseline" class="doc-source" data-source="docs/adr/ADR-001-stack-and-shell-baseline.md">
-<header class="source-header">
-<p class="source-path">Former source: docs/adr/ADR-001-stack-and-shell-baseline.md</p>
+</article><!-- /docs-adr-orientation -->
+<article id="docs-adr-adr-001-stack-and-shell-baseline" class="doc-panel">
+<header class="doc-header">
 <h2>ADR-001 Stack And Shell Baseline</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>ADR-001: Stack and Shell Baseline</h1>
 <h2>Status</h2>
 <p>Accepted</p>
@@ -188,9 +170,9 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <p>2026-04-17</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
-<li><a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a></li>
-<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a></li>
+<li><a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC</a></li>
+<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC</a></li>
 </ul>
 <h2>Context</h2>
 <p>Evernear is a desktop-first, local-first writing product whose differentiator is semantic context and multi-panel re-entry flow, not cloud collaboration.
@@ -232,13 +214,11 @@ Long-document layout and visible-range tracking are still open enough that Prete
 </ul>
 </div>
 </article><!-- /docs-adr-adr-001-stack-and-shell-baseline -->
-<article id="docs-adr-adr-002-sqlite-first-with-portability" class="doc-source" data-source="docs/adr/ADR-002-sqlite-first-with-portability.md">
-<header class="source-header">
-<p class="source-path">Former source: docs/adr/ADR-002-sqlite-first-with-portability.md</p>
+<article id="docs-adr-adr-002-sqlite-first-with-portability" class="doc-panel">
+<header class="doc-header">
 <h2>ADR-002 SQLite First With Portability</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>ADR-002: SQLite First with Portability</h1>
 <h2>Status</h2>
 <p>Accepted</p>
@@ -246,8 +226,8 @@ Long-document layout and visible-range tracking are still open enough that Prete
 <p>2026-04-16</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
-<li><a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a></li>
+<li><a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC</a></li>
 </ul>
 <h2>Context</h2>
 <p>Evernear needs structured local storage for documents, entities, matching rules, slice associations, reusable slice boundaries, annotations, and persistent layout state.
@@ -279,13 +259,11 @@ The likely project shape is a local project directory that contains the database
 </ul>
 </div>
 </article><!-- /docs-adr-adr-002-sqlite-first-with-portability -->
-<article id="docs-adr-adr-003-document-persistence-and-editor-state" class="doc-source" data-source="docs/adr/ADR-003-document-persistence-and-editor-state.md">
-<header class="source-header">
-<p class="source-path">Former source: docs/adr/ADR-003-document-persistence-and-editor-state.md</p>
+<article id="docs-adr-adr-003-document-persistence-and-editor-state" class="doc-panel">
+<header class="doc-header">
 <h2>ADR-003 Document Persistence And Editor State</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>ADR-003: Document Persistence and Editor State</h1>
 <h2>Status</h2>
 <p>Accepted</p>
@@ -293,10 +271,10 @@ The likely project shape is a local project directory that contains the database
 <p>2026-04-17</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
-<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a></li>
-<li><a href="../../src/db/db-docs.html#src-db-readme">src/db/README.md</a></li>
-<li><a href="../../src/renderer/renderer-docs.html#src-renderer-editor-readme">src/renderer/editor/README.md</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a></li>
+<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC</a></li>
+<li><a href="../../src/db/db-docs.html#src-db-orientation">Database Folder Orientation</a></li>
+<li><a href="../../src/renderer/renderer-docs.html#src-renderer-editor">Editor</a></li>
 </ul>
 <h2>Context</h2>
 <p>The document row is the seam between the editor host and SQLite.
@@ -357,13 +335,11 @@ They persist through shared <code>TextAnchor</code> payloads that can be mapped 
 </ul>
 </div>
 </article><!-- /docs-adr-adr-003-document-persistence-and-editor-state -->
-<article id="docs-adr-adr-004-prove-load-bearing-editor-risks-before-phase-2" class="doc-source" data-source="docs/adr/ADR-004-prove-load-bearing-editor-risks-before-phase-2.md">
-<header class="source-header">
-<p class="source-path">Former source: docs/adr/ADR-004-prove-load-bearing-editor-risks-before-phase-2.md</p>
+<article id="docs-adr-adr-004-prove-load-bearing-editor-risks-before-phase-2" class="doc-panel">
+<header class="doc-header">
 <h2>ADR-004 Prove Load-Bearing Editor Risks Before Phase 2</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>ADR-004: Prove Load-Bearing Risks Before Phase 2</h1>
 <h2>Status</h2>
 <p>Accepted</p>
@@ -371,9 +347,9 @@ They persist through shared <code>TextAnchor</code> payloads that can be mapped 
 <p>2026-04-17</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a></li>
-<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
-<li><a href="../experiments/experiments-index.html#docs-experiments-readme">docs/experiments/README.md</a></li>
+<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a></li>
+<li><a href="../experiments/experiments-index.html#docs-experiments-orientation">Experiments Folder Orientation</a></li>
 </ul>
 <h2>Context</h2>
 <p>The most expensive rewrite risks in Evernear are not shell setup risks.
@@ -417,13 +393,11 @@ They are:</p>
 </ul>
 </div>
 </article><!-- /docs-adr-adr-004-prove-load-bearing-editor-risks-before-phase-2 -->
-<article id="docs-adr-adr-005-editor-foundation-locked-to-prosemirror" class="doc-source" data-source="docs/adr/ADR-005-editor-foundation-locked-to-prosemirror.md">
-<header class="source-header">
-<p class="source-path">Former source: docs/adr/ADR-005-editor-foundation-locked-to-prosemirror.md</p>
+<article id="docs-adr-adr-005-editor-foundation-locked-to-prosemirror" class="doc-panel">
+<header class="doc-header">
 <h2>ADR-005 Editor Foundation Locked To ProseMirror</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>ADR-005: Editor Foundation Locked to ProseMirror</h1>
 <h2>Status</h2>
 <p>Accepted</p>
@@ -431,7 +405,7 @@ They are:</p>
 <p>2026-04-17</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a></li>
 <li><a href="#docs-adr-adr-001-stack-and-shell-baseline">ADR-001</a></li>
 <li><a href="#docs-adr-adr-003-document-persistence-and-editor-state">ADR-003</a></li>
 <li><a href="../experiments/experiments-index.html#docs-experiments-resolved-exp-003-lexical-prototype-walkthrough">EXP-003</a></li>
@@ -444,7 +418,7 @@ They are:</p>
 <p>ProseMirror is the editor foundation for Evernear. All planning and implementation passes should treat it as assumed rather than pending. Lexical is rejected. The question is closed unless a concrete ProseMirror-specific blocker surfaces.</p>
 <h2>Consequences</h2>
 <ul>
-<li>Planning docs and code-facing READMEs stop treating the editor choice as tentative.</li>
+<li>Planning docs and code-facing orientation sections stop treating the editor choice as tentative.</li>
 <li>Anchor healing under edits rides on ProseMirror transaction <code>Mapping</code>.</li>
 <li>Derived entity highlights and quiet annotation underlines are ProseMirror <code>Decoration</code> objects.</li>
 <li>The history layer in ADR-006 can assume <code>Step</code> as a stable primitive.</li>
@@ -466,13 +440,11 @@ They are:</p>
 </ul>
 </div>
 </article><!-- /docs-adr-adr-005-editor-foundation-locked-to-prosemirror -->
-<article id="docs-adr-adr-006-event-sourced-document-and-metadata-history" class="doc-source" data-source="docs/adr/ADR-006-event-sourced-document-and-metadata-history.md">
-<header class="source-header">
-<p class="source-path">Former source: docs/adr/ADR-006-event-sourced-document-and-metadata-history.md</p>
+<article id="docs-adr-adr-006-event-sourced-document-and-metadata-history" class="doc-panel">
+<header class="doc-header">
 <h2>ADR-006 Event-Sourced Document And Metadata History</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>ADR-006: Event-Sourced Document and Metadata History</h1>
 <h2>Status</h2>
 <p>Accepted</p>
@@ -480,8 +452,8 @@ They are:</p>
 <p>2026-04-17</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
-<li><a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a></li>
+<li><a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC</a></li>
 <li><a href="#docs-adr-adr-002-sqlite-first-with-portability">ADR-002</a></li>
 <li><a href="#docs-adr-adr-003-document-persistence-and-editor-state">ADR-003</a></li>
 <li><a href="#docs-adr-adr-005-editor-foundation-locked-to-prosemirror">ADR-005</a></li>
@@ -541,13 +513,11 @@ They are:</p>
 </ul>
 </div>
 </article><!-- /docs-adr-adr-006-event-sourced-document-and-metadata-history -->
-<article id="docs-adr-adr-007-workbench-storage-engine-for-phase-1-proof" class="doc-source" data-source="docs/adr/ADR-007-workbench-storage-engine-for-phase-1-proof.md">
-<header class="source-header">
-<p class="source-path">Former source: docs/adr/ADR-007-workbench-storage-engine-for-phase-1-proof.md</p>
+<article id="docs-adr-adr-007-workbench-storage-engine-for-phase-1-proof" class="doc-panel">
+<header class="doc-header">
 <h2>ADR-007 Workbench Storage Engine For Phase 1 Proof</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>ADR-007: Workbench Storage Engine for Phase 1 Proof</h1>
 <h2>Status</h2>
 <p>Accepted</p>
@@ -587,7 +557,6 @@ That was acceptable for a narrow snapshot-only proof, but it would give misleadi
 </div>
 </article><!-- /docs-adr-adr-007-workbench-storage-engine-for-phase-1-proof -->
 </main>
-<p class="footer">Generated from repo-authored Markdown during the HTML documentation migration. AGENT.md and CLAUDE.md remain Markdown bootstrap files by design.</p>
 </div>
 </body>
 </html>

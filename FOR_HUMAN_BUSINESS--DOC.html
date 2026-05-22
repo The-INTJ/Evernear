@@ -41,24 +41,21 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 .index-row > div { padding: 10px 14px; border-top: 1px solid var(--line); min-width: 0; }
 .index-row:first-child > div { border-top: 0; }
 .index-range { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 0.86rem; color: var(--accent); white-space: nowrap; }
-.source-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-.source-pill { border: 1px solid var(--accent-line); background: var(--accent-soft); color: var(--ink); border-radius: 999px; padding: 5px 9px; font-size: 0.82rem; font-weight: 700; }
-.doc-source, .map-section { margin-top: 18px; border: 1px solid var(--line); background: var(--paper); border-radius: 8px; overflow: clip; }
-.source-header, .section-header { padding: 16px 18px; border-bottom: 1px solid var(--line); background: #fbfbf9; }
-.source-header h2, .section-header h2 { margin: 3px 0 0; font-size: 1.35rem; letter-spacing: 0; overflow-wrap: anywhere; }
-.source-header p, .section-header p { margin: 0; color: var(--muted); }
-.source-path { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 0.78rem; color: var(--muted); overflow-wrap: anywhere; }
-.md-content { padding: 18px; }
-.md-content h1 { font-size: 2rem; line-height: 1.08; margin: 0 0 14px; overflow-wrap: anywhere; }
-.md-content h2 { margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 1.25rem; overflow-wrap: anywhere; }
-.md-content h3 { margin-top: 20px; font-size: 1.06rem; overflow-wrap: anywhere; }
-.md-content p, .md-content ul, .md-content ol { max-width: 86ch; }
-.md-content table, .dense-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.94rem; }
-.md-content th, .md-content td, .dense-table th, .dense-table td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
-.md-content th, .dense-table th { background: var(--soft); color: #30363d; }
-.md-content code:not(pre code) { background: var(--soft); border: 1px solid var(--line); border-radius: 5px; padding: 0.08rem 0.28rem; font-size: 0.9em; }
-.md-content pre, pre.code-block { background: var(--code-bg); color: var(--code-ink); border-radius: 8px; overflow: auto; padding: 14px; }
-.md-content pre code { color: inherit; background: transparent; border: 0; padding: 0; }
+.doc-panel, .map-section { margin-top: 18px; border: 1px solid var(--line); background: var(--paper); border-radius: 8px; overflow: clip; }
+.doc-header, .section-header { padding: 16px 18px; border-bottom: 1px solid var(--line); background: #fbfbf9; }
+.doc-header h2, .section-header h2 { margin: 3px 0 0; font-size: 1.35rem; letter-spacing: 0; overflow-wrap: anywhere; }
+.doc-header p, .section-header p { margin: 0; color: var(--muted); }
+.section-content { padding: 18px; }
+.section-content h1 { font-size: 2rem; line-height: 1.08; margin: 0 0 14px; overflow-wrap: anywhere; }
+.section-content h2 { margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 1.25rem; overflow-wrap: anywhere; }
+.section-content h3 { margin-top: 20px; font-size: 1.06rem; overflow-wrap: anywhere; }
+.section-content p, .section-content ul, .section-content ol { max-width: 86ch; }
+.section-content table, .dense-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.94rem; }
+.section-content th, .section-content td, .dense-table th, .dense-table td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+.section-content th, .dense-table th { background: var(--soft); color: #30363d; }
+.section-content code:not(pre code) { background: var(--soft); border: 1px solid var(--line); border-radius: 5px; padding: 0.08rem 0.28rem; font-size: 0.9em; }
+.section-content pre, pre.code-block { background: var(--code-bg); color: var(--code-ink); border-radius: 8px; overflow: auto; padding: 14px; }
+.section-content pre code { color: inherit; background: transparent; border: 0; padding: 0; }
 .compact-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
 .compact-card { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 12px; min-width: 0; }
 .compact-card h3 { margin: 0 0 6px; font-size: 1rem; }
@@ -74,7 +71,6 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 .entity-node strong { display: block; }
 .entity-node span { display: block; color: var(--muted); font-size: 0.88rem; margin-top: 4px; }
 .note { border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 12px 14px; border-radius: 0 8px 8px 0; }
-.footer { margin-top: 22px; color: var(--muted); font-size: 0.88rem; }
 @media (max-width: 860px) {
   .doc-shell { width: min(100% - 20px, 1180px); padding-top: 12px; }
   .doc-hero { padding: 18px; }
@@ -83,38 +79,33 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
   .index-row > div { border-top: 0; padding: 6px 14px; }
   .index-row { display: block; border-top: 1px solid var(--line); padding: 8px 0; }
   .context-index header { display: block; }
-  .md-content { padding: 14px; overflow-x: auto; }
+  .section-content { padding: 14px; overflow-x: auto; }
 }</style>
 </head>
 <body style="--accent: #a16207;">
 <div class="doc-shell">
 <header class="doc-hero">
-<p class="eyebrow">Evernear HTML documentation</p>
+<p class="eyebrow">Evernear documentation</p>
 <h1>For Human Business Doc</h1>
 <p class="subtitle">Product strategy and positioning context for implementation choices.</p>
 <div class="meta-grid">
 <div class="meta-card"><strong>Audience</strong><span>Humans evaluating product direction; agents preserving intent.</span></div>
-<div class="meta-card"><strong>Format</strong><span>Standalone HTML, browser-openable</span></div>
+<div class="meta-card"><strong>Format</strong><span>Standalone reference, browser-openable</span></div>
 <div class="meta-card"><strong>Agent Use</strong><span>Use the line ranges below before ingesting whole files.</span></div>
-</div>
-<div class="source-list">
-<span class="source-pill">FOR_HUMAN_BUSINESS--DOC.md</span>
 </div>
 </header>
 <nav class="context-index" aria-label="Agent Context Index">
 <header><h2>Agent Context Index</h2><p>Line ranges point into this HTML file.</p></header>
 <div class="index-grid">
-<a class="index-row" href="#for-human-business-doc"><div><strong>FOR_HUMAN_BUSINESS--DOC.md</strong></div><div class="index-range">L111-L233</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#for-human-business-doc"><div><strong>FOR_HUMAN_BUSINESS--DOC</strong></div><div class="index-range">L104-L224</div><div>Use this section for FOR_HUMAN_BUSINESS--DOC context.</div></a>
 </div>
 </nav>
 <main>
-<article id="for-human-business-doc" class="doc-source" data-source="FOR_HUMAN_BUSINESS--DOC.md">
-<header class="source-header">
-<p class="source-path">Former source: FOR_HUMAN_BUSINESS--DOC.md</p>
+<article id="for-human-business-doc" class="doc-panel">
+<header class="doc-header">
 <h2>FORHUMANBUSINESS--DOC</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>FOR_HUMAN_BUSINESS--DOC</h1>
 <h2>Last change</h2>
 <p>2026-04-19: marked the Phase 0 &quot;doc-only&quot; note below as historical — the repo has had runnable code since commit <code>d0ea627</code> and is now in Phase 1.5 foundation-hardened shape.
@@ -147,7 +138,7 @@ The first writing workflow must also respect how real projects arrive: paste in 
 <li>A future text-transfer seam must be able to preserve slice meaning across move or copy workflows without making ordinary editing or clipboard behavior weird in the meantime.</li>
 <li>An annotation is a quiet personal note anchored straight to the main document, not a collaborative comment system and not a second-class afterthought.</li>
 <li>The app is organized around <code>main</code>, <code>preload</code>, <code>renderer</code>, <code>shared</code>, and <code>db</code> so product ideas map cleanly to runtime boundaries.</li>
-<li>The runnable Phase 1.5 app implements this organization with strict boundaries enforced by ESLint; each source folder has a canonical README explaining its ownership and chain-up reads.</li>
+<li>The runnable Phase 1.5 app implements this organization with strict boundaries enforced by ESLint; each source folder has a canonical HTML orientation section explaining its ownership and chain-up reads.</li>
 <li>SQLite is the canonical project store, with explicit author-ownership protections through export and package support that carries history, not just current state.</li>
 <li>Highlights are derived from entity matches and should not become stored records.</li>
 <li>History is event-sourced: an append-only domain event log plus the ProseMirror step log are the canonical record; the tables writers query are rebuildable projections.</li>
@@ -232,7 +223,6 @@ The first writing workflow must also respect how real projects arrive: paste in 
 </div>
 </article><!-- /for-human-business-doc -->
 </main>
-<p class="footer">Generated from repo-authored Markdown during the HTML documentation migration. AGENT.md and CLAUDE.md remain Markdown bootstrap files by design.</p>
 </div>
 </body>
 </html>

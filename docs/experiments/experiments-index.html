@@ -41,24 +41,21 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 .index-row > div { padding: 10px 14px; border-top: 1px solid var(--line); min-width: 0; }
 .index-row:first-child > div { border-top: 0; }
 .index-range { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 0.86rem; color: var(--accent); white-space: nowrap; }
-.source-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-.source-pill { border: 1px solid var(--accent-line); background: var(--accent-soft); color: var(--ink); border-radius: 999px; padding: 5px 9px; font-size: 0.82rem; font-weight: 700; }
-.doc-source, .map-section { margin-top: 18px; border: 1px solid var(--line); background: var(--paper); border-radius: 8px; overflow: clip; }
-.source-header, .section-header { padding: 16px 18px; border-bottom: 1px solid var(--line); background: #fbfbf9; }
-.source-header h2, .section-header h2 { margin: 3px 0 0; font-size: 1.35rem; letter-spacing: 0; overflow-wrap: anywhere; }
-.source-header p, .section-header p { margin: 0; color: var(--muted); }
-.source-path { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 0.78rem; color: var(--muted); overflow-wrap: anywhere; }
-.md-content { padding: 18px; }
-.md-content h1 { font-size: 2rem; line-height: 1.08; margin: 0 0 14px; overflow-wrap: anywhere; }
-.md-content h2 { margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 1.25rem; overflow-wrap: anywhere; }
-.md-content h3 { margin-top: 20px; font-size: 1.06rem; overflow-wrap: anywhere; }
-.md-content p, .md-content ul, .md-content ol { max-width: 86ch; }
-.md-content table, .dense-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.94rem; }
-.md-content th, .md-content td, .dense-table th, .dense-table td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
-.md-content th, .dense-table th { background: var(--soft); color: #30363d; }
-.md-content code:not(pre code) { background: var(--soft); border: 1px solid var(--line); border-radius: 5px; padding: 0.08rem 0.28rem; font-size: 0.9em; }
-.md-content pre, pre.code-block { background: var(--code-bg); color: var(--code-ink); border-radius: 8px; overflow: auto; padding: 14px; }
-.md-content pre code { color: inherit; background: transparent; border: 0; padding: 0; }
+.doc-panel, .map-section { margin-top: 18px; border: 1px solid var(--line); background: var(--paper); border-radius: 8px; overflow: clip; }
+.doc-header, .section-header { padding: 16px 18px; border-bottom: 1px solid var(--line); background: #fbfbf9; }
+.doc-header h2, .section-header h2 { margin: 3px 0 0; font-size: 1.35rem; letter-spacing: 0; overflow-wrap: anywhere; }
+.doc-header p, .section-header p { margin: 0; color: var(--muted); }
+.section-content { padding: 18px; }
+.section-content h1 { font-size: 2rem; line-height: 1.08; margin: 0 0 14px; overflow-wrap: anywhere; }
+.section-content h2 { margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 1.25rem; overflow-wrap: anywhere; }
+.section-content h3 { margin-top: 20px; font-size: 1.06rem; overflow-wrap: anywhere; }
+.section-content p, .section-content ul, .section-content ol { max-width: 86ch; }
+.section-content table, .dense-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.94rem; }
+.section-content th, .section-content td, .dense-table th, .dense-table td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+.section-content th, .dense-table th { background: var(--soft); color: #30363d; }
+.section-content code:not(pre code) { background: var(--soft); border: 1px solid var(--line); border-radius: 5px; padding: 0.08rem 0.28rem; font-size: 0.9em; }
+.section-content pre, pre.code-block { background: var(--code-bg); color: var(--code-ink); border-radius: 8px; overflow: auto; padding: 14px; }
+.section-content pre code { color: inherit; background: transparent; border: 0; padding: 0; }
 .compact-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
 .compact-card { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 12px; min-width: 0; }
 .compact-card h3 { margin: 0 0 6px; font-size: 1rem; }
@@ -74,7 +71,6 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 .entity-node strong { display: block; }
 .entity-node span { display: block; color: var(--muted); font-size: 0.88rem; margin-top: 4px; }
 .note { border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 12px 14px; border-radius: 0 8px 8px 0; }
-.footer { margin-top: 22px; color: var(--muted); font-size: 0.88rem; }
 @media (max-width: 860px) {
   .doc-shell { width: min(100% - 20px, 1180px); padding-top: 12px; }
   .doc-hero { padding: 18px; }
@@ -83,60 +79,49 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
   .index-row > div { border-top: 0; padding: 6px 14px; }
   .index-row { display: block; border-top: 1px solid var(--line); padding: 8px 0; }
   .context-index header { display: block; }
-  .md-content { padding: 14px; overflow-x: auto; }
+  .section-content { padding: 14px; overflow-x: auto; }
 }</style>
 </head>
 <body style="--accent: #7c3aed;">
 <div class="doc-shell">
 <header class="doc-hero">
-<p class="eyebrow">Evernear HTML documentation</p>
+<p class="eyebrow">Evernear documentation</p>
 <h1>Experiment Atlas</h1>
 <p class="subtitle">Active and resolved proof work in one indexed experiment file.</p>
 <div class="meta-grid">
 <div class="meta-card"><strong>Audience</strong><span>Agents validating risky assumptions; humans reviewing proof status.</span></div>
-<div class="meta-card"><strong>Format</strong><span>Consolidated HTML, browser-openable</span></div>
+<div class="meta-card"><strong>Format</strong><span>Consolidated reference, browser-openable</span></div>
 <div class="meta-card"><strong>Agent Use</strong><span>Use the line ranges below before ingesting whole files.</span></div>
-</div>
-<div class="source-list">
-<span class="source-pill">docs/experiments/README.md</span>
-<span class="source-pill">docs/experiments/EXP-001-shared-anchor-substrate.md</span>
-<span class="source-pill">docs/experiments/EXP-002-matching-normalization-and-scale.md</span>
-<span class="source-pill">docs/experiments/EXP-005-event-log-and-checkpoint-replay.md</span>
-<span class="source-pill">docs/experiments/EXP-006-pretext-layout-viability.md</span>
-<span class="source-pill">docs/experiments/resolved/EXP-003-lexical-prototype-walkthrough.md</span>
-<span class="source-pill">docs/experiments/resolved/EXP-004-prosemirror-prototype-walkthrough.md</span>
 </div>
 </header>
 <nav class="context-index" aria-label="Agent Context Index">
 <header><h2>Agent Context Index</h2><p>Line ranges point into this HTML file.</p></header>
 <div class="index-grid">
-<a class="index-row" href="#docs-experiments-readme"><div><strong>Experiments Folder Orientation</strong></div><div class="index-range">L123-L185</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#docs-experiments-exp-001-shared-anchor-substrate"><div><strong>EXP-001 Shared Anchor Substrate</strong></div><div class="index-range">L186-L293</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#docs-experiments-exp-002-matching-normalization-and-scale"><div><strong>EXP-002 Matching Normalization And Scale</strong></div><div class="index-range">L294-L416</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#docs-experiments-exp-005-event-log-and-checkpoint-replay"><div><strong>EXP-005 Event Log And Checkpoint Replay</strong></div><div class="index-range">L417-L560</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#docs-experiments-exp-006-pretext-layout-viability"><div><strong>EXP-006 Pretext Layout Viability</strong></div><div class="index-range">L561-L666</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#docs-experiments-resolved-exp-003-lexical-prototype-walkthrough"><div><strong>EXP-003 Lexical Prototype Walkthrough</strong></div><div class="index-range">L667-L770</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#docs-experiments-resolved-exp-004-prosemirror-prototype-walkthrough"><div><strong>EXP-004 ProseMirror Prototype Walkthrough</strong></div><div class="index-range">L771-L875</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#docs-experiments-orientation"><div><strong>Experiments Folder Orientation</strong></div><div class="index-range">L110-L170</div><div>Use this section for ownership, parent reads, and navigation context.</div></a>
+<a class="index-row" href="#docs-experiments-exp-001-shared-anchor-substrate"><div><strong>EXP-001 Shared Anchor Substrate</strong></div><div class="index-range">L171-L276</div><div>Use this section for experiment status, method, and proof criteria.</div></a>
+<a class="index-row" href="#docs-experiments-exp-002-matching-normalization-and-scale"><div><strong>EXP-002 Matching Normalization And Scale</strong></div><div class="index-range">L277-L397</div><div>Use this section for experiment status, method, and proof criteria.</div></a>
+<a class="index-row" href="#docs-experiments-exp-005-event-log-and-checkpoint-replay"><div><strong>EXP-005 Event Log And Checkpoint Replay</strong></div><div class="index-range">L398-L539</div><div>Use this section for experiment status, method, and proof criteria.</div></a>
+<a class="index-row" href="#docs-experiments-exp-006-pretext-layout-viability"><div><strong>EXP-006 Pretext Layout Viability</strong></div><div class="index-range">L540-L643</div><div>Use this section for experiment status, method, and proof criteria.</div></a>
+<a class="index-row" href="#docs-experiments-resolved-exp-003-lexical-prototype-walkthrough"><div><strong>EXP-003 Lexical Prototype Walkthrough</strong></div><div class="index-range">L644-L745</div><div>Use this section for experiment status, method, and proof criteria.</div></a>
+<a class="index-row" href="#docs-experiments-resolved-exp-004-prosemirror-prototype-walkthrough"><div><strong>EXP-004 ProseMirror Prototype Walkthrough</strong></div><div class="index-range">L746-L848</div><div>Use this section for experiment status, method, and proof criteria.</div></a>
 </div>
 </nav>
 <main>
-<article id="docs-experiments-readme" class="doc-source" data-source="docs/experiments/README.md">
-<header class="source-header">
-<p class="source-path">Former source: docs/experiments/README.md</p>
+<article id="docs-experiments-orientation" class="doc-panel">
+<header class="doc-header">
 <h2>Experiments Folder Orientation</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>Experiments</h1>
 <h2>Status</h2>
 <p>MVP now</p>
 <h2>If you landed here first</h2>
-<p>Read <a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a> first, then <a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a>. This folder holds the proof work for questions big enough to force a rewrite if guessed wrong.</p>
+<p>Read <a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC</a> first, then <a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a>. This folder holds the proof work for questions big enough to force a rewrite if guessed wrong.</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="../docs-index.html#docs-readme">docs/README.md</a></li>
-<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a></li>
-<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="../docs-index.html#docs-orientation">Docs Folder Orientation</a></li>
+<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a></li>
 </ul>
 <h2>Owns</h2>
 <ul>
@@ -182,14 +167,12 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <li>Low-stakes polish studies.</li>
 </ul>
 </div>
-</article><!-- /docs-experiments-readme -->
-<article id="docs-experiments-exp-001-shared-anchor-substrate" class="doc-source" data-source="docs/experiments/EXP-001-shared-anchor-substrate.md">
-<header class="source-header">
-<p class="source-path">Former source: docs/experiments/EXP-001-shared-anchor-substrate.md</p>
+</article><!-- /docs-experiments-orientation -->
+<article id="docs-experiments-exp-001-shared-anchor-substrate" class="doc-panel">
+<header class="doc-header">
 <h2>EXP-001 Shared Anchor Substrate</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>EXP-001: Shared Anchor Substrate Under Live Edits</h1>
 <h2>Status</h2>
 <p>In progress</p>
@@ -197,10 +180,10 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <p>2026-04-17</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a></li>
-<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
-<li><a href="../../src/db/db-docs.html#src-db-readme">src/db/README.md</a></li>
-<li><a href="../../src/renderer/renderer-docs.html#src-renderer-features-annotations-readme">src/renderer/features/annotations/README.md</a></li>
+<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a></li>
+<li><a href="../../src/db/db-docs.html#src-db-orientation">Database Folder Orientation</a></li>
+<li><a href="../../src/renderer/renderer-docs.html#src-renderer-features-annotations">Annotations Feature</a></li>
 </ul>
 <h2>Question</h2>
 <p>Can one anchor-healing model serve both reusable slice boundaries and direct document annotations under normal writing edits?</p>
@@ -291,13 +274,11 @@ function applyDocumentEdit(nextDoc: Doc, changeMap: ChangeMap, boundaries: TextA
 </ul>
 </div>
 </article><!-- /docs-experiments-exp-001-shared-anchor-substrate -->
-<article id="docs-experiments-exp-002-matching-normalization-and-scale" class="doc-source" data-source="docs/experiments/EXP-002-matching-normalization-and-scale.md">
-<header class="source-header">
-<p class="source-path">Former source: docs/experiments/EXP-002-matching-normalization-and-scale.md</p>
+<article id="docs-experiments-exp-002-matching-normalization-and-scale" class="doc-panel">
+<header class="doc-header">
 <h2>EXP-002 Matching Normalization And Scale</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>EXP-002: Live Visible-Range Matching and Rule Normalization</h1>
 <h2>Status</h2>
 <p>In progress</p>
@@ -305,9 +286,9 @@ function applyDocumentEdit(nextDoc: Doc, changeMap: ChangeMap, boundaries: TextA
 <p>2026-04-17</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a></li>
-<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
-<li><a href="../../src/renderer/renderer-docs.html#src-renderer-editor-open-questions">src/renderer/editor/OPEN_QUESTIONS.md</a></li>
+<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a></li>
+<li><a href="../../src/renderer/renderer-docs.html#src-renderer-editor-open-questions">src/renderer/editor/OPEN_QUESTIONS</a></li>
 </ul>
 <h2>Question</h2>
 <p>Can live visible-range matching stay trustworthy and fast while typing and scrolling, without ever precomputing stored document match sets?</p>
@@ -414,13 +395,11 @@ function deriveVisibleMatches(state: ViewState) {
 </ul>
 </div>
 </article><!-- /docs-experiments-exp-002-matching-normalization-and-scale -->
-<article id="docs-experiments-exp-005-event-log-and-checkpoint-replay" class="doc-source" data-source="docs/experiments/EXP-005-event-log-and-checkpoint-replay.md">
-<header class="source-header">
-<p class="source-path">Former source: docs/experiments/EXP-005-event-log-and-checkpoint-replay.md</p>
+<article id="docs-experiments-exp-005-event-log-and-checkpoint-replay" class="doc-panel">
+<header class="doc-header">
 <h2>EXP-005 Event Log And Checkpoint Replay</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>EXP-005: Event Log and Checkpoint Replay</h1>
 <h2>Status</h2>
 <p>In progress</p>
@@ -428,10 +407,10 @@ function deriveVisibleMatches(state: ViewState) {
 <p>2026-04-17</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a></li>
-<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a></li>
 <li><a href="../adr/adr-index.html#docs-adr-adr-006-event-sourced-document-and-metadata-history">ADR-006</a></li>
-<li><a href="../../src/db/db-docs.html#src-db-readme">src/db/README.md</a></li>
+<li><a href="../../src/db/db-docs.html#src-db-orientation">Database Folder Orientation</a></li>
 </ul>
 <h2>Question</h2>
 <p>Can the event-sourced history layer carry real writing sessions without making normal saves feel slow, normal opens feel slow, or projections drift from the logs?</p>
@@ -558,13 +537,11 @@ function resolveAnchorAtVersion(anchorEvents: AnchorEvent[], targetVersion: numb
 </ul>
 </div>
 </article><!-- /docs-experiments-exp-005-event-log-and-checkpoint-replay -->
-<article id="docs-experiments-exp-006-pretext-layout-viability" class="doc-source" data-source="docs/experiments/EXP-006-pretext-layout-viability.md">
-<header class="source-header">
-<p class="source-path">Former source: docs/experiments/EXP-006-pretext-layout-viability.md</p>
+<article id="docs-experiments-exp-006-pretext-layout-viability" class="doc-panel">
+<header class="doc-header">
 <h2>EXP-006 Pretext Layout Viability</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>EXP-006: Pretext Layout Viability</h1>
 <h2>Status</h2>
 <p>In progress</p>
@@ -572,9 +549,9 @@ function resolveAnchorAtVersion(anchorEvents: AnchorEvent[], targetVersion: numb
 <p>2026-04-17</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a></li>
-<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
-<li><a href="../../src/renderer/renderer-docs.html#src-renderer-editor-open-questions">src/renderer/editor/OPEN_QUESTIONS.md</a></li>
+<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a></li>
+<li><a href="../../src/renderer/renderer-docs.html#src-renderer-editor-open-questions">src/renderer/editor/OPEN_QUESTIONS</a></li>
 </ul>
 <h2>Question</h2>
 <p>Does Pretext materially help Evernear solve long-document layout, visible-range mapping, or &quot;where am I in the whole document?&quot; problems before the repo commits to a final rendering design?</p>
@@ -664,13 +641,11 @@ function deriveVisibleLines(prepared: PreparedTextWithSegments, viewport: Viewpo
 </ul>
 </div>
 </article><!-- /docs-experiments-exp-006-pretext-layout-viability -->
-<article id="docs-experiments-resolved-exp-003-lexical-prototype-walkthrough" class="doc-source" data-source="docs/experiments/resolved/EXP-003-lexical-prototype-walkthrough.md">
-<header class="source-header">
-<p class="source-path">Former source: docs/experiments/resolved/EXP-003-lexical-prototype-walkthrough.md</p>
+<article id="docs-experiments-resolved-exp-003-lexical-prototype-walkthrough" class="doc-panel">
+<header class="doc-header">
 <h2>EXP-003 Lexical Prototype Walkthrough</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>EXP-003: Lexical Prototype Walkthrough</h1>
 <h2>Status</h2>
 <p>Resolved — Lexical not selected</p>
@@ -678,9 +653,9 @@ function deriveVisibleLines(prepared: PreparedTextWithSegments, viewport: Viewpo
 <p>2026-04-17</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
-<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a></li>
-<li><a href="../../src/renderer/renderer-docs.html#src-renderer-editor-readme">src/renderer/editor/README.md</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a></li>
+<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC</a></li>
+<li><a href="../../src/renderer/renderer-docs.html#src-renderer-editor">Editor</a></li>
 </ul>
 <h2>Goal</h2>
 <p>Pressure-test what it would actually feel like to build Evernear's anchor-heavy workflow on Lexical.</p>
@@ -764,17 +739,15 @@ function EvernearPersistencePlugin() {
 <h2>Follow-up</h2>
 <ul>
 <li><a href="../adr/adr-index.html#docs-adr-adr-005-editor-foundation-locked-to-prosemirror">ADR-005</a> records ProseMirror as the locked-in editor foundation.</li>
-<li>This file stays as the memory of why Lexical was not chosen. It should not be deleted.</li>
+<li>This section stays as the memory of why Lexical was not chosen. It should not be deleted.</li>
 </ul>
 </div>
 </article><!-- /docs-experiments-resolved-exp-003-lexical-prototype-walkthrough -->
-<article id="docs-experiments-resolved-exp-004-prosemirror-prototype-walkthrough" class="doc-source" data-source="docs/experiments/resolved/EXP-004-prosemirror-prototype-walkthrough.md">
-<header class="source-header">
-<p class="source-path">Former source: docs/experiments/resolved/EXP-004-prosemirror-prototype-walkthrough.md</p>
+<article id="docs-experiments-resolved-exp-004-prosemirror-prototype-walkthrough" class="doc-panel">
+<header class="doc-header">
 <h2>EXP-004 ProseMirror Prototype Walkthrough</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>EXP-004: ProseMirror Prototype Walkthrough</h1>
 <h2>Status</h2>
 <p>Resolved — ProseMirror selected</p>
@@ -782,9 +755,9 @@ function EvernearPersistencePlugin() {
 <p>2026-04-17</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
-<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a></li>
-<li><a href="../../src/renderer/renderer-docs.html#src-renderer-editor-readme">src/renderer/editor/README.md</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a></li>
+<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC</a></li>
+<li><a href="../../src/renderer/renderer-docs.html#src-renderer-editor">Editor</a></li>
 </ul>
 <h2>Goal</h2>
 <p>Pressure-test what it would actually feel like to build Evernear's anchor-heavy workflow on ProseMirror.</p>
@@ -874,7 +847,6 @@ const view = new EditorView(host, {
 </div>
 </article><!-- /docs-experiments-resolved-exp-004-prosemirror-prototype-walkthrough -->
 </main>
-<p class="footer">Generated from repo-authored Markdown during the HTML documentation migration. AGENT.md and CLAUDE.md remain Markdown bootstrap files by design.</p>
 </div>
 </body>
 </html>

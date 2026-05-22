@@ -41,24 +41,21 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 .index-row > div { padding: 10px 14px; border-top: 1px solid var(--line); min-width: 0; }
 .index-row:first-child > div { border-top: 0; }
 .index-range { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 0.86rem; color: var(--accent); white-space: nowrap; }
-.source-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-.source-pill { border: 1px solid var(--accent-line); background: var(--accent-soft); color: var(--ink); border-radius: 999px; padding: 5px 9px; font-size: 0.82rem; font-weight: 700; }
-.doc-source, .map-section { margin-top: 18px; border: 1px solid var(--line); background: var(--paper); border-radius: 8px; overflow: clip; }
-.source-header, .section-header { padding: 16px 18px; border-bottom: 1px solid var(--line); background: #fbfbf9; }
-.source-header h2, .section-header h2 { margin: 3px 0 0; font-size: 1.35rem; letter-spacing: 0; overflow-wrap: anywhere; }
-.source-header p, .section-header p { margin: 0; color: var(--muted); }
-.source-path { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 0.78rem; color: var(--muted); overflow-wrap: anywhere; }
-.md-content { padding: 18px; }
-.md-content h1 { font-size: 2rem; line-height: 1.08; margin: 0 0 14px; overflow-wrap: anywhere; }
-.md-content h2 { margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 1.25rem; overflow-wrap: anywhere; }
-.md-content h3 { margin-top: 20px; font-size: 1.06rem; overflow-wrap: anywhere; }
-.md-content p, .md-content ul, .md-content ol { max-width: 86ch; }
-.md-content table, .dense-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.94rem; }
-.md-content th, .md-content td, .dense-table th, .dense-table td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
-.md-content th, .dense-table th { background: var(--soft); color: #30363d; }
-.md-content code:not(pre code) { background: var(--soft); border: 1px solid var(--line); border-radius: 5px; padding: 0.08rem 0.28rem; font-size: 0.9em; }
-.md-content pre, pre.code-block { background: var(--code-bg); color: var(--code-ink); border-radius: 8px; overflow: auto; padding: 14px; }
-.md-content pre code { color: inherit; background: transparent; border: 0; padding: 0; }
+.doc-panel, .map-section { margin-top: 18px; border: 1px solid var(--line); background: var(--paper); border-radius: 8px; overflow: clip; }
+.doc-header, .section-header { padding: 16px 18px; border-bottom: 1px solid var(--line); background: #fbfbf9; }
+.doc-header h2, .section-header h2 { margin: 3px 0 0; font-size: 1.35rem; letter-spacing: 0; overflow-wrap: anywhere; }
+.doc-header p, .section-header p { margin: 0; color: var(--muted); }
+.section-content { padding: 18px; }
+.section-content h1 { font-size: 2rem; line-height: 1.08; margin: 0 0 14px; overflow-wrap: anywhere; }
+.section-content h2 { margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 1.25rem; overflow-wrap: anywhere; }
+.section-content h3 { margin-top: 20px; font-size: 1.06rem; overflow-wrap: anywhere; }
+.section-content p, .section-content ul, .section-content ol { max-width: 86ch; }
+.section-content table, .dense-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.94rem; }
+.section-content th, .section-content td, .dense-table th, .dense-table td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+.section-content th, .dense-table th { background: var(--soft); color: #30363d; }
+.section-content code:not(pre code) { background: var(--soft); border: 1px solid var(--line); border-radius: 5px; padding: 0.08rem 0.28rem; font-size: 0.9em; }
+.section-content pre, pre.code-block { background: var(--code-bg); color: var(--code-ink); border-radius: 8px; overflow: auto; padding: 14px; }
+.section-content pre code { color: inherit; background: transparent; border: 0; padding: 0; }
 .compact-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
 .compact-card { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 12px; min-width: 0; }
 .compact-card h3 { margin: 0 0 6px; font-size: 1rem; }
@@ -74,7 +71,6 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 .entity-node strong { display: block; }
 .entity-node span { display: block; color: var(--muted); font-size: 0.88rem; margin-top: 4px; }
 .note { border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 12px 14px; border-radius: 0 8px 8px 0; }
-.footer { margin-top: 22px; color: var(--muted); font-size: 0.88rem; }
 @media (max-width: 860px) {
   .doc-shell { width: min(100% - 20px, 1180px); padding-top: 12px; }
   .doc-hero { padding: 18px; }
@@ -83,60 +79,49 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
   .index-row > div { border-top: 0; padding: 6px 14px; }
   .index-row { display: block; border-top: 1px solid var(--line); padding: 8px 0; }
   .context-index header { display: block; }
-  .md-content { padding: 14px; overflow-x: auto; }
+  .section-content { padding: 14px; overflow-x: auto; }
 }</style>
 </head>
 <body style="--accent: #be123c;">
 <div class="doc-shell">
 <header class="doc-hero">
-<p class="eyebrow">Evernear HTML documentation</p>
+<p class="eyebrow">Evernear documentation</p>
 <h1>Docs Index</h1>
 <p class="subtitle">Cross-cutting docs, glossary, feature briefs, and phase retrospectives in one navigable file.</p>
 <div class="meta-grid">
 <div class="meta-card"><strong>Audience</strong><span>Agents deciding which durable planning slice to ingest; humans reviewing project history.</span></div>
-<div class="meta-card"><strong>Format</strong><span>Consolidated HTML, browser-openable</span></div>
+<div class="meta-card"><strong>Format</strong><span>Consolidated reference, browser-openable</span></div>
 <div class="meta-card"><strong>Agent Use</strong><span>Use the line ranges below before ingesting whole files.</span></div>
-</div>
-<div class="source-list">
-<span class="source-pill">docs/README.md</span>
-<span class="source-pill">docs/glossary/README.md</span>
-<span class="source-pill">docs/FB-001-selection-driven-everlink.md</span>
-<span class="source-pill">docs/FB-002-everslice-add-to-entity.md</span>
-<span class="source-pill">docs/PHASE-1-INITIAL-MVP.md</span>
-<span class="source-pill">docs/PHASE-1-GATE-RETROSPECTIVE.md</span>
-<span class="source-pill">docs/PHASE-1.5-FOUNDATION-HARDENING.md</span>
 </div>
 </header>
 <nav class="context-index" aria-label="Agent Context Index">
 <header><h2>Agent Context Index</h2><p>Line ranges point into this HTML file.</p></header>
 <div class="index-grid">
-<a class="index-row" href="#docs-readme"><div><strong>Docs Folder Orientation</strong></div><div class="index-range">L123-L177</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#docs-glossary-readme"><div><strong>Glossary</strong></div><div class="index-range">L178-L415</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#docs-fb-001-selection-driven-everlink"><div><strong>FB-001 Selection-Driven Everlink</strong></div><div class="index-range">L416-L474</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#docs-fb-002-everslice-add-to-entity"><div><strong>FB-002 Everslice Add To Entity</strong></div><div class="index-range">L475-L546</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#docs-phase-1-initial-mvp"><div><strong>Phase 1 Initial MVP</strong></div><div class="index-range">L547-L697</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#docs-phase-1-gate-retrospective"><div><strong>Phase 1 Gate Retrospective</strong></div><div class="index-range">L698-L737</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#docs-phase-1-5-foundation-hardening"><div><strong>Phase 1.5 Foundation Hardening</strong></div><div class="index-range">L738-L785</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#docs-orientation"><div><strong>Docs Folder Orientation</strong></div><div class="index-range">L110-L162</div><div>Use this section for ownership, parent reads, and navigation context.</div></a>
+<a class="index-row" href="#docs-glossary"><div><strong>Glossary</strong></div><div class="index-range">L163-L398</div><div>Use this section for Glossary context.</div></a>
+<a class="index-row" href="#docs-fb-001-selection-driven-everlink"><div><strong>FB-001 Selection-Driven Everlink</strong></div><div class="index-range">L399-L455</div><div>Use this section for workflow intent, data touchpoints, and proof criteria.</div></a>
+<a class="index-row" href="#docs-fb-002-everslice-add-to-entity"><div><strong>FB-002 Everslice Add To Entity</strong></div><div class="index-range">L456-L525</div><div>Use this section for workflow intent, data touchpoints, and proof criteria.</div></a>
+<a class="index-row" href="#docs-phase-1-initial-mvp"><div><strong>Phase 1 Initial MVP</strong></div><div class="index-range">L526-L674</div><div>Use this section for phase history, outcomes, and follow-up work.</div></a>
+<a class="index-row" href="#docs-phase-1-gate-retrospective"><div><strong>Phase 1 Gate Retrospective</strong></div><div class="index-range">L675-L712</div><div>Use this section for phase history, outcomes, and follow-up work.</div></a>
+<a class="index-row" href="#docs-phase-1-5-foundation-hardening"><div><strong>Phase 1.5 Foundation Hardening</strong></div><div class="index-range">L713-L758</div><div>Use this section for phase history, outcomes, and follow-up work.</div></a>
 </div>
 </nav>
 <main>
-<article id="docs-readme" class="doc-source" data-source="docs/README.md">
-<header class="source-header">
-<p class="source-path">Former source: docs/README.md</p>
+<article id="docs-orientation" class="doc-panel">
+<header class="doc-header">
 <h2>Docs Folder Orientation</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>Docs</h1>
 <h2>Status</h2>
 <p>MVP now</p>
 <h2>If you landed here first</h2>
-<p>Start with <a href="../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a>, <a href="../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a>, and <a href="../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a>. This folder is for durable cross-cutting documentation that should outlive any one implementation pass.</p>
+<p>Start with <a href="../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC</a>, <a href="../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a>, and <a href="../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC</a>. This folder is for durable cross-cutting documentation that should outlive any one implementation pass.</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a></li>
-<li><a href="../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
-<li><a href="../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a></li>
+<li><a href="../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC</a></li>
+<li><a href="../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a></li>
+<li><a href="../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC</a></li>
 </ul>
 <h2>Owns</h2>
 <ul>
@@ -174,23 +159,21 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <li>A larger documentation taxonomy until the codebase earns it.</li>
 </ul>
 </div>
-</article><!-- /docs-readme -->
-<article id="docs-glossary-readme" class="doc-source" data-source="docs/glossary/README.md">
-<header class="source-header">
-<p class="source-path">Former source: docs/glossary/README.md</p>
+</article><!-- /docs-orientation -->
+<article id="docs-glossary" class="doc-panel">
+<header class="doc-header">
 <h2>Glossary</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>Glossary</h1>
 <h2>Status</h2>
 <p>MVP now</p>
 <h2>If you landed here first</h2>
-<p>Read <a href="../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a> and <a href="../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a> first. This file is the canonical language for how Evernear talks about the product model and its core UI surfaces.</p>
+<p>Read <a href="../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC</a> and <a href="../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a> first. This section is the canonical language for how Evernear talks about the product model and its core UI surfaces.</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a></li>
-<li><a href="../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC</a></li>
+<li><a href="../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a></li>
 </ul>
 <h2>Organization terms</h2>
 <table>
@@ -412,14 +395,12 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <li>Modal and panel are different views over the same underlying data.</li>
 </ul>
 </div>
-</article><!-- /docs-glossary-readme -->
-<article id="docs-fb-001-selection-driven-everlink" class="doc-source" data-source="docs/FB-001-selection-driven-everlink.md">
-<header class="source-header">
-<p class="source-path">Former source: docs/FB-001-selection-driven-everlink.md</p>
+</article><!-- /docs-glossary -->
+<article id="docs-fb-001-selection-driven-everlink" class="doc-panel">
+<header class="doc-header">
 <h2>FB-001 Selection-Driven Everlink</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>Feature Brief: Selection-Driven Everlink</h1>
 <h2>Status</h2>
 <p>Implemented — lives in <a href="../src/renderer/state/useEverlinkSession.ts">useEverlinkSession</a>, <a href="../src/renderer/state/usePendingPlacement.ts">usePendingPlacement</a>, <a href="../src/renderer/state/useEverlinkPlacement.ts">useEverlinkPlacement</a>, and <a href="../src/renderer/features/entities/EverlinkPanel.tsx">EverlinkPanel</a> + <a href="../src/renderer/features/panes/SlicePlacementPanel.tsx">SlicePlacementPanel</a>. Still pending real-manuscript adversarial pass.</p>
@@ -472,13 +453,11 @@ If authors have to leave the writing flow to create an entity, choose a lore doc
 </ul>
 </div>
 </article><!-- /docs-fb-001-selection-driven-everlink -->
-<article id="docs-fb-002-everslice-add-to-entity" class="doc-source" data-source="docs/FB-002-everslice-add-to-entity.md">
-<header class="source-header">
-<p class="source-path">Former source: docs/FB-002-everslice-add-to-entity.md</p>
+<article id="docs-fb-002-everslice-add-to-entity" class="doc-panel">
+<header class="doc-header">
 <h2>FB-002 Everslice Add To Entity</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>Feature Brief: Everslice it — selection → add to entity</h1>
 <h2>Status</h2>
 <p>Draft</p>
@@ -544,29 +523,27 @@ If authors have to leave the writing flow to create an entity, choose a lore doc
 </ul>
 </div>
 </article><!-- /docs-fb-002-everslice-add-to-entity -->
-<article id="docs-phase-1-initial-mvp" class="doc-source" data-source="docs/PHASE-1-INITIAL-MVP.md">
-<header class="source-header">
-<p class="source-path">Former source: docs/PHASE-1-INITIAL-MVP.md</p>
+<article id="docs-phase-1-initial-mvp" class="doc-panel">
+<header class="doc-header">
 <h2>Phase 1 Initial MVP</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>Initial MVP for Phase 1</h1>
 <h2>Status</h2>
-<p>Historical — harness landed, widened into the Phase 1 proof workbench, then the workbench became the real app through Phase 1.5 foundation hardening. Kept for context; see <a href="#docs-phase-1-gate-retrospective">PHASE-1-GATE-RETROSPECTIVE.md</a> and <a href="#docs-phase-1-5-foundation-hardening">PHASE-1.5-FOUNDATION-HARDENING.md</a> for the current state.</p>
+<p>Historical — harness landed, widened into the Phase 1 proof workbench, then the workbench became the real app through Phase 1.5 foundation hardening. Kept for context; see <a href="#docs-phase-1-gate-retrospective">PHASE-1-GATE-RETROSPECTIVE</a> and <a href="#docs-phase-1-5-foundation-hardening">PHASE-1.5-FOUNDATION-HARDENING</a> for the current state.</p>
 <h2>Date</h2>
 <p>2026-04-17 (original), last reviewed 2026-04-19</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a></li>
-<li><a href="../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a></li>
+<li><a href="../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC</a></li>
+<li><a href="../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC</a></li>
 <li><a href="adr/adr-index.html#docs-adr-adr-003-document-persistence-and-editor-state">ADR-003: Document Persistence and Editor State</a></li>
 <li><a href="adr/adr-index.html#docs-adr-adr-004-prove-load-bearing-editor-risks-before-phase-2">ADR-004: Prove Load-Bearing Risks Before Phase 2</a></li>
 <li><a href="adr/adr-index.html#docs-adr-adr-006-event-sourced-document-and-metadata-history">ADR-006: Event-Sourced Document and Metadata History</a></li>
 </ul>
 <h2>Why this exists</h2>
 <p>Phase 1 has several load-bearing spikes, but the first executable deliverable needed to be smaller than &quot;do all of Phase 1.&quot;
-This document originally scoped a narrow round-trip harness. That harness landed, was intentionally widened into the <strong>Phase 1 proof workbench</strong> so the remaining spikes could share one executable surface, and then became the real app after Phase 1.5 split the god files and hardened the foundation. The build slices and exit criteria below describe the original deliverable, not the current state.</p>
+This phase note originally scoped a narrow round-trip harness. That harness landed, was intentionally widened into the <strong>Phase 1 proof workbench</strong> so the remaining spikes could share one executable surface, and then became the real app after Phase 1.5 split the god files and hardened the foundation. The build slices and exit criteria below describe the original deliverable, not the current state.</p>
 <p>Note: The AI will never directly manage or execute over prose. The amount of text would destroy context windows and consume usage quotas.</p>
 <p>Use small text amounts for any testing the AI does; delegate to the human to place and paste in the 50k+ word fixture that proves real-world behavior.</p>
 <h2>Implemented deliverable</h2>
@@ -695,13 +672,11 @@ A lightweight result summary covering save, reload, clipboard cleanliness, and a
 </ul>
 </div>
 </article><!-- /docs-phase-1-initial-mvp -->
-<article id="docs-phase-1-gate-retrospective" class="doc-source" data-source="docs/PHASE-1-GATE-RETROSPECTIVE.md">
-<header class="source-header">
-<p class="source-path">Former source: docs/PHASE-1-GATE-RETROSPECTIVE.md</p>
+<article id="docs-phase-1-gate-retrospective" class="doc-panel">
+<header class="doc-header">
 <h2>Phase 1 Gate Retrospective</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>Phase 1 Gate Retrospective</h1>
 <h2>Status</h2>
 <p>In progress — foundation hardened (Phase 1.5 landed 2026-04-18), real-manuscript proof still pending</p>
@@ -716,7 +691,7 @@ This note is the lightweight checkpoint between the original single-document har
 <li>The renderer has an explicit real-manuscript import slot, a persisted head reload path, and a clipboard audit path.</li>
 <li>The workbench records steps, checkpoints, events, and replays historical document versions.</li>
 <li>Shared <code>TextAnchor</code> substrate exists in <a href="../src/shared/anchoring.ts">src/shared/anchoring.ts</a>, used by both DB (boundary repair) and renderer (selection → anchor). Covered by a dedicated test suite; the <code>walkNodeText</code> off-by-one from the pre-split code has been fixed.</li>
-<li>Foundation hardened in Phase 1.5: god files split (App.tsx 1,865 → 354; workbenchRepository.ts 2,188 → 0 replaced by per-aggregate repos), schema migration framework, typed event catalog, Zod at IPC boundary, Vitest suite covering load-bearing paths. See <a href="#docs-phase-1-5-foundation-hardening">PHASE-1.5-FOUNDATION-HARDENING.md</a>.</li>
+<li>Foundation hardened in Phase 1.5: god files split (App.tsx 1,865 → 354; workbenchRepository.ts 2,188 → 0 replaced by per-aggregate repos), schema migration framework, typed event catalog, Zod at IPC boundary, Vitest suite covering load-bearing paths. See <a href="#docs-phase-1-5-foundation-hardening">PHASE-1.5-FOUNDATION-HARDENING</a>.</li>
 </ul>
 <h2>Implemented but still unproven at real-manuscript scale</h2>
 <ul>
@@ -735,13 +710,11 @@ This note is the lightweight checkpoint between the original single-document har
 <p>The foundation is now clean enough to build new features on, but Phase 1's load-bearing proof claims (EXP-001, 002, 005, 006) still need the adversarial pass on a real 50k+ word manuscript before they can be marked Resolved. Human delegation required — the AI should not drive the large-fixture paste itself.</p>
 </div>
 </article><!-- /docs-phase-1-gate-retrospective -->
-<article id="docs-phase-1-5-foundation-hardening" class="doc-source" data-source="docs/PHASE-1.5-FOUNDATION-HARDENING.md">
-<header class="source-header">
-<p class="source-path">Former source: docs/PHASE-1.5-FOUNDATION-HARDENING.md</p>
+<article id="docs-phase-1-5-foundation-hardening" class="doc-panel">
+<header class="doc-header">
 <h2>Phase 1.5 Foundation Hardening</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>Phase 1.5 Foundation Hardening</h1>
 <p>Date: 2026-04-18. Branch: <code>claude/elegant-ptolemy-a80b4d</code>.</p>
 <p>MVP features were working but the foundation had two god files, no tests, no lint, no schema migrations, no IPC validation, and an off-by-one bug lurking in the anchor math. This pass closed those gaps.</p>
@@ -766,7 +739,7 @@ This note is the lightweight checkpoint between the original single-document har
 </ul>
 <h2>What stays open</h2>
 <ul>
-<li><strong>C5 (workbench/workspace naming).</strong> The vocabulary now uses &quot;Workspace&quot; consistently at the class level but the folder README heading &quot;Workbench&quot; still appears in a couple of places. Worth a sweep.</li>
+<li><strong>C5 (workbench/workspace naming).</strong> The vocabulary now uses &quot;Workspace&quot; consistently at the class level but the folder orientation heading &quot;Workbench&quot; still appears in a couple of places. Worth a sweep.</li>
 <li><strong>C6 (targeted projection reads).</strong> Every mutation still returns the full <code>WorkspaceState</code>. Fine at MVP scale. When it bites, introduce a <code>WorkspaceStateDelta</code> return shape.</li>
 <li><strong>C8 (incremental decoration diffing in HarnessEditor).</strong> Same principle — wait for a profiler.</li>
 <li><strong>UI tests.</strong> The repository + anchoring suites cover the load-bearing algorithms; feature components are still untested. Prefer Playwright-style smoke tests for the Everlink + slice-commit flow if we add a runner.</li>
@@ -777,14 +750,13 @@ This note is the lightweight checkpoint between the original single-document har
 <ul>
 <li>New IPC method → three files in <a href="../src/shared/contracts">src/shared/contracts/</a> + main handler + preload forwarder. Zod schema is mandatory.</li>
 <li>New event → add to <a href="../src/db/events.ts">src/db/events.ts</a>; typed payload, misspellings compile-error.</li>
-<li>New UI feature → new folder under <a href="../src/renderer/features">src/renderer/features/</a> with a README, feature components, and (if needed) a hook under <a href="../src/renderer/state">src/renderer/state/</a>.</li>
+<li>New UI feature → new folder under <a href="../src/renderer/features">src/renderer/features/</a> with an orientation entry, feature components, and (if needed) a hook under <a href="../src/renderer/state">src/renderer/state/</a>.</li>
 <li>New aggregate → new repository under <a href="../src/db/repositories">src/db/repositories/</a>, wired into <a href="../src/db/repositories/WorkspaceRepository.ts">WorkspaceRepository</a>, migration added to <a href="../src/db/migrations.ts">migrations.ts</a>.</li>
 </ul>
-<p>The conventions that keep these files from regrowing into god files are in <a href="../CLAUDE.md">CLAUDE.md</a>, <a href="../refineCode.html">refineCode.md</a>, and <a href="../AGENT.md">AGENT.md</a> — in that order of depth.</p>
+<p>The conventions that keep these files from regrowing into god files are in <a href="../CLAUDE.md">CLAUDE.md</a>, <a href="../refineCode.html">refineCode</a>, and <a href="../AGENT.md">AGENT.md</a> — in that order of depth.</p>
 </div>
 </article><!-- /docs-phase-1-5-foundation-hardening -->
 </main>
-<p class="footer">Generated from repo-authored Markdown during the HTML documentation migration. AGENT.md and CLAUDE.md remain Markdown bootstrap files by design.</p>
 </div>
 </body>
 </html>

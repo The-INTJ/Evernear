@@ -46,7 +46,7 @@ If you just arrived and don't remember the codebase:
 Except for this file and [CLAUDE.md](CLAUDE.md), durable repo docs are HTML by default. Do not add new Markdown docs.
 
 - Prefer high-density forms when they make the material easier to scan: tables, grids, timelines, swimlanes, SVG/HTML diagrams, compact cards, and collapsible sections.
-- Every substantial HTML doc should be mobile responsive, directly browser-openable, and have a header with purpose, audience, included former sources where relevant, stable section anchors, and an **Agent Context Index** with line ranges.
+- Every substantial HTML doc should be mobile responsive, directly browser-openable, and have a header with purpose, audience, stable section anchors, and an **Agent Context Index** with line ranges.
 - Use hidden HTML comments for agent-only context where a dense visual compresses ordering, invariants, provenance, or failure-mode nuance that would otherwise be easier for an agent to understand in prose.
 - Keep consolidation local to a folder or clear subsystem. Current consolidated docs: [docs/docs-index.html](docs/docs-index.html), [docs/adr/adr-index.html](docs/adr/adr-index.html), [docs/experiments/experiments-index.html](docs/experiments/experiments-index.html), [docs/templates/templates-index.html](docs/templates/templates-index.html), [src/src-docs.html](src/src-docs.html), [src/db/db-docs.html](src/db/db-docs.html), [src/renderer/renderer-docs.html](src/renderer/renderer-docs.html), and [src/shared/shared-docs.html](src/shared/shared-docs.html).
 

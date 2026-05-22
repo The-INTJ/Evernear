@@ -41,24 +41,21 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 .index-row > div { padding: 10px 14px; border-top: 1px solid var(--line); min-width: 0; }
 .index-row:first-child > div { border-top: 0; }
 .index-range { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 0.86rem; color: var(--accent); white-space: nowrap; }
-.source-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
-.source-pill { border: 1px solid var(--accent-line); background: var(--accent-soft); color: var(--ink); border-radius: 999px; padding: 5px 9px; font-size: 0.82rem; font-weight: 700; }
-.doc-source, .map-section { margin-top: 18px; border: 1px solid var(--line); background: var(--paper); border-radius: 8px; overflow: clip; }
-.source-header, .section-header { padding: 16px 18px; border-bottom: 1px solid var(--line); background: #fbfbf9; }
-.source-header h2, .section-header h2 { margin: 3px 0 0; font-size: 1.35rem; letter-spacing: 0; overflow-wrap: anywhere; }
-.source-header p, .section-header p { margin: 0; color: var(--muted); }
-.source-path { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 0.78rem; color: var(--muted); overflow-wrap: anywhere; }
-.md-content { padding: 18px; }
-.md-content h1 { font-size: 2rem; line-height: 1.08; margin: 0 0 14px; overflow-wrap: anywhere; }
-.md-content h2 { margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 1.25rem; overflow-wrap: anywhere; }
-.md-content h3 { margin-top: 20px; font-size: 1.06rem; overflow-wrap: anywhere; }
-.md-content p, .md-content ul, .md-content ol { max-width: 86ch; }
-.md-content table, .dense-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.94rem; }
-.md-content th, .md-content td, .dense-table th, .dense-table td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
-.md-content th, .dense-table th { background: var(--soft); color: #30363d; }
-.md-content code:not(pre code) { background: var(--soft); border: 1px solid var(--line); border-radius: 5px; padding: 0.08rem 0.28rem; font-size: 0.9em; }
-.md-content pre, pre.code-block { background: var(--code-bg); color: var(--code-ink); border-radius: 8px; overflow: auto; padding: 14px; }
-.md-content pre code { color: inherit; background: transparent; border: 0; padding: 0; }
+.doc-panel, .map-section { margin-top: 18px; border: 1px solid var(--line); background: var(--paper); border-radius: 8px; overflow: clip; }
+.doc-header, .section-header { padding: 16px 18px; border-bottom: 1px solid var(--line); background: #fbfbf9; }
+.doc-header h2, .section-header h2 { margin: 3px 0 0; font-size: 1.35rem; letter-spacing: 0; overflow-wrap: anywhere; }
+.doc-header p, .section-header p { margin: 0; color: var(--muted); }
+.section-content { padding: 18px; }
+.section-content h1 { font-size: 2rem; line-height: 1.08; margin: 0 0 14px; overflow-wrap: anywhere; }
+.section-content h2 { margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 1.25rem; overflow-wrap: anywhere; }
+.section-content h3 { margin-top: 20px; font-size: 1.06rem; overflow-wrap: anywhere; }
+.section-content p, .section-content ul, .section-content ol { max-width: 86ch; }
+.section-content table, .dense-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.94rem; }
+.section-content th, .section-content td, .dense-table th, .dense-table td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+.section-content th, .dense-table th { background: var(--soft); color: #30363d; }
+.section-content code:not(pre code) { background: var(--soft); border: 1px solid var(--line); border-radius: 5px; padding: 0.08rem 0.28rem; font-size: 0.9em; }
+.section-content pre, pre.code-block { background: var(--code-bg); color: var(--code-ink); border-radius: 8px; overflow: auto; padding: 14px; }
+.section-content pre code { color: inherit; background: transparent; border: 0; padding: 0; }
 .compact-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
 .compact-card { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 12px; min-width: 0; }
 .compact-card h3 { margin: 0 0 6px; font-size: 1rem; }
@@ -74,7 +71,6 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 .entity-node strong { display: block; }
 .entity-node span { display: block; color: var(--muted); font-size: 0.88rem; margin-top: 4px; }
 .note { border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 12px 14px; border-radius: 0 8px 8px 0; }
-.footer { margin-top: 22px; color: var(--muted); font-size: 0.88rem; }
 @media (max-width: 860px) {
   .doc-shell { width: min(100% - 20px, 1180px); padding-top: 12px; }
   .doc-hero { padding: 18px; }
@@ -83,82 +79,60 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
   .index-row > div { border-top: 0; padding: 6px 14px; }
   .index-row { display: block; border-top: 1px solid var(--line); padding: 8px 0; }
   .context-index header { display: block; }
-  .md-content { padding: 14px; overflow-x: auto; }
+  .section-content { padding: 14px; overflow-x: auto; }
 }</style>
 </head>
 <body style="--accent: #be123c;">
 <div class="doc-shell">
 <header class="doc-hero">
-<p class="eyebrow">Evernear HTML documentation</p>
+<p class="eyebrow">Evernear documentation</p>
 <h1>Renderer Docs</h1>
 <p class="subtitle">Renderer flow, editor, state, feature surfaces, styles, UI primitives, and utilities.</p>
 <div class="meta-grid">
 <div class="meta-card"><strong>Audience</strong><span>Agents changing React UI, editor behavior, or renderer-side workflows.</span></div>
-<div class="meta-card"><strong>Format</strong><span>Consolidated HTML, browser-openable</span></div>
+<div class="meta-card"><strong>Format</strong><span>Consolidated reference, browser-openable</span></div>
 <div class="meta-card"><strong>Agent Use</strong><span>Use the line ranges below before ingesting whole files.</span></div>
-</div>
-<div class="source-list">
-<span class="source-pill">src/renderer/README.md</span>
-<span class="source-pill">src/renderer/FLOW.md</span>
-<span class="source-pill">src/renderer/editor/README.md</span>
-<span class="source-pill">src/renderer/editor/OPEN_QUESTIONS.md</span>
-<span class="source-pill">src/renderer/state/README.md</span>
-<span class="source-pill">src/renderer/features/README.md</span>
-<span class="source-pill">src/renderer/features/annotations/README.md</span>
-<span class="source-pill">src/renderer/features/chrome/README.md</span>
-<span class="source-pill">src/renderer/features/documents/README.md</span>
-<span class="source-pill">src/renderer/features/documents/nav/README.md</span>
-<span class="source-pill">src/renderer/features/entities/README.md</span>
-<span class="source-pill">src/renderer/features/help/README.md</span>
-<span class="source-pill">src/renderer/features/history/README.md</span>
-<span class="source-pill">src/renderer/features/panes/README.md</span>
-<span class="source-pill">src/renderer/features/projects/README.md</span>
-<span class="source-pill">src/renderer/styles/README.md</span>
-<span class="source-pill">src/renderer/ui/README.md</span>
-<span class="source-pill">src/renderer/utils/README.md</span>
 </div>
 </header>
 <nav class="context-index" aria-label="Agent Context Index">
 <header><h2>Agent Context Index</h2><p>Line ranges point into this HTML file.</p></header>
 <div class="index-grid">
-<a class="index-row" href="#src-renderer-readme"><div><strong>Renderer Folder Orientation</strong></div><div class="index-range">L145-L209</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#src-renderer-flow"><div><strong>Renderer Flow</strong></div><div class="index-range">L210-L259</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#src-renderer-editor-readme"><div><strong>Editor</strong></div><div class="index-range">L260-L332</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#src-renderer-editor-open-questions"><div><strong>Editor Open Questions</strong></div><div class="index-range">L333-L377</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#src-renderer-state-readme"><div><strong>Renderer State</strong></div><div class="index-range">L378-L433</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#src-renderer-features-readme"><div><strong>Features</strong></div><div class="index-range">L434-L487</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#src-renderer-features-annotations-readme"><div><strong>Annotations Feature</strong></div><div class="index-range">L488-L552</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#src-renderer-features-chrome-readme"><div><strong>Chrome Feature</strong></div><div class="index-range">L553-L604</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#src-renderer-features-documents-readme"><div><strong>Documents Feature</strong></div><div class="index-range">L605-L675</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#src-renderer-features-documents-nav-readme"><div><strong>Document Navigation</strong></div><div class="index-range">L676-L738</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#src-renderer-features-entities-readme"><div><strong>Entities Feature</strong></div><div class="index-range">L739-L813</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#src-renderer-features-help-readme"><div><strong>Help Feature</strong></div><div class="index-range">L814-L861</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#src-renderer-features-history-readme"><div><strong>History Feature</strong></div><div class="index-range">L862-L929</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#src-renderer-features-panes-readme"><div><strong>Panes Feature</strong></div><div class="index-range">L930-L995</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#src-renderer-features-projects-readme"><div><strong>Projects Feature</strong></div><div class="index-range">L996-L1055</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#src-renderer-styles-readme"><div><strong>Styles</strong></div><div class="index-range">L1056-L1107</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#src-renderer-ui-readme"><div><strong>UI Primitives</strong></div><div class="index-range">L1108-L1155</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
-<a class="index-row" href="#src-renderer-utils-readme"><div><strong>Renderer Utils</strong></div><div class="index-range">L1156-L1207</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#src-renderer-orientation"><div><strong>Renderer Folder Orientation</strong></div><div class="index-range">L121-L183</div><div>Use this section for ownership, parent reads, and navigation context.</div></a>
+<a class="index-row" href="#src-renderer-flow"><div><strong>Renderer Flow</strong></div><div class="index-range">L184-L231</div><div>Use this section for renderer ownership and boundary context.</div></a>
+<a class="index-row" href="#src-renderer-editor"><div><strong>Editor</strong></div><div class="index-range">L232-L302</div><div>Use this section for renderer ownership and boundary context.</div></a>
+<a class="index-row" href="#src-renderer-editor-open-questions"><div><strong>Editor Open Questions</strong></div><div class="index-range">L303-L345</div><div>Use this section for renderer ownership and boundary context.</div></a>
+<a class="index-row" href="#src-renderer-state"><div><strong>Renderer State</strong></div><div class="index-range">L346-L399</div><div>Use this section for renderer ownership and boundary context.</div></a>
+<a class="index-row" href="#src-renderer-features"><div><strong>Features</strong></div><div class="index-range">L400-L451</div><div>Use this section for renderer ownership and boundary context.</div></a>
+<a class="index-row" href="#src-renderer-features-annotations"><div><strong>Annotations Feature</strong></div><div class="index-range">L452-L514</div><div>Use this section for renderer ownership and boundary context.</div></a>
+<a class="index-row" href="#src-renderer-features-chrome"><div><strong>Chrome Feature</strong></div><div class="index-range">L515-L564</div><div>Use this section for renderer ownership and boundary context.</div></a>
+<a class="index-row" href="#src-renderer-features-documents"><div><strong>Documents Feature</strong></div><div class="index-range">L565-L633</div><div>Use this section for renderer ownership and boundary context.</div></a>
+<a class="index-row" href="#src-renderer-features-documents-nav"><div><strong>Document Navigation</strong></div><div class="index-range">L634-L694</div><div>Use this section for Document Navigation context.</div></a>
+<a class="index-row" href="#src-renderer-features-entities"><div><strong>Entities Feature</strong></div><div class="index-range">L695-L767</div><div>Use this section for renderer ownership and boundary context.</div></a>
+<a class="index-row" href="#src-renderer-features-help"><div><strong>Help Feature</strong></div><div class="index-range">L768-L813</div><div>Use this section for renderer ownership and boundary context.</div></a>
+<a class="index-row" href="#src-renderer-features-history"><div><strong>History Feature</strong></div><div class="index-range">L814-L879</div><div>Use this section for renderer ownership and boundary context.</div></a>
+<a class="index-row" href="#src-renderer-features-panes"><div><strong>Panes Feature</strong></div><div class="index-range">L880-L943</div><div>Use this section for renderer ownership and boundary context.</div></a>
+<a class="index-row" href="#src-renderer-features-projects"><div><strong>Projects Feature</strong></div><div class="index-range">L944-L1001</div><div>Use this section for renderer ownership and boundary context.</div></a>
+<a class="index-row" href="#src-renderer-styles"><div><strong>Styles</strong></div><div class="index-range">L1002-L1051</div><div>Use this section for Styles context.</div></a>
+<a class="index-row" href="#src-renderer-ui"><div><strong>UI Primitives</strong></div><div class="index-range">L1052-L1097</div><div>Use this section for UI Primitives context.</div></a>
+<a class="index-row" href="#src-renderer-utils"><div><strong>Renderer Utils</strong></div><div class="index-range">L1098-L1147</div><div>Use this section for renderer ownership and boundary context.</div></a>
 </div>
 </nav>
 <main>
-<article id="src-renderer-readme" class="doc-source" data-source="src/renderer/README.md">
-<header class="source-header">
-<p class="source-path">Former source: src/renderer/README.md</p>
+<article id="src-renderer-orientation" class="doc-panel">
+<header class="doc-header">
 <h2>Renderer Folder Orientation</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>Renderer</h1>
 <h2>Status</h2>
 <p>MVP now</p>
 <h2>If you landed here first</h2>
-<p>Read <a href="../src-docs.html#src-readme">src/README.md</a>, then <a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a>. If you care about product flow more than folder shape, also read <a href="#src-renderer-flow">FLOW.md</a>.</p>
+<p>Read <a href="../src-docs.html#src-orientation">Source Folder Orientation</a>, then <a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a>. If you care about product flow more than folder shape, also read <a href="#src-renderer-flow">FLOW</a>.</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="../src-docs.html#src-readme">src/README.md</a></li>
-<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
-<li><a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a></li>
+<li><a href="../src-docs.html#src-orientation">Source Folder Orientation</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a></li>
+<li><a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC</a></li>
 </ul>
 <h2>Owns</h2>
 <ul>
@@ -206,24 +180,22 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <li>Detached windows and multi-monitor sophistication beyond what proves the core product loop.</li>
 </ul>
 </div>
-</article><!-- /src-renderer-readme -->
-<article id="src-renderer-flow" class="doc-source" data-source="src/renderer/FLOW.md">
-<header class="source-header">
-<p class="source-path">Former source: src/renderer/FLOW.md</p>
+</article><!-- /src-renderer-orientation -->
+<article id="src-renderer-flow" class="doc-panel">
+<header class="doc-header">
 <h2>Renderer Flow</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>Renderer Flow</h1>
 <h2>Status</h2>
 <p>MVP now</p>
 <h2>If you landed here first</h2>
-<p>Read <a href="#src-renderer-readme">README.md</a> for folder ownership, then <a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a> for the product loop this flow is serving.</p>
+<p>Read <a href="#src-renderer-orientation">Renderer Folder Orientation</a> for folder ownership, then <a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC</a> for the product loop this flow is serving.</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="#src-renderer-readme">README.md</a></li>
-<li><a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a></li>
-<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="#src-renderer-orientation">Renderer Folder Orientation</a></li>
+<li><a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a></li>
 </ul>
 <h2>Owns</h2>
 <ul>
@@ -257,23 +229,21 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 </ul>
 </div>
 </article><!-- /src-renderer-flow -->
-<article id="src-renderer-editor-readme" class="doc-source" data-source="src/renderer/editor/README.md">
-<header class="source-header">
-<p class="source-path">Former source: src/renderer/editor/README.md</p>
+<article id="src-renderer-editor" class="doc-panel">
+<header class="doc-header">
 <h2>Editor</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>Editor</h1>
 <h2>Status</h2>
 <p>MVP now</p>
 <h2>If you landed here first</h2>
-<p>Read <a href="#src-renderer-readme">src/renderer/README.md</a> first. Then read <a href="../shared/shared-docs.html#src-shared-domain-readme">src/shared/domain/README.md</a> so the editor behavior stays grounded in domain language rather than ad hoc UI terms.</p>
+<p>Read <a href="#src-renderer-orientation">Renderer Folder Orientation</a> first. Then read <a href="../shared/shared-docs.html#src-shared-domain">Shared Domain</a> so the editor behavior stays grounded in domain language rather than ad hoc UI terms.</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="#src-renderer-readme">src/renderer/README.md</a></li>
-<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
-<li><a href="../shared/shared-docs.html#src-shared-domain-readme">src/shared/domain/README.md</a></li>
+<li><a href="#src-renderer-orientation">Renderer Folder Orientation</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a></li>
+<li><a href="../shared/shared-docs.html#src-shared-domain">Shared Domain</a></li>
 </ul>
 <h2>Owns</h2>
 <ul>
@@ -329,24 +299,22 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <li>Rich formatting ambitions that do not directly serve writing and re-entry.</li>
 </ul>
 </div>
-</article><!-- /src-renderer-editor-readme -->
-<article id="src-renderer-editor-open-questions" class="doc-source" data-source="src/renderer/editor/OPEN_QUESTIONS.md">
-<header class="source-header">
-<p class="source-path">Former source: src/renderer/editor/OPEN_QUESTIONS.md</p>
+</article><!-- /src-renderer-editor -->
+<article id="src-renderer-editor-open-questions" class="doc-panel">
+<header class="doc-header">
 <h2>Editor Open Questions</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>Editor Open Questions</h1>
 <h2>Status</h2>
 <p>MVP now</p>
 <h2>If you landed here first</h2>
-<p>Read <a href="#src-renderer-editor-readme">README.md</a> first, then <a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a> for the current architectural recommendation.</p>
+<p>Read <a href="#src-renderer-editor">Editor</a> first, then <a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a> for the current architectural recommendation.</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="#src-renderer-editor-readme">README.md</a></li>
-<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
-<li><a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a></li>
+<li><a href="#src-renderer-editor">Editor</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a></li>
+<li><a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC</a></li>
 </ul>
 <h2>Owns</h2>
 <ul>
@@ -375,23 +343,21 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 </ul>
 </div>
 </article><!-- /src-renderer-editor-open-questions -->
-<article id="src-renderer-state-readme" class="doc-source" data-source="src/renderer/state/README.md">
-<header class="source-header">
-<p class="source-path">Former source: src/renderer/state/README.md</p>
+<article id="src-renderer-state" class="doc-panel">
+<header class="doc-header">
 <h2>Renderer State</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>Renderer State</h1>
 <h2>Status</h2>
 <p>MVP now</p>
 <h2>If you landed here first</h2>
-<p>Read <a href="#src-renderer-readme">src/renderer/README.md</a> first. The hooks here are the renderer's seam between the IPC bridge and feature components — App.tsx composes them and threads their results into <code>src/renderer/features/</code>.</p>
+<p>Read <a href="#src-renderer-orientation">Renderer Folder Orientation</a> first. The hooks here are the renderer's seam between the IPC bridge and feature components — App.tsx composes them and threads their results into <code>src/renderer/features/</code>.</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="#src-renderer-readme">src/renderer/README.md</a></li>
-<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
-<li><a href="../shared/shared-docs.html#src-shared-domain-readme">src/shared/domain/README.md</a></li>
+<li><a href="#src-renderer-orientation">Renderer Folder Orientation</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a></li>
+<li><a href="../shared/shared-docs.html#src-shared-domain">Shared Domain</a></li>
 </ul>
 <h2>Owns</h2>
 <ul>
@@ -430,24 +396,22 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <li>A renderer-side projection cache layer (refineCode C6) — wait until profiling shows the lookups are the bottleneck.</li>
 </ul>
 </div>
-</article><!-- /src-renderer-state-readme -->
-<article id="src-renderer-features-readme" class="doc-source" data-source="src/renderer/features/README.md">
-<header class="source-header">
-<p class="source-path">Former source: src/renderer/features/README.md</p>
+</article><!-- /src-renderer-state -->
+<article id="src-renderer-features" class="doc-panel">
+<header class="doc-header">
 <h2>Features</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>Renderer Features</h1>
 <h2>Status</h2>
 <p>MVP now</p>
 <h2>If you landed here first</h2>
-<p>Read <a href="#src-renderer-readme">src/renderer/README.md</a> first. This folder groups user-facing capability areas without pretending each one is already a separate package.</p>
+<p>Read <a href="#src-renderer-orientation">Renderer Folder Orientation</a> first. This folder groups user-facing capability areas without pretending each one is already a separate package.</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="#src-renderer-readme">src/renderer/README.md</a></li>
-<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
-<li><a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a></li>
+<li><a href="#src-renderer-orientation">Renderer Folder Orientation</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a></li>
+<li><a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC</a></li>
 </ul>
 <h2>Owns</h2>
 <ul>
@@ -484,25 +448,23 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <li>A plugin-like internal feature system.</li>
 </ul>
 </div>
-</article><!-- /src-renderer-features-readme -->
-<article id="src-renderer-features-annotations-readme" class="doc-source" data-source="src/renderer/features/annotations/README.md">
-<header class="source-header">
-<p class="source-path">Former source: src/renderer/features/annotations/README.md</p>
+</article><!-- /src-renderer-features -->
+<article id="src-renderer-features-annotations" class="doc-panel">
+<header class="doc-header">
 <h2>Annotations Feature</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>Annotation Features</h1>
 <h2>Status</h2>
 <p>MVP now</p>
 <h2>If you landed here first</h2>
-<p>Read <a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a> first. Annotations are designed now because they ride on the same anchor substrate as slice boundaries, even if their full UI lands after the central loop.</p>
+<p>Read <a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC</a> first. Annotations are designed now because they ride on the same anchor substrate as slice boundaries, even if their full UI lands after the central loop.</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="#src-renderer-features-readme">src/renderer/features/README.md</a></li>
-<li><a href="#src-renderer-readme">src/renderer/README.md</a></li>
-<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
-<li><a href="../../docs/experiments/experiments-index.html#docs-experiments-exp-001-shared-anchor-substrate">docs/experiments/EXP-001-shared-anchor-substrate.md</a></li>
+<li><a href="#src-renderer-features">Features</a></li>
+<li><a href="#src-renderer-orientation">Renderer Folder Orientation</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a></li>
+<li><a href="../../docs/experiments/experiments-index.html#docs-experiments-exp-001-shared-anchor-substrate">docs/experiments/EXP-001-shared-anchor-substrate</a></li>
 </ul>
 <h2>Owns</h2>
 <ul>
@@ -549,24 +511,22 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <li>Collaboration, notifications, or review-style threading.</li>
 </ul>
 </div>
-</article><!-- /src-renderer-features-annotations-readme -->
-<article id="src-renderer-features-chrome-readme" class="doc-source" data-source="src/renderer/features/chrome/README.md">
-<header class="source-header">
-<p class="source-path">Former source: src/renderer/features/chrome/README.md</p>
+</article><!-- /src-renderer-features-annotations -->
+<article id="src-renderer-features-chrome" class="doc-panel">
+<header class="doc-header">
 <h2>Chrome Feature</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>Renderer Chrome</h1>
 <h2>Status</h2>
 <p>MVP now</p>
 <h2>If you landed here first</h2>
-<p>Read <a href="#src-renderer-features-readme">src/renderer/features/README.md</a>, then <a href="../src-docs.html#src-main-readme">src/main/README.md</a>. The chrome surface bridges Electron window policy and the renderer's React tree.</p>
+<p>Read <a href="#src-renderer-features">Features</a>, then <a href="../src-docs.html#src-main-runtime">Main Runtime</a>. The chrome surface bridges Electron window policy and the renderer's React tree.</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="#src-renderer-features-readme">src/renderer/features/README.md</a></li>
-<li><a href="#src-renderer-readme">src/renderer/README.md</a></li>
-<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="#src-renderer-features">Features</a></li>
+<li><a href="#src-renderer-orientation">Renderer Folder Orientation</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a></li>
 </ul>
 <h2>Owns</h2>
 <ul>
@@ -601,24 +561,22 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <li>macOS/Linux variants — current overlay tuning is Windows-first.</li>
 </ul>
 </div>
-</article><!-- /src-renderer-features-chrome-readme -->
-<article id="src-renderer-features-documents-readme" class="doc-source" data-source="src/renderer/features/documents/README.md">
-<header class="source-header">
-<p class="source-path">Former source: src/renderer/features/documents/README.md</p>
+</article><!-- /src-renderer-features-chrome -->
+<article id="src-renderer-features-documents" class="doc-panel">
+<header class="doc-header">
 <h2>Documents Feature</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>Document Features</h1>
 <h2>Status</h2>
 <p>MVP now</p>
 <h2>If you landed here first</h2>
-<p>Read <a href="#src-renderer-features-readme">src/renderer/features/README.md</a>, then <a href="../shared/shared-docs.html#src-shared-domain-readme">src/shared/domain/README.md</a>. Documents are where writing happens, but their meaning comes from the shared model.</p>
+<p>Read <a href="#src-renderer-features">Features</a>, then <a href="../shared/shared-docs.html#src-shared-domain">Shared Domain</a>. Documents are where writing happens, but their meaning comes from the shared model.</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="#src-renderer-features-readme">src/renderer/features/README.md</a></li>
-<li><a href="#src-renderer-readme">src/renderer/README.md</a></li>
-<li><a href="../shared/shared-docs.html#src-shared-domain-readme">src/shared/domain/README.md</a></li>
+<li><a href="#src-renderer-features">Features</a></li>
+<li><a href="#src-renderer-orientation">Renderer Folder Orientation</a></li>
+<li><a href="../shared/shared-docs.html#src-shared-domain">Shared Domain</a></li>
 </ul>
 <h2>Owns</h2>
 <ul>
@@ -672,14 +630,12 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <li>Binder-like manuscript tooling beyond the lightweight tree and later anchored outline nodes.</li>
 </ul>
 </div>
-</article><!-- /src-renderer-features-documents-readme -->
-<article id="src-renderer-features-documents-nav-readme" class="doc-source" data-source="src/renderer/features/documents/nav/README.md">
-<header class="source-header">
-<p class="source-path">Former source: src/renderer/features/documents/nav/README.md</p>
+</article><!-- /src-renderer-features-documents -->
+<article id="src-renderer-features-documents-nav" class="doc-panel">
+<header class="doc-header">
 <h2>Document Navigation</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1><code>src/renderer/features/documents/nav/</code></h1>
 <h2>Status</h2>
 <p>Active. Owns the side-nav tree UI: nested folders, drag-and-drop reorder/reparent, inline rename, and the right-click context menu.</p>
@@ -693,7 +649,7 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 </ol>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="#src-renderer-features-documents-readme">../README.md</a> — the documents feature folder.</li>
+<li><a href="#src-renderer-features-documents">Documents Feature</a> — the documents feature folder.</li>
 <li><a href="state/useDocumentActions.ts">../../../state/useDocumentActions.ts</a> — the action hook that fronts the IPC bridge methods used here.</li>
 <li><a href="../shared/domain/workspace.ts">../../../../shared/domain/workspace.ts</a> — <code>DocumentFolderRecord</code>, <code>DocumentSummary</code>, <code>MoveFolderInput</code>, <code>MoveDocumentInput</code>.</li>
 </ul>
@@ -735,25 +691,23 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <li>Custom indent guides (vertical lines connecting parent and child rows). Aesthetic; depth indent alone reads cleanly today.</li>
 </ul>
 </div>
-</article><!-- /src-renderer-features-documents-nav-readme -->
-<article id="src-renderer-features-entities-readme" class="doc-source" data-source="src/renderer/features/entities/README.md">
-<header class="source-header">
-<p class="source-path">Former source: src/renderer/features/entities/README.md</p>
+</article><!-- /src-renderer-features-documents-nav -->
+<article id="src-renderer-features-entities" class="doc-panel">
+<header class="doc-header">
 <h2>Entities Feature</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>Entity Features</h1>
 <h2>Status</h2>
 <p>MVP now</p>
 <h2>If you landed here first</h2>
-<p>Read <a href="#src-renderer-features-readme">src/renderer/features/README.md</a>, then <a href="../shared/shared-docs.html#src-shared-domain-readme">src/shared/domain/README.md</a>, then <a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a>. This area is the heart of the product idea.</p>
+<p>Read <a href="#src-renderer-features">Features</a>, then <a href="../shared/shared-docs.html#src-shared-domain">Shared Domain</a>, then <a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC</a>. This area is the heart of the product idea.</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="#src-renderer-features-readme">src/renderer/features/README.md</a></li>
-<li><a href="#src-renderer-readme">src/renderer/README.md</a></li>
-<li><a href="../shared/shared-docs.html#src-shared-domain-readme">src/shared/domain/README.md</a></li>
-<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="#src-renderer-features">Features</a></li>
+<li><a href="#src-renderer-orientation">Renderer Folder Orientation</a></li>
+<li><a href="../shared/shared-docs.html#src-shared-domain">Shared Domain</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a></li>
 </ul>
 <h2>Owns</h2>
 <ul>
@@ -810,24 +764,22 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <li>Advanced matching logic beyond the rules needed to prove the concept.</li>
 </ul>
 </div>
-</article><!-- /src-renderer-features-entities-readme -->
-<article id="src-renderer-features-help-readme" class="doc-source" data-source="src/renderer/features/help/README.md">
-<header class="source-header">
-<p class="source-path">Former source: src/renderer/features/help/README.md</p>
+</article><!-- /src-renderer-features-entities -->
+<article id="src-renderer-features-help" class="doc-panel">
+<header class="doc-header">
 <h2>Help Feature</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>Help Feature</h1>
 <h2>Status</h2>
 <p>MVP now</p>
 <h2>If you landed here first</h2>
-<p>Read <a href="#src-renderer-features-readme">src/renderer/features/README.md</a> and <a href="#src-renderer-readme">src/renderer/README.md</a>. This folder owns user-facing guidance that is displayed inside the app.</p>
+<p>Read <a href="#src-renderer-features">Features</a> and <a href="#src-renderer-orientation">Renderer Folder Orientation</a>. This folder owns user-facing guidance that is displayed inside the app.</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="#src-renderer-features-readme">src/renderer/features/README.md</a></li>
-<li><a href="#src-renderer-readme">src/renderer/README.md</a></li>
-<li><a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a></li>
+<li><a href="#src-renderer-features">Features</a></li>
+<li><a href="#src-renderer-orientation">Renderer Folder Orientation</a></li>
+<li><a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC</a></li>
 </ul>
 <h2>Owns</h2>
 <ul>
@@ -858,24 +810,22 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <li>Deep contextual help tied to individual panes.</li>
 </ul>
 </div>
-</article><!-- /src-renderer-features-help-readme -->
-<article id="src-renderer-features-history-readme" class="doc-source" data-source="src/renderer/features/history/README.md">
-<header class="source-header">
-<p class="source-path">Former source: src/renderer/features/history/README.md</p>
+</article><!-- /src-renderer-features-help -->
+<article id="src-renderer-features-history" class="doc-panel">
+<header class="doc-header">
 <h2>History Feature</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>History Features</h1>
 <h2>Status</h2>
 <p>Soon</p>
 <h2>If you landed here first</h2>
-<p>Read <a href="#src-renderer-features-readme">src/renderer/features/README.md</a> first, then <a href="../../docs/adr/adr-index.html#docs-adr-adr-006-event-sourced-document-and-metadata-history">ADR-006</a>. History storage is foundational, but the writer-facing surface lands right after the truthful MVP proves itself.</p>
+<p>Read <a href="#src-renderer-features">Features</a> first, then <a href="../../docs/adr/adr-index.html#docs-adr-adr-006-event-sourced-document-and-metadata-history">ADR-006</a>. History storage is foundational, but the writer-facing surface lands right after the truthful MVP proves itself.</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="#src-renderer-features-readme">src/renderer/features/README.md</a></li>
-<li><a href="#src-renderer-readme">src/renderer/README.md</a></li>
-<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="#src-renderer-features">Features</a></li>
+<li><a href="#src-renderer-orientation">Renderer Folder Orientation</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a></li>
 <li><a href="../../docs/adr/adr-index.html#docs-adr-adr-006-event-sourced-document-and-metadata-history">ADR-006</a></li>
 </ul>
 <h2>Owns</h2>
@@ -926,24 +876,22 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <li>Any merge or reconciliation workflow.</li>
 </ul>
 </div>
-</article><!-- /src-renderer-features-history-readme -->
-<article id="src-renderer-features-panes-readme" class="doc-source" data-source="src/renderer/features/panes/README.md">
-<header class="source-header">
-<p class="source-path">Former source: src/renderer/features/panes/README.md</p>
+</article><!-- /src-renderer-features-history -->
+<article id="src-renderer-features-panes" class="doc-panel">
+<header class="doc-header">
 <h2>Panes Feature</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>Panel Features</h1>
 <h2>Status</h2>
 <p>MVP now</p>
 <h2>If you landed here first</h2>
-<p>Read <a href="#src-renderer-readme">src/renderer/README.md</a> and <a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a>. Panels matter because persistent side context is part of the core promise, not just layout chrome.</p>
+<p>Read <a href="#src-renderer-orientation">Renderer Folder Orientation</a> and <a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC</a>. Panels matter because persistent side context is part of the core promise, not just layout chrome.</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="#src-renderer-features-readme">src/renderer/features/README.md</a></li>
-<li><a href="#src-renderer-readme">src/renderer/README.md</a></li>
-<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="#src-renderer-features">Features</a></li>
+<li><a href="#src-renderer-orientation">Renderer Folder Orientation</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a></li>
 </ul>
 <h2>Owns</h2>
 <ul>
@@ -992,24 +940,22 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <li>Detachable panels and multi-monitor choreography.</li>
 </ul>
 </div>
-</article><!-- /src-renderer-features-panes-readme -->
-<article id="src-renderer-features-projects-readme" class="doc-source" data-source="src/renderer/features/projects/README.md">
-<header class="source-header">
-<p class="source-path">Former source: src/renderer/features/projects/README.md</p>
+</article><!-- /src-renderer-features-panes -->
+<article id="src-renderer-features-projects" class="doc-panel">
+<header class="doc-header">
 <h2>Projects Feature</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>Project Features</h1>
 <h2>Status</h2>
 <p>MVP now</p>
 <h2>If you landed here first</h2>
-<p>Read <a href="#src-renderer-features-readme">src/renderer/features/README.md</a>, then <a href="../src-docs.html#src-main-readme">src/main/README.md</a>. Project UX touches both renderer and main boundaries.</p>
+<p>Read <a href="#src-renderer-features">Features</a>, then <a href="../src-docs.html#src-main-runtime">Main Runtime</a>. Project UX touches both renderer and main boundaries.</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="#src-renderer-features-readme">src/renderer/features/README.md</a></li>
-<li><a href="#src-renderer-readme">src/renderer/README.md</a></li>
-<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="#src-renderer-features">Features</a></li>
+<li><a href="#src-renderer-orientation">Renderer Folder Orientation</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a></li>
 </ul>
 <h2>Owns</h2>
 <ul>
@@ -1052,23 +998,21 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <li>Multi-project workspaces.</li>
 </ul>
 </div>
-</article><!-- /src-renderer-features-projects-readme -->
-<article id="src-renderer-styles-readme" class="doc-source" data-source="src/renderer/styles/README.md">
-<header class="source-header">
-<p class="source-path">Former source: src/renderer/styles/README.md</p>
+</article><!-- /src-renderer-features-projects -->
+<article id="src-renderer-styles" class="doc-panel">
+<header class="doc-header">
 <h2>Styles</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>Renderer Styles</h1>
 <h2>Status</h2>
 <p>MVP now</p>
 <h2>If you landed here first</h2>
-<p>Read <a href="#src-renderer-readme">../README.md</a>, then <a href="../src-docs.html#src-readme">../../README.md</a>. Global styles here are for app-wide foundations only; component styles belong beside the component as CSS Modules.</p>
+<p>Read <a href="#src-renderer-orientation">Renderer Folder Orientation</a>, then <a href="../src-docs.html#src-orientation">Source Folder Orientation</a>. Global styles here are for app-wide foundations only; component styles belong beside the component as CSS Modules.</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="#src-renderer-readme">../README.md</a></li>
-<li><a href="../../FOR_HUMAN_CODE--DOC.html">../../../FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="#src-renderer-orientation">Renderer Folder Orientation</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">../../../FOR_HUMAN_CODE--DOC</a></li>
 </ul>
 <h2>Owns</h2>
 <ul>
@@ -1104,23 +1048,21 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <li>Theme switching and author-configurable annotation visuals.</li>
 </ul>
 </div>
-</article><!-- /src-renderer-styles-readme -->
-<article id="src-renderer-ui-readme" class="doc-source" data-source="src/renderer/ui/README.md">
-<header class="source-header">
-<p class="source-path">Former source: src/renderer/ui/README.md</p>
+</article><!-- /src-renderer-styles -->
+<article id="src-renderer-ui" class="doc-panel">
+<header class="doc-header">
 <h2>UI Primitives</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>Renderer UI</h1>
 <h2>Status</h2>
 <p>MVP now</p>
 <h2>If you landed here first</h2>
-<p>Read <a href="#src-renderer-readme">../README.md</a>, then <a href="#src-renderer-styles-readme">../styles/README.md</a>. This folder holds small renderer-only primitives that keep repeated visual controls out of feature components.</p>
+<p>Read <a href="#src-renderer-orientation">Renderer Folder Orientation</a>, then <a href="#src-renderer-styles">Styles</a>. This folder holds small renderer-only primitives that keep repeated visual controls out of feature components.</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="#src-renderer-readme">../README.md</a></li>
-<li><a href="#src-renderer-styles-readme">../styles/README.md</a></li>
+<li><a href="#src-renderer-orientation">Renderer Folder Orientation</a></li>
+<li><a href="#src-renderer-styles">Styles</a></li>
 </ul>
 <h2>Owns</h2>
 <ul>
@@ -1152,23 +1094,21 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <li>Form validation components and theme switching controls.</li>
 </ul>
 </div>
-</article><!-- /src-renderer-ui-readme -->
-<article id="src-renderer-utils-readme" class="doc-source" data-source="src/renderer/utils/README.md">
-<header class="source-header">
-<p class="source-path">Former source: src/renderer/utils/README.md</p>
+</article><!-- /src-renderer-ui -->
+<article id="src-renderer-utils" class="doc-panel">
+<header class="doc-header">
 <h2>Renderer Utils</h2>
-<p>Converted from the former Markdown source.</p>
 </header>
-<div class="md-content">
+<div class="section-content">
 <h1>Renderer Utilities</h1>
 <h2>Status</h2>
 <p>MVP now</p>
 <h2>If you landed here first</h2>
-<p>Read <a href="#src-renderer-readme">src/renderer/README.md</a> first. The modules here are pure helpers — no React state, no IPC, no DOM. If you find yourself needing one of those, the file does not belong in this folder.</p>
+<p>Read <a href="#src-renderer-orientation">Renderer Folder Orientation</a> first. The modules here are pure helpers — no React state, no IPC, no DOM. If you find yourself needing one of those, the file does not belong in this folder.</p>
 <h2>Parent reads</h2>
 <ul>
-<li><a href="#src-renderer-readme">src/renderer/README.md</a></li>
-<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="#src-renderer-orientation">Renderer Folder Orientation</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC</a></li>
 </ul>
 <h2>Owns</h2>
 <ul>
@@ -1179,10 +1119,10 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 </ul>
 <h2>Does not own</h2>
 <ul>
-<li>React hooks (those live in <a href="#src-renderer-state-readme">src/renderer/state/</a>).</li>
-<li>IPC contracts (those live in <a href="../shared/shared-docs.html#src-shared-contracts-readme">src/shared/contracts/</a>).</li>
-<li>Domain types (those live in <a href="../shared/shared-docs.html#src-shared-domain-readme">src/shared/domain/</a>).</li>
-<li>Editor view code (those live in <a href="#src-renderer-editor-readme">src/renderer/editor/</a>).</li>
+<li>React hooks (those live in <a href="#src-renderer-state">src/renderer/state/</a>).</li>
+<li>IPC contracts (those live in <a href="../shared/shared-docs.html#src-shared-contracts">src/shared/contracts/</a>).</li>
+<li>Domain types (those live in <a href="../shared/shared-docs.html#src-shared-domain">src/shared/domain/</a>).</li>
+<li>Editor view code (those live in <a href="#src-renderer-editor">src/renderer/editor/</a>).</li>
 </ul>
 <h2>Key relationships</h2>
 <ul>
@@ -1204,9 +1144,8 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <li>A renderer-side i18n layer. Today every formatter assumes <code>en-US</code>.</li>
 </ul>
 </div>
-</article><!-- /src-renderer-utils-readme -->
+</article><!-- /src-renderer-utils -->
 </main>
-<p class="footer">Generated from repo-authored Markdown during the HTML documentation migration. AGENT.md and CLAUDE.md remain Markdown bootstrap files by design.</p>
 </div>
 </body>
 </html>

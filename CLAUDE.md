@@ -8,7 +8,7 @@ The repo has a runnable Electron app (v0.3.0): ProseMirror editor, SQLite persis
 
 The two god files that earlier versions of this doc flagged — renderer `App.tsx` (~1,700 lines) and `workbenchRepository.ts` (~2,000 lines) — have been split:
 
-- DB layer split along the aggregates pre-declared in [src/db/db-docs.html#src-db-repositories-readme](src/db/db-docs.html#src-db-repositories-readme). Each aggregate owns its own repository; [WorkspaceRepository](src/db/repositories/WorkspaceRepository.ts) is a thin composition facade. Pure ProseMirror anchor math lives in [src/shared/anchoring.ts](src/shared/anchoring.ts) (used by both DB and renderer).
+- DB layer split along the aggregates pre-declared in [src/db/db-docs.html#src-db-repositories](src/db/db-docs.html#src-db-repositories). Each aggregate owns its own repository; [WorkspaceRepository](src/db/repositories/WorkspaceRepository.ts) is a thin composition facade. Pure ProseMirror anchor math lives in [src/shared/anchoring.ts](src/shared/anchoring.ts) (used by both DB and renderer).
 - Renderer split into hooks under [src/renderer/state/](src/renderer/state/) and feature components under [src/renderer/features/](src/renderer/features/). `App.tsx` is now a composition shell; no new features should go there.
 
 Working commands:
