@@ -8,7 +8,7 @@
 // way. If you need repo state, wrap these functions somewhere else — don't
 // pull repository concerns down here.
 //
-// See docs/adr/ADR-006 and FOR_HUMAN_CODE--DOC.md for the anchor contract.
+// See docs/adr/adr-index.html#docs-adr-adr-006-event-sourced-document-and-metadata-history and FOR_HUMAN_CODE--DOC.html for the anchor contract.
 
 import type { Node as ProseMirrorNode } from "prosemirror-model";
 import { schema as basicSchema } from "prosemirror-schema-basic";

@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>For Human Code Doc | Evernear</title>
+  <style>:root {
+  color-scheme: light;
+  --bg: #f7f7f4;
+  --paper: #ffffff;
+  --ink: #1f2328;
+  --muted: #606a75;
+  --line: #d8ddd8;
+  --soft: #eef1ed;
+  --accent: #2563eb;
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, white);
+  --accent-line: color-mix(in srgb, var(--accent) 32%, #d8ddd8);
+  --code-bg: #151b23;
+  --code-ink: #f1f5f9;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--ink); line-height: 1.55; }
+a { color: var(--accent); text-decoration-thickness: 0.08em; text-underline-offset: 0.18em; }
+.doc-shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 56px; }
+.doc-hero { border: 1px solid var(--accent-line); background: linear-gradient(135deg, var(--paper), var(--accent-soft)); border-radius: 8px; padding: 26px; }
+.eyebrow { margin: 0 0 8px; color: var(--accent); font-weight: 800; text-transform: uppercase; letter-spacing: 0; font-size: 0.78rem; }
+h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-spacing: 0; overflow-wrap: anywhere; }
+.subtitle { margin: 14px 0 0; max-width: 820px; color: var(--muted); font-size: 1.04rem; }
+.meta-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 20px; }
+.meta-card { border: 1px solid var(--line); background: rgba(255,255,255,0.7); border-radius: 8px; padding: 12px; min-width: 0; }
+.meta-card strong { display: block; font-size: 0.76rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0; }
+.meta-card span, .meta-card a { display: block; margin-top: 3px; font-weight: 700; overflow-wrap: anywhere; }
+.context-index { margin: 18px 0; border: 1px solid var(--line); background: var(--paper); border-radius: 8px; overflow: hidden; }
+.context-index header { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 14px 16px; background: var(--soft); border-bottom: 1px solid var(--line); }
+.context-index h2 { margin: 0; font-size: 1rem; }
+.context-index p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+.index-grid { display: grid; grid-template-columns: minmax(180px, 0.9fr) minmax(150px, 0.6fr) minmax(260px, 1.7fr); }
+.index-row { display: contents; color: inherit; text-decoration: none; }
+.index-row > div { padding: 10px 14px; border-top: 1px solid var(--line); min-width: 0; }
+.index-row:first-child > div { border-top: 0; }
+.index-range { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 0.86rem; color: var(--accent); white-space: nowrap; }
+.source-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.source-pill { border: 1px solid var(--accent-line); background: var(--accent-soft); color: var(--ink); border-radius: 999px; padding: 5px 9px; font-size: 0.82rem; font-weight: 700; }
+.doc-source, .map-section { margin-top: 18px; border: 1px solid var(--line); background: var(--paper); border-radius: 8px; overflow: clip; }
+.source-header, .section-header { padding: 16px 18px; border-bottom: 1px solid var(--line); background: #fbfbf9; }
+.source-header h2, .section-header h2 { margin: 3px 0 0; font-size: 1.35rem; letter-spacing: 0; overflow-wrap: anywhere; }
+.source-header p, .section-header p { margin: 0; color: var(--muted); }
+.source-path { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 0.78rem; color: var(--muted); overflow-wrap: anywhere; }
+.md-content { padding: 18px; }
+.md-content h1 { font-size: 2rem; line-height: 1.08; margin: 0 0 14px; overflow-wrap: anywhere; }
+.md-content h2 { margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 1.25rem; overflow-wrap: anywhere; }
+.md-content h3 { margin-top: 20px; font-size: 1.06rem; overflow-wrap: anywhere; }
+.md-content p, .md-content ul, .md-content ol { max-width: 86ch; }
+.md-content table, .dense-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.94rem; }
+.md-content th, .md-content td, .dense-table th, .dense-table td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+.md-content th, .dense-table th { background: var(--soft); color: #30363d; }
+.md-content code:not(pre code) { background: var(--soft); border: 1px solid var(--line); border-radius: 5px; padding: 0.08rem 0.28rem; font-size: 0.9em; }
+.md-content pre, pre.code-block { background: var(--code-bg); color: var(--code-ink); border-radius: 8px; overflow: auto; padding: 14px; }
+.md-content pre code { color: inherit; background: transparent; border: 0; padding: 0; }
+.compact-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
+.compact-card { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 12px; min-width: 0; }
+.compact-card h3 { margin: 0 0 6px; font-size: 1rem; }
+.compact-card p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+.flow-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
+.flow-step { position: relative; border: 1px solid var(--accent-line); background: var(--accent-soft); border-radius: 8px; padding: 12px; min-height: 120px; overflow-wrap: anywhere; }
+.flow-step strong { display: block; margin-bottom: 6px; }
+.flow-step span { color: var(--muted); font-size: 0.9rem; }
+.badge-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.badge { border: 1px solid var(--line); border-radius: 999px; padding: 5px 8px; background: var(--soft); font-size: 0.82rem; font-weight: 700; }
+.mermaidless-map { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
+.entity-node { border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 8px; padding: 12px; background: #fff; }
+.entity-node strong { display: block; }
+.entity-node span { display: block; color: var(--muted); font-size: 0.88rem; margin-top: 4px; }
+.note { border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 12px 14px; border-radius: 0 8px 8px 0; }
+.footer { margin-top: 22px; color: var(--muted); font-size: 0.88rem; }
+@media (max-width: 860px) {
+  .doc-shell { width: min(100% - 20px, 1180px); padding-top: 12px; }
+  .doc-hero { padding: 18px; }
+  .meta-grid, .compact-grid, .flow-grid, .mermaidless-map { grid-template-columns: 1fr; }
+  .index-grid { grid-template-columns: 1fr; }
+  .index-row > div { border-top: 0; padding: 6px 14px; }
+  .index-row { display: block; border-top: 1px solid var(--line); padding: 8px 0; }
+  .context-index header { display: block; }
+  .md-content { padding: 14px; overflow-x: auto; }
+}</style>
+</head>
+<body style="--accent: #4338ca;">
+<div class="doc-shell">
+<header class="doc-hero">
+<p class="eyebrow">Evernear HTML documentation</p>
+<h1>For Human Code Doc</h1>
+<p class="subtitle">Architecture, domain vocabulary, storage stance, and current implementation map.</p>
+<div class="meta-grid">
+<div class="meta-card"><strong>Audience</strong><span>Engineers and agents making code changes.</span></div>
+<div class="meta-card"><strong>Format</strong><span>Standalone HTML, browser-openable</span></div>
+<div class="meta-card"><strong>Agent Use</strong><span>Use the line ranges below before ingesting whole files.</span></div>
+</div>
+<div class="source-list">
+<span class="source-pill">FOR_HUMAN_CODE--DOC.md</span>
+</div>
+</header>
+<nav class="context-index" aria-label="Agent Context Index">
+<header><h2>Agent Context Index</h2><p>Line ranges point into this HTML file.</p></header>
+<div class="index-grid">
+<a class="index-row" href="#for-human-code-doc"><div><strong>FOR_HUMAN_CODE--DOC.md</strong></div><div class="index-range">L111-L652</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+</div>
+</nav>
+<main>
+<article id="for-human-code-doc" class="doc-source" data-source="FOR_HUMAN_CODE--DOC.md">
+<header class="source-header">
+<p class="source-path">Former source: FOR_HUMAN_CODE--DOC.md</p>
+<h2>FORHUMANCODE--DOC</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>FOR_HUMAN_CODE--DOC</h1>
+<h2>Last change</h2>
+<p>2026-04-18: Phase 1.5 foundation hardening — DB layer split into per-aggregate repositories, renderer split into hooks + feature components, anchor math unified in <code>src/shared/anchoring.ts</code> (fixing an off-by-one bug in <code>walkNodeText</code>), typed event catalog, schema migration framework, Zod validation at IPC boundary, Vitest suite, ESLint with runtime-boundary enforcement. Added the &quot;Current implementation map&quot; section below.
+2026-04-17: defined selection-driven Everlink authoring, hybrid slice anchors, and fail-closed anchor-resolution states for future implementation passes.
+2026-04-17: added folders, generic documents, anchored outline nodes, and a future text-transfer provenance seam to the shared model and roadmap.
+2026-04-17: cleaned the merged planning pass, removed stale editor-choice language, and completed the MVP history architecture around event logs, step logs, checkpoints, and inline projections.
+2026-04-17: clarified entities as rule libraries plus slice libraries, made matching explicitly live and non-persistent, and added Pretext as an exploratory layout option.
+2026-04-17: locked ProseMirror in as the editor foundation after EXP-003 and EXP-004 resolved, and added the event-sourced history subsystem as a first-class architectural concern.</p>
+<h2>Current recommendation</h2>
+<p>Build Evernear as a single desktop app repo with strong source boundaries:</p>
+<ul>
+<li><code>src/main</code>: Electron app lifecycle, project open/load, window creation, IPC registration</li>
+<li><code>src/preload</code>: the narrow bridge between privileged code and the renderer</li>
+<li><code>src/renderer</code>: React UI, panel orchestration, and feature composition</li>
+<li><code>src/shared</code>: canonical domain language and cross-runtime contracts</li>
+<li><code>src/db</code>: SQLite schema direction, repositories, projections, migrations, and export logic</li>
+</ul>
+<p>This keeps the repo approachable while still giving clear seams for future extraction if the codebase earns it.</p>
+<h2>Stack baseline</h2>
+<ul>
+<li>Electron: practical desktop shell with familiar tooling and good AI/codegen support</li>
+<li>React + TypeScript + Vite: fast iteration, readable component model, clear type surfaces</li>
+<li>ProseMirror: the editor foundation; transaction <code>Mapping</code>, <code>Decoration</code>, and <code>Step</code> are load-bearing primitives for anchor healing, derived highlights, and document history</li>
+<li>SQLite: local-first storage with transactional reads and writes, append-only event and step logs, and rich querying for entity-aware workflows</li>
+<li>Pretext: worth an explicit spike before locking long-document layout and visible-range mapping strategy</li>
+</ul>
+<p>Evidence for the editor choice lives in <a href="docs/experiments/experiments-index.html#docs-experiments-resolved-exp-003-lexical-prototype-walkthrough">EXP-003</a> and <a href="docs/experiments/experiments-index.html#docs-experiments-resolved-exp-004-prosemirror-prototype-walkthrough">EXP-004</a>. The lock-in is recorded as <a href="docs/adr/adr-index.html#docs-adr-adr-005-editor-foundation-locked-to-prosemirror">ADR-005</a>. The history approach is recorded as <a href="docs/adr/adr-index.html#docs-adr-adr-006-event-sourced-document-and-metadata-history">ADR-006</a>, with proof work in <a href="docs/experiments/experiments-index.html#docs-experiments-exp-005-event-log-and-checkpoint-replay">EXP-005</a> and <a href="docs/experiments/experiments-index.html#docs-experiments-exp-006-pretext-layout-viability">EXP-006</a>.</p>
+<h2>Runtime boundaries</h2>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Owns</th>
+<th>Should stay out of</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>main</code></td>
+<td>app lifecycle, filesystem entrypoints, database bootstrap, window policy</td>
+<td>React UI state, editor internals</td>
+</tr>
+<tr>
+<td><code>preload</code></td>
+<td>tiny typed bridge, validation, least-privilege exposure</td>
+<td>business logic, persistence policy</td>
+</tr>
+<tr>
+<td><code>renderer</code></td>
+<td>interaction model, panels, editor host, view state</td>
+<td>raw SQL, broad filesystem access</td>
+</tr>
+<tr>
+<td><code>shared</code></td>
+<td>domain terms, DTOs, contracts, common validation rules</td>
+<td>platform-specific behavior</td>
+</tr>
+<tr>
+<td><code>db</code></td>
+<td>schema, logs, projections, repositories, migrations, export/import mechanics</td>
+<td>UI composition, renderer-driven state</td>
+</tr>
+</tbody>
+</table>
+<h2>Domain vocabulary</h2>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Meaning now</th>
+<th>Likely stable fields later</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Project</code></td>
+<td>local story workspace</td>
+<td>id, name, path, preferences, timestamps</td>
+</tr>
+<tr>
+<td><code>DocumentFolder</code></td>
+<td>lightweight organization-only container inside a project</td>
+<td>id, projectId, parentFolderId, title, ordering, timestamps</td>
+</tr>
+<tr>
+<td><code>Document</code></td>
+<td>editable prose unit kept generic in the early product</td>
+<td>id, title, folderId, kind, contentFormat, contentJson, plainText, ordering</td>
+</tr>
+<tr>
+<td><code>DocumentOutlineNode</code></td>
+<td>anchored navigational marker inside one document</td>
+<td>id, documentId, role, label, anchor, ordering</td>
+</tr>
+<tr>
+<td><code>Entity</code></td>
+<td>semantic definition used to detect and resolve references in text and open related context</td>
+<td>id, name, scope, timestamps</td>
+</tr>
+<tr>
+<td><code>MatchingRule</code></td>
+<td>literal, alias, or pattern rule used by an entity to match text</td>
+<td>id, entityId, ruleType, pattern, normalization</td>
+</tr>
+<tr>
+<td><code>TextAnchor</code></td>
+<td>durable selector payload that can re-find a document range after nearby edits</td>
+<td>documentId, from, to, exact, prefix, suffix, blockPath, approxPlainTextOffset, versionSeen</td>
+</tr>
+<tr>
+<td><code>TextTransferProvenance</code></td>
+<td>future seam for copy or move operations that should preserve slice meaning across text transfers</td>
+<td>sourceDocumentId, sourceAnchor, sliceIds, transferMode, versionSeen</td>
+</tr>
+<tr>
+<td><code>Slice</code></td>
+<td>reference to a bounded piece of content or a whole document</td>
+<td>id, sourceKind, sourceId, boundaryId, label</td>
+</tr>
+<tr>
+<td><code>SliceBoundary</code></td>
+<td>reusable anchored range inside a document</td>
+<td>id, documentId, anchor, timestamps</td>
+</tr>
+<tr>
+<td><code>EntitySlice</code></td>
+<td>many-to-many association between entities and slices</td>
+<td>entityId, sliceId, ordering</td>
+</tr>
+<tr>
+<td><code>Highlight</code></td>
+<td>derived visual effect when a matching rule hits text</td>
+<td>computed from matching results, never stored</td>
+</tr>
+<tr>
+<td><code>PendingEverlinkSession</code></td>
+<td>renderer-side state for one selection-driven Everlink authoring flow</td>
+<td>sourceDocumentId, sourceSelection, selectedEntityId?, targetDocumentId?, pendingAnchor?, colorToken</td>
+</tr>
+<tr>
+<td><code>AnchorResolutionResult</code></td>
+<td>explicit result of trying to resolve a stored anchor against current text</td>
+<td>state, resolvedRange?, confidence?, repairReason?</td>
+</tr>
+<tr>
+<td><code>ProjectNavNode</code></td>
+<td>renderer-facing union used to show folder, document, or outline navigation in one tree</td>
+<td>nodeType, id, parentId, ordering, targetDocumentId</td>
+</tr>
+<tr>
+<td><code>SliceViewer</code></td>
+<td>scrollable sequence of slices for one entity</td>
+<td>shared by modal and panel surfaces</td>
+</tr>
+<tr>
+<td><code>Modal</code></td>
+<td>temporary hover preview surface</td>
+<td>shows the slice viewer and disappears on mouse exit</td>
+</tr>
+<tr>
+<td><code>Panel</code></td>
+<td>persistent expanded surface opened from a highlight</td>
+<td>can host the slice viewer and a deeper document view</td>
+</tr>
+<tr>
+<td><code>DocumentView</code></td>
+<td>full document shown from a slice inside a panel</td>
+<td>can show active or all slice boundaries</td>
+</tr>
+<tr>
+<td><code>Annotation</code></td>
+<td>low-noise personal note anchored directly to the document</td>
+<td>id, documentId, anchor, body, style, timestamps</td>
+</tr>
+<tr>
+<td><code>Panel/LayoutState</code></td>
+<td>persistent workspace state</td>
+<td>open items, pinned context, arrangement</td>
+</tr>
+</tbody>
+</table>
+<h3>History vocabulary</h3>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Meaning now</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>EventStream</code></td>
+<td>append-only sequence of domain events for an aggregate</td>
+<td>canonical truth for metadata history</td>
+</tr>
+<tr>
+<td><code>Event</code></td>
+<td>one typed semantic mutation on an aggregate</td>
+<td>examples: <code>EntityRenamed</code>, <code>BoundaryMoved</code>, <code>SliceReassigned</code></td>
+</tr>
+<tr>
+<td><code>DocumentStep</code></td>
+<td>one ProseMirror <code>Step</code> with its inverse</td>
+<td>canonical truth for document-content history</td>
+</tr>
+<tr>
+<td><code>DocumentCheckpoint</code></td>
+<td>full document snapshot at a given version</td>
+<td>stored in <code>document_checkpoints</code> as a replay base</td>
+</tr>
+<tr>
+<td><code>Projection</code></td>
+<td>current-state table materialized from logs and checkpoints</td>
+<td>convenience for queries, never the truth</td>
+</tr>
+<tr>
+<td><code>Timeline</code></td>
+<td>unified chronological view of events and document steps</td>
+<td>long-term writer-facing narrative of what changed when</td>
+</tr>
+</tbody>
+</table>
+<h2>Current implementation map</h2>
+<p>Where the domain concepts live in the code right now. Update this section whenever a concept moves or a new aggregate gets its own file.</p>
+<table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>File(s)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Canonical domain types</td>
+<td><a href="src/shared/domain/workspace.ts">src/shared/domain/workspace.ts</a>, <a href="src/shared/domain/document.ts">src/shared/domain/document.ts</a></td>
+</tr>
+<tr>
+<td>Anchor math (ProseMirror-facing)</td>
+<td><a href="src/shared/anchoring.ts">src/shared/anchoring.ts</a></td>
+</tr>
+<tr>
+<td>IPC channel constants + <code>HarnessBridge</code></td>
+<td><a href="src/shared/contracts/harnessApi.ts">src/shared/contracts/harnessApi.ts</a></td>
+</tr>
+<tr>
+<td>Runtime input validation (Zod schemas)</td>
+<td><a href="src/shared/contracts/harnessSchemas.ts">src/shared/contracts/harnessSchemas.ts</a></td>
+</tr>
+<tr>
+<td>Event type catalog</td>
+<td><a href="src/db/events.ts">src/db/events.ts</a></td>
+</tr>
+<tr>
+<td>SQLite bootstrap + transaction API</td>
+<td><a href="src/db/sqliteHarness.ts">src/db/sqliteHarness.ts</a></td>
+</tr>
+<tr>
+<td>Schema migrations (<code>user_version</code>-driven)</td>
+<td><a href="src/db/migrations.ts">src/db/migrations.ts</a></td>
+</tr>
+<tr>
+<td>Row-shape decoders</td>
+<td><a href="src/db/rowTypes.ts">src/db/rowTypes.ts</a>, <a href="src/db/rowMappers.ts">src/db/rowMappers.ts</a></td>
+</tr>
+<tr>
+<td>DB utility helpers</td>
+<td><a href="src/db/utils.ts">src/db/utils.ts</a></td>
+</tr>
+<tr>
+<td>Project aggregate</td>
+<td><a href="src/db/repositories/ProjectRepository.ts">src/db/repositories/ProjectRepository.ts</a></td>
+</tr>
+<tr>
+<td>Folder aggregate</td>
+<td><a href="src/db/repositories/FolderRepository.ts">src/db/repositories/FolderRepository.ts</a></td>
+</tr>
+<tr>
+<td>Document aggregate</td>
+<td><a href="src/db/repositories/DocumentRepository.ts">src/db/repositories/DocumentRepository.ts</a></td>
+</tr>
+<tr>
+<td>Entity + MatchingRule aggregate</td>
+<td><a href="src/db/repositories/EntityRepository.ts">src/db/repositories/EntityRepository.ts</a></td>
+</tr>
+<tr>
+<td>Slice + SliceBoundary + EntitySlice</td>
+<td><a href="src/db/repositories/SliceRepository.ts">src/db/repositories/SliceRepository.ts</a></td>
+</tr>
+<tr>
+<td>History (events, step log, checkpoints, replay)</td>
+<td><a href="src/db/repositories/HistoryRepository.ts">src/db/repositories/HistoryRepository.ts</a></td>
+</tr>
+<tr>
+<td>Workspace layout projection</td>
+<td><a href="src/db/repositories/LayoutRepository.ts">src/db/repositories/LayoutRepository.ts</a></td>
+</tr>
+<tr>
+<td>Composition facade + cross-aggregate transactions</td>
+<td><a href="src/db/repositories/WorkspaceRepository.ts">src/db/repositories/WorkspaceRepository.ts</a></td>
+</tr>
+<tr>
+<td>IPC handler registration</td>
+<td><a href="src/main/index.ts">src/main/index.ts</a></td>
+</tr>
+<tr>
+<td>Preload forwarders (context bridge)</td>
+<td><a href="src/preload/index.ts">src/preload/index.ts</a></td>
+</tr>
+<tr>
+<td>Editor host (ProseMirror view)</td>
+<td><a href="src/renderer/editor/HarnessEditor.tsx">src/renderer/editor/HarnessEditor.tsx</a></td>
+</tr>
+<tr>
+<td>Renderer-side anchor + match utilities</td>
+<td><a href="src/renderer/editor/editorUtils.ts">src/renderer/editor/editorUtils.ts</a></td>
+</tr>
+<tr>
+<td>Workspace persistence coordinator</td>
+<td><a href="src/renderer/state/useWorkspace.ts">src/renderer/state/useWorkspace.ts</a></td>
+</tr>
+<tr>
+<td>Mutation handlers facade (composes the per-aggregate hooks)</td>
+<td><a href="src/renderer/state/useWorkspaceActions.ts">src/renderer/state/useWorkspaceActions.ts</a></td>
+</tr>
+<tr>
+<td>Per-aggregate mutation hooks (project / document / entity / slice+layout)</td>
+<td><a href="src/renderer/state/useProjectActions.ts">src/renderer/state/useProjectActions.ts</a>, <a href="src/renderer/state/useDocumentActions.ts">src/renderer/state/useDocumentActions.ts</a>, <a href="src/renderer/state/useEntityActions.ts">src/renderer/state/useEntityActions.ts</a>, <a href="src/renderer/state/useSliceAndLayoutActions.ts">src/renderer/state/useSliceAndLayoutActions.ts</a></td>
+</tr>
+<tr>
+<td>Everlink session orchestration (entity / target document choice)</td>
+<td><a href="src/renderer/state/useEverlinkSession.ts">src/renderer/state/useEverlinkSession.ts</a></td>
+</tr>
+<tr>
+<td>Everlink pending-placement (in-editor range + commit)</td>
+<td><a href="src/renderer/state/usePendingPlacement.ts">src/renderer/state/usePendingPlacement.ts</a></td>
+</tr>
+<tr>
+<td>Everlink composition facade (threads session ↔ placement)</td>
+<td><a href="src/renderer/state/useEverlinkPlacement.ts">src/renderer/state/useEverlinkPlacement.ts</a></td>
+</tr>
+<tr>
+<td>Memoized id-indexed workspace lookups</td>
+<td><a href="src/renderer/state/useWorkspaceLookups.ts">src/renderer/state/useWorkspaceLookups.ts</a></td>
+</tr>
+<tr>
+<td>Editor selection state</td>
+<td><a href="src/renderer/state/useEditorSelections.ts">src/renderer/state/useEditorSelections.ts</a></td>
+</tr>
+<tr>
+<td>Short-lived UI session types (EverlinkSession, RuleFormState, HoverPreview, etc.)</td>
+<td><a href="src/renderer/state/sessionTypes.ts">src/renderer/state/sessionTypes.ts</a></td>
+</tr>
+<tr>
+<td>Feature: project top-bar switcher</td>
+<td><code>src/renderer/features/projects/TopBar.tsx</code> (historical path; no current file)</td>
+</tr>
+<tr>
+<td>Feature: document tree + project actions</td>
+<td><a href="src/renderer/features/documents/NavPanel.tsx">src/renderer/features/documents/NavPanel.tsx</a></td>
+</tr>
+<tr>
+<td>Feature: main editor pane</td>
+<td><a href="src/renderer/features/documents/EditorPane.tsx">src/renderer/features/documents/EditorPane.tsx</a></td>
+</tr>
+<tr>
+<td>Feature: entity library / detail / rules</td>
+<td><a href="src/renderer/features/entities/EntityList.tsx">src/renderer/features/entities/EntityList.tsx</a>, <a href="src/renderer/features/entities/EntityDetail.tsx">src/renderer/features/entities/EntityDetail.tsx</a>, <a href="src/renderer/features/entities/MatchingRuleEditor.tsx">src/renderer/features/entities/MatchingRuleEditor.tsx</a></td>
+</tr>
+<tr>
+<td>Feature: Everlink chooser UI</td>
+<td><a href="src/renderer/features/entities/EverlinkPanel.tsx">src/renderer/features/entities/EverlinkPanel.tsx</a></td>
+</tr>
+<tr>
+<td>Feature: pending slice placement panel</td>
+<td><a href="src/renderer/features/panes/SlicePlacementPanel.tsx">src/renderer/features/panes/SlicePlacementPanel.tsx</a></td>
+</tr>
+<tr>
+<td>Feature: slice viewer, panel-document view, hover preview</td>
+<td><a href="src/renderer/features/panes/SliceViewer.tsx">src/renderer/features/panes/SliceViewer.tsx</a>, <a href="src/renderer/features/panes/PanelDocumentView.tsx">src/renderer/features/panes/PanelDocumentView.tsx</a>, <a href="src/renderer/features/panes/HoverPreview.tsx">src/renderer/features/panes/HoverPreview.tsx</a></td>
+</tr>
+<tr>
+<td>Feature: run log</td>
+<td><a href="src/renderer/features/history/RunLog.tsx">src/renderer/features/history/RunLog.tsx</a></td>
+</tr>
+<tr>
+<td>App shell (composition only)</td>
+<td><a href="src/renderer/App.tsx">src/renderer/App.tsx</a></td>
+</tr>
+<tr>
+<td>Tests — anchor math</td>
+<td><a href="src/shared/anchoring.test.ts">src/shared/anchoring.test.ts</a></td>
+</tr>
+<tr>
+<td>Tests — repositories (event log + cascade + replay)</td>
+<td><a href="src/db/repositories/WorkspaceRepository.test.ts">src/db/repositories/WorkspaceRepository.test.ts</a>, <a href="src/db/repositories/DocumentRepository.test.ts">src/db/repositories/DocumentRepository.test.ts</a>, <a href="src/db/repositories/EntityRepository.test.ts">src/db/repositories/EntityRepository.test.ts</a>, <a href="src/db/repositories/HistoryRepository.test.ts">src/db/repositories/HistoryRepository.test.ts</a></td>
+</tr>
+<tr>
+<td>Tests — schema migrations</td>
+<td><a href="src/db/migrations.test.ts">src/db/migrations.test.ts</a></td>
+</tr>
+<tr>
+<td>Tests — IPC contract symmetry (channels ↔ bridge ↔ schemas ↔ handlers)</td>
+<td><a href="src/shared/contracts/harnessApi.test.ts">src/shared/contracts/harnessApi.test.ts</a></td>
+</tr>
+<tr>
+<td>Tests — anchor selection building</td>
+<td><a href="src/renderer/editor/editorUtils.test.ts">src/renderer/editor/editorUtils.test.ts</a></td>
+</tr>
+<tr>
+<td>Tests — clipboard prose-only invariant</td>
+<td><a href="src/renderer/editor/HarnessEditor.test.ts">src/renderer/editor/HarnessEditor.test.ts</a></td>
+</tr>
+</tbody>
+</table>
+<h2>Data and storage stance</h2>
+<p>SQLite is the canonical runtime store.
+The current best-fit project shape is a local project directory that contains at least:</p>
+<ul>
+<li>a SQLite database for structured project data, append-only event and step logs, and document checkpoints</li>
+<li>optional adjacent asset or export material</li>
+<li>a first-class export path so the author is never trapped in an opaque container, and that path carries history</li>
+</ul>
+<p>The database owns a <strong>log-first model</strong> for working truth. Every mutation is appended to the domain event log or the ProseMirror step log, or both, before projections are updated. MVP history writes are append-then-project inside one SQLite transaction. Current-state tables for document folders, documents, entities, matching rules, entity-slice links, slices, slice boundaries, annotations, and layout state are <strong>projections</strong> of those logs plus document checkpoints, and they must be rebuildable from scratch.</p>
+<p>Document rows keep the shape established by ADR-003, plus the lightweight organization metadata the writing workspace needs:</p>
+<ul>
+<li><code>folderId</code> links a document into the project tree</li>
+<li><code>ordering</code> is stable within its folder</li>
+<li><code>kind</code> stays generic in the first build and must not quietly become a behavior switch</li>
+<li><code>contentFormat</code> identifies the editor schema family</li>
+<li><code>contentSchemaVersion</code> identifies the stored snapshot version</li>
+<li><code>contentJson</code> stores the canonical structured document snapshot</li>
+<li><code>plainText</code> stores the denormalized text projection used by matching, search, export, and other non-editor helpers</li>
+</ul>
+<p>The <code>documents</code> row is the head current-state projection for a document. Historical replay bases live in <code>document_checkpoints</code>. Opening a document at any version uses the nearest checkpoint plus forward <code>Step</code> replay.
+<code>DocumentFolder</code> records define a lightweight tree for project organization; the renderer can expose that tree as a <code>ProjectNavNode</code> union without mirroring filesystem folders. <code>DocumentOutlineNode</code> records land later as anchored metadata inside a document and should reuse <code>TextAnchor</code> rather than inventing a second navigation-position system.</p>
+<p>Highlights stay derived from document text plus matching results rather than becoming stored records.
+Matches never become stored or precomputed document records.
+Slice boundaries stay reusable records rather than being hidden inside slice blobs.
+Slice boundaries and annotations share the same <code>TextAnchor</code> payload shape even if they live in different tables.
+Slice boundaries persist one range anchor each. Truth does not get split into separate line-number start and end markers.
+Regex belongs to entity matching. Slice repair and preview resolution should use exact text plus context, with fail-closed ambiguity handling rather than raw regex replay.</p>
+<p>Every semantic anchor mutation records the anchor payload together with <code>documentVersionSeen</code>. Historical reconstruction starts from the latest anchor event at or before the target version, then maps forward through document steps. If mapping collapses or deletes the range, the current anchor state becomes invalid rather than being silently healed.</p>
+<p>Portability is not optional, so export and package behavior must carry logs and checkpoints, not just the current projection.
+Editor-only decorations must never pollute clipboard output or plain-text export. A full-document copy should yield clean prose, not entity markup, slice chrome, or annotation affordances.
+Future slice-aware text transfer can hang off <code>TextTransferProvenance</code>, but the normal document snapshot model must not depend on that future feature before it exists.</p>
+<h2>Editor strategy</h2>
+<ul>
+<li>Use ProseMirror as the editor foundation. Do not treat this as provisional.</li>
+<li>Keep semantic behavior composable: matching, derived highlighting, modal preview, panel open, document view, boundary editing, and annotation rendering stay separable concerns.</li>
+<li>Treat ProseMirror's <code>Decoration</code> API as the home for derived highlights and quiet annotation underlines; neither is persisted inside the document.</li>
+<li>Treat ProseMirror's <code>Step</code> and <code>Mapping</code> as the document-content primitives for both live anchor migration and the history layer.</li>
+<li>Let editor selection affordances bootstrap entity-and-slice authoring through <code>Everlink it!</code> without storing hyperlink markup in the manuscript.</li>
+<li>Keep target-document placement and pending-slice editing inside persistent panel document view rather than hover modals.</li>
+<li>Let slice boundaries and annotations share one anchor-healing substrate.</li>
+<li>Let future outline navigation reuse that same anchor substrate rather than inventing a separate heading-position model.</li>
+<li>Live-calculate matches from visible text when highlighting is enabled rather than precomputing whole-document match sets.</li>
+<li>Allow authors to disable live matching and highlighting while writing.</li>
+<li>Explore Pretext before locking the long-document layout and visible-range mapping design, especially for document view or virtualized reading surfaces.</li>
+<li>Avoid pushing database or IPC details into editor plugins.</li>
+<li>Keep editor decorations and chrome out of the clipboard path so <code>Ctrl+A</code> and <code>Ctrl+C</code> remain trustworthy.</li>
+<li>Prefer a renderer shell where the editor receives domain results and renders them, rather than embedding persistence logic inside editor code.</li>
+<li>Modal and panel are different views over the same slice-viewer data rather than separate product models.</li>
+<li>The editor is the source of truth for emitting <code>DocumentStep</code> records into the step log, but it does not own how they are persisted.</li>
+</ul>
+<h2>Key technical tradeoffs</h2>
+<ul>
+<li>SQLite-first storage simplifies querying and consistency, but raises the bar for transparent export, and export must include logs and checkpoints rather than just current state.</li>
+<li>A single-app repo is simpler now, but shared code must stay clean enough that extraction would still be possible later.</li>
+<li>ProseMirror asks for more upfront schema and plugin discipline, but its transaction mapping, decoration model, and <code>Step</code> primitive line up directly with Evernear's anchored-range problems.</li>
+<li>Full snapshot persistence remains simpler and safer than pure delta-stream storage for current state, and the history layer reuses those snapshots as checkpoints rather than competing with them.</li>
+<li>A lightweight tree of folders plus generic documents keeps organization useful without pretending to be binder software, but it also means semantic meaning must stay clearly separate from navigation structure.</li>
+<li>Live visible-range matching keeps the product honest to the desired interaction model, but it makes layout and invalidation strategy as important as raw regex throughput.</li>
+<li>Persistent panels are part of the core product loop, so layout state belongs in the early architecture even if advanced windowing does not.</li>
+<li>Event sourcing makes history honest and projections rebuildable, but every mutation path must write log and projection atomically, and projection rebuild logic must be maintained.</li>
+</ul>
+<h2>Future considerations</h2>
+<ul>
+<li>The exact acceptance thresholds for anchor healing under live edits.</li>
+<li>Matching normalization rules, visible-range invalidation, and author-controlled highlight toggles.</li>
+<li>How internal outline nodes are authored, displayed, and reordered once anchored document navigation lands.</li>
+<li>How <code>All Slices</code> mode, overlap visualization, and boundary merge or link should behave.</li>
+<li>How <code>TextTransferProvenance</code> should serialize once slice-aware copy or move is implemented.</li>
+<li>Whether project export should be plain-text-first, bundle-first, or dual-mode, and how logs and checkpoints serialize in each.</li>
+<li>The shape of the writer-facing timeline UI once the restore-first MVP surface is proven.</li>
+<li>Checkpoint cadence beyond every explicit save, and whether writers can name checkpoints directly.</li>
+<li>Whether Pretext materially improves long-document layout and viewport tracking enough to change the current rendering approach.</li>
+</ul>
+<h2>Decided</h2>
+<ul>
+<li>Single desktop app repo with clear source boundaries.</li>
+<li>Narrow preload API and limited IPC surface.</li>
+<li>SQLite-first project storage with a mandatory ownership and export story that includes history.</li>
+<li>React renderer and ProseMirror editor foundation.</li>
+<li>The first organization model is a lightweight tree of folders plus generic documents.</li>
+<li>Documents persist as full JSON snapshots plus a plain-text projection.</li>
+<li>Organization is orthogonal to entity semantics.</li>
+<li>Document outline nodes are anchored navigation metadata later, not separate documents and not an early document taxonomy.</li>
+<li>The <code>documents</code> row is current state; <code>document_checkpoints</code> stores historical replay bases.</li>
+<li>Entities are semantic definitions, not visual objects.</li>
+<li>Matches are live-calculated and never stored or precomputed as document truth.</li>
+<li>Highlights are derived, not stored.</li>
+<li>Clean copy out must not leak decorations or editor chrome.</li>
+<li>History is event-sourced. The domain event log and the ProseMirror step log are canonical; current-state tables are projections.</li>
+<li>MVP history writes append then project inline inside one SQLite transaction.</li>
+<li>The first writer-visible history surface can be a minimal restore-previous-version action after the truthful MVP.</li>
+<li>Branching as a product feature, merge, conflict resolution, and collaboration are out of scope.</li>
+</ul>
+<h2>Open</h2>
+<ul>
+<li>Exact project folder and package format, and how logs plus checkpoints serialize on export.</li>
+<li>Exact first tree interaction model for folders, documents, and later outline nodes.</li>
+<li>Exact state-management approach inside the renderer.</li>
+<li>Exact migration tooling and schema evolution conventions, including event payload versioning.</li>
+<li>Exact <code>TextAnchor</code> representation in ProseMirror position space under unusual edits.</li>
+<li>Exact repair ranking and UI behavior when <code>AnchorResolutionResult</code> is <code>ambiguous</code> or <code>invalid</code>.</li>
+<li>Exact <code>TextTransferProvenance</code> payload shape once slice-aware transfer lands.</li>
+<li>Whether to use TipTap or raw ProseMirror at the React seam.</li>
+<li>Checkpoint cadence and named-checkpoint UX.</li>
+<li>Exact annotation-style preference surface for authors.</li>
+<li>Whether Pretext belongs only in document view or changes the primary long-document rendering strategy.</li>
+</ul>
+<h2>Deferred</h2>
+<ul>
+<li>Binder-style manuscript tooling beyond the lightweight tree the first workflow needs.</li>
+<li>Multi-window sophistication beyond what the core workflow requires.</li>
+<li>Search and analytics features beyond immediate re-entry value.</li>
+<li>Graph-style relationship visualization beyond what the core workflow requires.</li>
+<li>Slice-preserving <code>Move Slice</code> behavior until anchor, provenance, and history rules are proven.</li>
+<li>A full scrubbable timeline UI beyond the initial restore-first surface.</li>
+<li>Visible branching UX.</li>
+<li>Any collaboration, CRDT, or merge functionality.</li>
+</ul>
+</div>
+</article><!-- /for-human-code-doc -->
+</main>
+<p class="footer">Generated from repo-authored Markdown during the HTML documentation migration. AGENT.md and CLAUDE.md remain Markdown bootstrap files by design.</p>
+</div>
+</body>
+</html>

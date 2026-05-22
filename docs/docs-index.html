@@ -1,0 +1,790 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Docs Index | Evernear</title>
+  <style>:root {
+  color-scheme: light;
+  --bg: #f7f7f4;
+  --paper: #ffffff;
+  --ink: #1f2328;
+  --muted: #606a75;
+  --line: #d8ddd8;
+  --soft: #eef1ed;
+  --accent: #2563eb;
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, white);
+  --accent-line: color-mix(in srgb, var(--accent) 32%, #d8ddd8);
+  --code-bg: #151b23;
+  --code-ink: #f1f5f9;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--ink); line-height: 1.55; }
+a { color: var(--accent); text-decoration-thickness: 0.08em; text-underline-offset: 0.18em; }
+.doc-shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 56px; }
+.doc-hero { border: 1px solid var(--accent-line); background: linear-gradient(135deg, var(--paper), var(--accent-soft)); border-radius: 8px; padding: 26px; }
+.eyebrow { margin: 0 0 8px; color: var(--accent); font-weight: 800; text-transform: uppercase; letter-spacing: 0; font-size: 0.78rem; }
+h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-spacing: 0; overflow-wrap: anywhere; }
+.subtitle { margin: 14px 0 0; max-width: 820px; color: var(--muted); font-size: 1.04rem; }
+.meta-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 20px; }
+.meta-card { border: 1px solid var(--line); background: rgba(255,255,255,0.7); border-radius: 8px; padding: 12px; min-width: 0; }
+.meta-card strong { display: block; font-size: 0.76rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0; }
+.meta-card span, .meta-card a { display: block; margin-top: 3px; font-weight: 700; overflow-wrap: anywhere; }
+.context-index { margin: 18px 0; border: 1px solid var(--line); background: var(--paper); border-radius: 8px; overflow: hidden; }
+.context-index header { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 14px 16px; background: var(--soft); border-bottom: 1px solid var(--line); }
+.context-index h2 { margin: 0; font-size: 1rem; }
+.context-index p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+.index-grid { display: grid; grid-template-columns: minmax(180px, 0.9fr) minmax(150px, 0.6fr) minmax(260px, 1.7fr); }
+.index-row { display: contents; color: inherit; text-decoration: none; }
+.index-row > div { padding: 10px 14px; border-top: 1px solid var(--line); min-width: 0; }
+.index-row:first-child > div { border-top: 0; }
+.index-range { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 0.86rem; color: var(--accent); white-space: nowrap; }
+.source-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.source-pill { border: 1px solid var(--accent-line); background: var(--accent-soft); color: var(--ink); border-radius: 999px; padding: 5px 9px; font-size: 0.82rem; font-weight: 700; }
+.doc-source, .map-section { margin-top: 18px; border: 1px solid var(--line); background: var(--paper); border-radius: 8px; overflow: clip; }
+.source-header, .section-header { padding: 16px 18px; border-bottom: 1px solid var(--line); background: #fbfbf9; }
+.source-header h2, .section-header h2 { margin: 3px 0 0; font-size: 1.35rem; letter-spacing: 0; overflow-wrap: anywhere; }
+.source-header p, .section-header p { margin: 0; color: var(--muted); }
+.source-path { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 0.78rem; color: var(--muted); overflow-wrap: anywhere; }
+.md-content { padding: 18px; }
+.md-content h1 { font-size: 2rem; line-height: 1.08; margin: 0 0 14px; overflow-wrap: anywhere; }
+.md-content h2 { margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 1.25rem; overflow-wrap: anywhere; }
+.md-content h3 { margin-top: 20px; font-size: 1.06rem; overflow-wrap: anywhere; }
+.md-content p, .md-content ul, .md-content ol { max-width: 86ch; }
+.md-content table, .dense-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.94rem; }
+.md-content th, .md-content td, .dense-table th, .dense-table td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+.md-content th, .dense-table th { background: var(--soft); color: #30363d; }
+.md-content code:not(pre code) { background: var(--soft); border: 1px solid var(--line); border-radius: 5px; padding: 0.08rem 0.28rem; font-size: 0.9em; }
+.md-content pre, pre.code-block { background: var(--code-bg); color: var(--code-ink); border-radius: 8px; overflow: auto; padding: 14px; }
+.md-content pre code { color: inherit; background: transparent; border: 0; padding: 0; }
+.compact-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
+.compact-card { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 12px; min-width: 0; }
+.compact-card h3 { margin: 0 0 6px; font-size: 1rem; }
+.compact-card p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+.flow-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
+.flow-step { position: relative; border: 1px solid var(--accent-line); background: var(--accent-soft); border-radius: 8px; padding: 12px; min-height: 120px; overflow-wrap: anywhere; }
+.flow-step strong { display: block; margin-bottom: 6px; }
+.flow-step span { color: var(--muted); font-size: 0.9rem; }
+.badge-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.badge { border: 1px solid var(--line); border-radius: 999px; padding: 5px 8px; background: var(--soft); font-size: 0.82rem; font-weight: 700; }
+.mermaidless-map { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
+.entity-node { border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 8px; padding: 12px; background: #fff; }
+.entity-node strong { display: block; }
+.entity-node span { display: block; color: var(--muted); font-size: 0.88rem; margin-top: 4px; }
+.note { border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 12px 14px; border-radius: 0 8px 8px 0; }
+.footer { margin-top: 22px; color: var(--muted); font-size: 0.88rem; }
+@media (max-width: 860px) {
+  .doc-shell { width: min(100% - 20px, 1180px); padding-top: 12px; }
+  .doc-hero { padding: 18px; }
+  .meta-grid, .compact-grid, .flow-grid, .mermaidless-map { grid-template-columns: 1fr; }
+  .index-grid { grid-template-columns: 1fr; }
+  .index-row > div { border-top: 0; padding: 6px 14px; }
+  .index-row { display: block; border-top: 1px solid var(--line); padding: 8px 0; }
+  .context-index header { display: block; }
+  .md-content { padding: 14px; overflow-x: auto; }
+}</style>
+</head>
+<body style="--accent: #be123c;">
+<div class="doc-shell">
+<header class="doc-hero">
+<p class="eyebrow">Evernear HTML documentation</p>
+<h1>Docs Index</h1>
+<p class="subtitle">Cross-cutting docs, glossary, feature briefs, and phase retrospectives in one navigable file.</p>
+<div class="meta-grid">
+<div class="meta-card"><strong>Audience</strong><span>Agents deciding which durable planning slice to ingest; humans reviewing project history.</span></div>
+<div class="meta-card"><strong>Format</strong><span>Consolidated HTML, browser-openable</span></div>
+<div class="meta-card"><strong>Agent Use</strong><span>Use the line ranges below before ingesting whole files.</span></div>
+</div>
+<div class="source-list">
+<span class="source-pill">docs/README.md</span>
+<span class="source-pill">docs/glossary/README.md</span>
+<span class="source-pill">docs/FB-001-selection-driven-everlink.md</span>
+<span class="source-pill">docs/FB-002-everslice-add-to-entity.md</span>
+<span class="source-pill">docs/PHASE-1-INITIAL-MVP.md</span>
+<span class="source-pill">docs/PHASE-1-GATE-RETROSPECTIVE.md</span>
+<span class="source-pill">docs/PHASE-1.5-FOUNDATION-HARDENING.md</span>
+</div>
+</header>
+<nav class="context-index" aria-label="Agent Context Index">
+<header><h2>Agent Context Index</h2><p>Line ranges point into this HTML file.</p></header>
+<div class="index-grid">
+<a class="index-row" href="#docs-readme"><div><strong>Docs Folder Orientation</strong></div><div class="index-range">L123-L177</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#docs-glossary-readme"><div><strong>Glossary</strong></div><div class="index-range">L178-L415</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#docs-fb-001-selection-driven-everlink"><div><strong>FB-001 Selection-Driven Everlink</strong></div><div class="index-range">L416-L474</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#docs-fb-002-everslice-add-to-entity"><div><strong>FB-002 Everslice Add To Entity</strong></div><div class="index-range">L475-L546</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#docs-phase-1-initial-mvp"><div><strong>Phase 1 Initial MVP</strong></div><div class="index-range">L547-L697</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#docs-phase-1-gate-retrospective"><div><strong>Phase 1 Gate Retrospective</strong></div><div class="index-range">L698-L737</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#docs-phase-1-5-foundation-hardening"><div><strong>Phase 1.5 Foundation Hardening</strong></div><div class="index-range">L738-L785</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+</div>
+</nav>
+<main>
+<article id="docs-readme" class="doc-source" data-source="docs/README.md">
+<header class="source-header">
+<p class="source-path">Former source: docs/README.md</p>
+<h2>Docs Folder Orientation</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>Docs</h1>
+<h2>Status</h2>
+<p>MVP now</p>
+<h2>If you landed here first</h2>
+<p>Start with <a href="../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a>, <a href="../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a>, and <a href="../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a>. This folder is for durable cross-cutting documentation that should outlive any one implementation pass.</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a></li>
+<li><a href="../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a></li>
+</ul>
+<h2>Owns</h2>
+<ul>
+<li>Cross-cutting documentation that is not best owned by a source folder.</li>
+<li>Durable feature briefs for workflows that would otherwise get reinvented during implementation.</li>
+<li>ADRs and other long-lived decision history.</li>
+<li>The shared glossary for product and architecture language.</li>
+<li>Experiments that are important enough to gate later phases.</li>
+<li>Reusable documentation templates.</li>
+</ul>
+<h2>Does not own</h2>
+<ul>
+<li>Source-folder runtime boundaries.</li>
+<li>Product logic by itself.</li>
+</ul>
+<h2>Key relationships</h2>
+<ul>
+<li><code>adr</code> stores the most durable architecture decisions.</li>
+<li><code>experiments</code> stores the load-bearing proof work.</li>
+<li>top-level <code>FB-*</code> docs capture workflow-specific decisions that are more detailed than the north-star docs but not durable enough to become ADRs</li>
+<li><code>glossary</code> stores the canonical terminology that the rest of the repo should reuse directly.</li>
+<li><code>templates</code> stores reusable doc starting points for future passes.</li>
+</ul>
+<h2>Decided</h2>
+<ul>
+<li>Important decisions should be easy to find without hunting through narrative docs.</li>
+<li>Hard rewrite risks should be visible before implementation momentum hides them.</li>
+</ul>
+<h2>Open</h2>
+<ul>
+<li>Whether <code>open-questions</code> needs its own cross-cutting folder or should remain near the code areas that surface those questions.</li>
+</ul>
+<h2>Deferred</h2>
+<ul>
+<li>A larger documentation taxonomy until the codebase earns it.</li>
+</ul>
+</div>
+</article><!-- /docs-readme -->
+<article id="docs-glossary-readme" class="doc-source" data-source="docs/glossary/README.md">
+<header class="source-header">
+<p class="source-path">Former source: docs/glossary/README.md</p>
+<h2>Glossary</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>Glossary</h1>
+<h2>Status</h2>
+<p>MVP now</p>
+<h2>If you landed here first</h2>
+<p>Read <a href="../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a> and <a href="../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a> first. This file is the canonical language for how Evernear talks about the product model and its core UI surfaces.</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a></li>
+<li><a href="../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+</ul>
+<h2>Organization terms</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Project</code></td>
+<td>one local writing workspace</td>
+<td>contains organization, prose, entities, and history</td>
+</tr>
+<tr>
+<td><code>DocumentFolder</code></td>
+<td>lightweight container that organizes documents in a project tree</td>
+<td>organization-only, not a semantic category</td>
+</tr>
+<tr>
+<td><code>Document</code></td>
+<td>editable prose unit</td>
+<td>stays generic early rather than splitting into behavior-heavy kinds</td>
+</tr>
+<tr>
+<td><code>DocumentOutlineNode</code></td>
+<td>anchored navigational marker inside a document</td>
+<td>can later represent <code>book</code>, <code>part</code>, <code>chapter</code>, <code>section</code>, or custom stops</td>
+</tr>
+<tr>
+<td><code>ProjectNavNode</code></td>
+<td>renderer-facing tree item for folder, document, or outline navigation</td>
+<td>derived from stored records rather than stored separately</td>
+</tr>
+</tbody>
+</table>
+<h2>Core terms</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Entity</code></td>
+<td>first-class semantic definition used to detect and resolve references in text</td>
+<td>owns a list of matching rules and a slice library; it is not visual</td>
+</tr>
+<tr>
+<td><code>MatchingRule</code></td>
+<td>one item in an entity's match list</td>
+<td>may be literal, alias-based, or pattern-based</td>
+</tr>
+<tr>
+<td><code>TextAnchor</code></td>
+<td>durable selector payload for a range inside a document</td>
+<td>shared substrate for slice boundaries and annotations; stores exact text, local context, and optional coarse jump hints rather than line-number truth</td>
+</tr>
+<tr>
+<td><code>TextTransferProvenance</code></td>
+<td>future payload for copy or move operations that should preserve slice meaning</td>
+<td>not required for ordinary clipboard use</td>
+</tr>
+<tr>
+<td><code>Slice</code></td>
+<td>reference to a bounded piece of content</td>
+<td>can point to part of a document, a whole document, or later a non-text asset</td>
+</tr>
+<tr>
+<td><code>SliceBoundary</code></td>
+<td>reusable anchored range inside a document</td>
+<td>multiple slices may share one boundary</td>
+</tr>
+<tr>
+<td><code>Annotation</code></td>
+<td>low-noise personal note anchored directly to the main document</td>
+<td>conceptually a direct anchored span, not a collaborative comment thread</td>
+</tr>
+<tr>
+<td><code>Highlight</code></td>
+<td>derived visual effect produced when a matching rule hits text</td>
+<td>computed, never stored</td>
+</tr>
+<tr>
+<td><code>PendingEverlinkSession</code></td>
+<td>temporary authoring state that carries a selection-driven Everlink flow</td>
+<td>holds source selection, chosen entity, target document, pending range, and temporary visual styling</td>
+</tr>
+<tr>
+<td><code>AnchorResolutionResult</code></td>
+<td>explicit outcome of trying to resolve a stored anchor against current text</td>
+<td>should fail closed as <code>ambiguous</code> or <code>invalid</code> rather than jump to the wrong place</td>
+</tr>
+</tbody>
+</table>
+<h2>UI surfaces</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SliceViewer</code></td>
+<td>scrollable sequence of slices associated with an entity</td>
+<td>reused in both hover and persistent views</td>
+</tr>
+<tr>
+<td><code>Modal</code></td>
+<td>temporary hover preview surface</td>
+<td>shows the slice viewer and disappears on mouse exit</td>
+</tr>
+<tr>
+<td><code>Panel</code></td>
+<td>persistent expanded surface opened from a highlight</td>
+<td>contains the slice viewer and deeper navigation</td>
+</tr>
+<tr>
+<td><code>DocumentView</code></td>
+<td>full document opened from a slice inside a panel</td>
+<td>shows the active slice boundary and may show all slice boundaries</td>
+</tr>
+<tr>
+<td><code>Everlink it!</code></td>
+<td>selection-driven authoring entry point for creating or extending an entity and placing a related slice</td>
+<td>bootstraps semantic truth from a selection without storing manuscript hyperlink markup</td>
+</tr>
+</tbody>
+</table>
+<h2>Boundary language</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AnchorHealing</code></td>
+<td>process that maps or re-resolves a <code>TextAnchor</code> after edits</td>
+<td>mapping first, then exact-text plus context repair if needed</td>
+</tr>
+<tr>
+<td><code>VerticalBoundaries</code></td>
+<td>subtle left/right indicators for a slice's horizontal extent</td>
+<td>persist while viewing a slice</td>
+</tr>
+<tr>
+<td><code>HorizontalBoundaries</code></td>
+<td>prominent top/bottom indicators for slice start and end</td>
+<td>define exact slice limits</td>
+</tr>
+<tr>
+<td><code>BoundaryEditing</code></td>
+<td>changing a slice boundary by dragging handles or typing within the slice</td>
+<td>edits inside bounds auto-expand the boundary</td>
+</tr>
+<tr>
+<td><code>AllSlicesToggle</code></td>
+<td>mode that reveals every slice boundary in the current document</td>
+<td>supports overlap inspection and alignment work</td>
+</tr>
+<tr>
+<td><code>SliceOverlap</code></td>
+<td>overlapping slice regions in one document</td>
+<td>visualized with multiple boundary sets</td>
+</tr>
+<tr>
+<td><code>BoundaryMergeOrLink</code></td>
+<td>operation that makes multiple slices share one boundary</td>
+<td>future edits then affect all linked slices</td>
+</tr>
+</tbody>
+</table>
+<h2>Future-facing terms</h2>
+<table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Meaning</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>EntityExplorer</code></td>
+<td>management UI for entities and their slices</td>
+<td>supports grouping, inspection, and editing</td>
+</tr>
+<tr>
+<td><code>Graph</code></td>
+<td>future visualization of relationships between entities</td>
+<td>not required for MVP</td>
+</tr>
+</tbody>
+</table>
+<h2>Key principles</h2>
+<ul>
+<li>Organization is orthogonal to entity semantics.</li>
+<li>Entities define meaning, not visuals.</li>
+<li>Matches are live-derived, never precomputed as stored document truth.</li>
+<li>Regex belongs to matching rules, not slice repair.</li>
+<li>Slices define context, not ownership.</li>
+<li>Boundaries are reusable, not implicit.</li>
+<li>Slice boundaries and annotations share the same anchor substrate.</li>
+<li>Outline nodes should reuse that anchor substrate when they land.</li>
+<li>Highlights are derived, never stored.</li>
+<li>Copying text out should not leak editor-only artifacts.</li>
+<li>Modal and panel are different views over the same underlying data.</li>
+</ul>
+</div>
+</article><!-- /docs-glossary-readme -->
+<article id="docs-fb-001-selection-driven-everlink" class="doc-source" data-source="docs/FB-001-selection-driven-everlink.md">
+<header class="source-header">
+<p class="source-path">Former source: docs/FB-001-selection-driven-everlink.md</p>
+<h2>FB-001 Selection-Driven Everlink</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>Feature Brief: Selection-Driven Everlink</h1>
+<h2>Status</h2>
+<p>Implemented — lives in <a href="../src/renderer/state/useEverlinkSession.ts">useEverlinkSession</a>, <a href="../src/renderer/state/usePendingPlacement.ts">usePendingPlacement</a>, <a href="../src/renderer/state/useEverlinkPlacement.ts">useEverlinkPlacement</a>, and <a href="../src/renderer/features/entities/EverlinkPanel.tsx">EverlinkPanel</a> + <a href="../src/renderer/features/panes/SlicePlacementPanel.tsx">SlicePlacementPanel</a>. Still pending real-manuscript adversarial pass.</p>
+<h2>Date</h2>
+<p>2026-04-17, last reviewed 2026-04-19</p>
+<h2>Problem</h2>
+<p>Entity and slice authoring is too detached from the moment a writer notices a new person, place, or concept in story text.
+If authors have to leave the writing flow to create an entity, choose a lore document, make a slice, and define boundaries manually, the feature turns into bookkeeping instead of re-entry help.</p>
+<h2>Desired outcome</h2>
+<p>Writers can select text in a story document, create or extend the right entity, place the related slice inside a lore document from a persistent panel, and trust that the slice keeps resolving after later edits or even a full re-paste.</p>
+<h2>Core flow</h2>
+<ol>
+<li>The writer selects text in a story document. If the exact selection already resolves to a linked entity, the affordance reads <code>Edit Everlink</code>; otherwise it reads <code>Everlink it!</code>.</li>
+<li>The chooser opens with the selected text prefilled, offers explicit attach-to-existing-entity behavior, shows recent target documents, and allows creating a new generic document.</li>
+<li>After the target document is chosen, a persistent panel <code>DocumentView</code> opens. The first click creates a pending collapsed slice with temporary colored rails so the author can see where the slice will live.</li>
+<li>Typing or pasting inside that pending slice expands its range live. If the pending slice is still empty on commit or blur, the original selected text is inserted automatically and becomes the initial slice contents.</li>
+<li>Later hover preview stays read-only and quick. Slice resolution maps the stored anchor forward first, then repairs by exact text plus context if needed, and surfaces repair instead of wrong lore when the match is ambiguous or gone.</li>
+</ol>
+<h2>Data and model touchpoints</h2>
+<ul>
+<li><code>Entity</code>, <code>MatchingRule</code>, <code>Slice</code>, <code>SliceBoundary</code>, and <code>TextAnchor</code></li>
+<li><code>PendingEverlinkSession</code> for source selection, chosen entity, target document, pending range, and temporary visual state</li>
+<li><code>AnchorResolutionResult</code> with explicit <code>resolved</code>, <code>ambiguous</code>, and <code>invalid</code> outcomes</li>
+<li>append-only history events for entity creation or update, matching-rule changes, slice creation, slice-boundary creation or update, and entity-slice linking</li>
+<li>a single range-style <code>TextAnchor</code> carrying <code>documentId</code>, <code>from</code>, <code>to</code>, <code>exact</code>, <code>prefix</code>, <code>suffix</code>, <code>blockPath</code>, <code>versionSeen</code>, and optional <code>approxPlainTextOffset</code></li>
+</ul>
+<h2>UI surfaces</h2>
+<ul>
+<li>selection affordance inside the story editor</li>
+<li>lightweight chooser for entity and target-document decisions</li>
+<li>persistent panel <code>DocumentView</code> for target placement and boundary-aware editing</li>
+<li>hover modal for read-only slice preview</li>
+<li>repair or warning surface when anchor resolution is <code>ambiguous</code> or <code>invalid</code></li>
+</ul>
+<h2>Risks</h2>
+<ul>
+<li>The flow could drift toward wiki-style manual linking if manuscript markup ever becomes the truth.</li>
+<li>Duplicate lore text could make repair jump to the wrong place unless anchor resolution fails closed.</li>
+<li>Panel-based placement could feel too disruptive if it steals focus from the story document more than necessary.</li>
+<li>Expanding an existing entity's match scope from selection must stay explicit so aliases or plurals do not silently overmatch.</li>
+</ul>
+<h2>Proof</h2>
+<ul>
+<li>Exact already-linked selections show <code>Edit Everlink</code>, while net-new selections show <code>Everlink it!</code>.</li>
+<li>Explicit attach-to-existing-entity expands matching rules instead of creating a hidden one-off link.</li>
+<li>Pending slice rails appear on first click in the target document and track typing, paste, deletion, and multiline edits.</li>
+<li>Empty pending slices auto-fill from the source selection only on commit or blur.</li>
+<li>Normal edits heal through mapping alone, while larger edits and re-paste paths repair through exact text plus context.</li>
+<li>Ambiguous or missing anchors never preview the wrong slice.</li>
+</ul>
+</div>
+</article><!-- /docs-fb-001-selection-driven-everlink -->
+<article id="docs-fb-002-everslice-add-to-entity" class="doc-source" data-source="docs/FB-002-everslice-add-to-entity.md">
+<header class="source-header">
+<p class="source-path">Former source: docs/FB-002-everslice-add-to-entity.md</p>
+<h2>FB-002 Everslice Add To Entity</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>Feature Brief: Everslice it — selection → add to entity</h1>
+<h2>Status</h2>
+<p>Draft</p>
+<h2>Date</h2>
+<p>2026-04-18</p>
+<h2>Problem</h2>
+<p>Everlink is optimized for the story-to-lore direction: pick text in the manuscript, create or extend an entity, then place the matching slice in a separate lore document. There is no symmetric flow for the opposite motion — the author is already <em>inside</em> a lore or reference document, sees a passage that is clearly <em>about</em> an entity, and wants to bind that passage as a slice in place. Today they must copy, open a chooser, set a target, and route around themselves to end up on the same page they started on. The friction pushes authors to skip lightweight annotation entirely.</p>
+<h2>Desired outcome</h2>
+<p>From any open document, the author can highlight a passage and, via one modal, pick an entity (new or existing, searched by name or alias) and commit — the highlight becomes a <code>Slice</code> in the current document, linked to that <code>Entity</code>. No target-doc dance, no placement step.</p>
+<h2>Non-goals</h2>
+<ul>
+<li>Not a replacement for Everlink. Everlink still owns the story-to-lore placement flow and the <code>PendingEverlinkSession</code> state it uses.</li>
+<li>Not a bulk operation. One selection → one slice → one entity per invocation.</li>
+<li>No cross-doc movement. If the author wants the slice to land in a different document, Everlink is the right tool.</li>
+<li>No new matching-rule authoring in this modal. This flow only <em>links</em> a selection to an entity via <code>EntitySlice</code>; it does not seed regex/literal matches. (Follow-up: a &quot;promote to matching rule&quot; affordance can be added once the slice exists.)</li>
+</ul>
+<h2>Core flow</h2>
+<ol>
+<li>Author selects a passage in any document and clicks <code>Everslice it!</code> in the editor toolbar (or a keybinding — TBD).</li>
+<li>A modal opens, centered on the editor. It shows the selected text, an entity search input (filters by name and alias/pattern text in <code>MatchingRule</code>), a scrollable result list, and a <code>+ New entity</code> row at the end.</li>
+<li>Author types to filter, clicks an entity row (or <code>+ New entity</code> with a name). Confirm commits the slice.</li>
+<li>On confirm: one IPC call creates the <code>Slice</code> against the current document's anchor (same <code>buildTextAnchorFromSelection</code> path used by Everlink's commit), links it to the chosen <code>Entity</code> via <code>EntitySlice</code>, and appends the relevant domain events. The modal closes; the editor shows the new slice boundary decoration on the original selection.</li>
+<li>If the author was creating a new entity, a second event creates the <code>Entity</code> first inside the same transaction, so the slice ↔ entity link is never orphaned.</li>
+</ol>
+<h2>Data and model touchpoints</h2>
+<ul>
+<li>Reuses <code>Entity</code>, <code>Slice</code>, <code>SliceBoundary</code>, <code>EntitySlice</code>, <code>TextAnchor</code>, <code>AnchorResolutionResult</code>.</li>
+<li>Reuses the existing <code>createSlice</code> IPC path (<code>HarnessBridge.createSlice</code>) — the only difference from Everlink is that the target document equals the source document, so no target-switching logic runs.</li>
+<li>New IPC is <em>not</em> required if the entity lookup/creation can happen client-side against the loaded workspace. If search needs server-side paging later, add <code>searchEntities</code> per R3.</li>
+<li>No new domain types. The flow is a thinner version of <code>PendingSlicePlacement</code> that skips the <code>surface</code> / <code>targetDocumentId</code> fields because they're implied.</li>
+</ul>
+<h2>UI surfaces</h2>
+<ul>
+<li>Editor toolbar button: <code>Everslice it!</code> — enabled when the main editor has a non-empty selection, disabled otherwise. Lives next to <code>Everlink it!</code>.</li>
+<li>Modal: <code>EversliceChooser</code> feature component under <code>src/renderer/features/entities/</code>. Owns its own entity search and a minimal local form state (selected entity id + optional new-entity name).</li>
+<li>No changes to the side panel — this flow is intentionally in-editor and modal so the author's focus stays on the passage.</li>
+</ul>
+<h2>Hook and state shape (sketch)</h2>
+<ul>
+<li>New hook <code>useEverslicePlacement</code> under <code>src/renderer/state/</code>, following the shape of <code>useEverlinkPlacement</code> but about half the surface area. Exposes <code>{ isOpen, open(), close(), confirm(entityIdOrNewName) }</code>. No blur handlers, no cross-surface selection tracking — the selection is captured at <code>open()</code> time into a <code>sourceSelection</code> ref and stays frozen until confirm/cancel.</li>
+<li>Entity filter is pure local state inside the modal component. It reads <code>workspace.entities</code> + <code>workspace.matchingRules</code> and filters by case-insensitive substring match on entity name, alias rule patterns, and existing slice titles.</li>
+</ul>
+<h2>Risks</h2>
+<ul>
+<li>If the modal steals focus from the editor, the frozen selection can get visually lost. Mitigation: the modal keeps the selection highlighted in the editor (reuse the existing pending-slice decoration style in <code>HarnessEditor</code>).</li>
+<li>Search across many entities could lag if the filter runs on every keystroke unbatched. Mitigation: cap result rows at ~50 and re-evaluate only if authors report slowness on a project with more than a few hundred entities.</li>
+<li>The &quot;create new entity&quot; path makes it easy to generate near-duplicate entities. Mitigation: if the typed name matches an existing entity's name or alias case-insensitively, hoist that entity to the top of the list and require an explicit &quot;create anyway&quot; click.</li>
+<li>R7: <code>useEverlinkPlacement</code> is already at the hook cap. The symmetry is tempting — do <em>not</em> merge the two. Keep <code>useEverslicePlacement</code> separate; shared helpers (anchor building, slice creation) live in <code>editor/editorUtils.ts</code> or a new <code>src/renderer/state/everlinkShared.ts</code> if extraction is needed.</li>
+</ul>
+<h2>Proof</h2>
+<ul>
+<li>From a document with text, selecting a phrase and clicking <code>Everslice it!</code> opens a modal pre-filled with the selection.</li>
+<li>Typing narrows the entity list; arrow keys and Enter pick a row; Escape cancels.</li>
+<li>Choosing an existing entity creates a slice on the current selection linked to that entity, and the slice appears as a boundary decoration with no further input.</li>
+<li>Choosing <code>+ New entity</code> with a typed name creates both the entity and the slice in one transaction; a reload shows the linkage intact.</li>
+<li>A full destructive re-paste of the document still recovers the slice via anchor repair (same substrate as Everlink — this is what validates that no metadata rides in the prose).</li>
+<li>An ambiguous or missing anchor after heavy edits surfaces the <code>ambiguous</code>/<code>invalid</code> state in the existing repair UI; no silent mislinking.</li>
+</ul>
+<h2>Open questions</h2>
+<ul>
+<li>Keybinding? <code>Ctrl+Shift+L</code> would mirror Everlink's implicit keyboard route, but confirm with the author.</li>
+<li>Should the modal also allow attaching the selection as a new matching rule for the chosen entity (not just a slice)? Probably yes as a checkbox later, but out of scope for v1.</li>
+</ul>
+</div>
+</article><!-- /docs-fb-002-everslice-add-to-entity -->
+<article id="docs-phase-1-initial-mvp" class="doc-source" data-source="docs/PHASE-1-INITIAL-MVP.md">
+<header class="source-header">
+<p class="source-path">Former source: docs/PHASE-1-INITIAL-MVP.md</p>
+<h2>Phase 1 Initial MVP</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>Initial MVP for Phase 1</h1>
+<h2>Status</h2>
+<p>Historical — harness landed, widened into the Phase 1 proof workbench, then the workbench became the real app through Phase 1.5 foundation hardening. Kept for context; see <a href="#docs-phase-1-gate-retrospective">PHASE-1-GATE-RETROSPECTIVE.md</a> and <a href="#docs-phase-1-5-foundation-hardening">PHASE-1.5-FOUNDATION-HARDENING.md</a> for the current state.</p>
+<h2>Date</h2>
+<p>2026-04-17 (original), last reviewed 2026-04-19</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a></li>
+<li><a href="../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a></li>
+<li><a href="adr/adr-index.html#docs-adr-adr-003-document-persistence-and-editor-state">ADR-003: Document Persistence and Editor State</a></li>
+<li><a href="adr/adr-index.html#docs-adr-adr-004-prove-load-bearing-editor-risks-before-phase-2">ADR-004: Prove Load-Bearing Risks Before Phase 2</a></li>
+<li><a href="adr/adr-index.html#docs-adr-adr-006-event-sourced-document-and-metadata-history">ADR-006: Event-Sourced Document and Metadata History</a></li>
+</ul>
+<h2>Why this exists</h2>
+<p>Phase 1 has several load-bearing spikes, but the first executable deliverable needed to be smaller than &quot;do all of Phase 1.&quot;
+This document originally scoped a narrow round-trip harness. That harness landed, was intentionally widened into the <strong>Phase 1 proof workbench</strong> so the remaining spikes could share one executable surface, and then became the real app after Phase 1.5 split the god files and hardened the foundation. The build slices and exit criteria below describe the original deliverable, not the current state.</p>
+<p>Note: The AI will never directly manage or execute over prose. The amount of text would destroy context windows and consume usage quotas.</p>
+<p>Use small text amounts for any testing the AI does; delegate to the human to place and paste in the 50k+ word fixture that proves real-world behavior.</p>
+<h2>Implemented deliverable</h2>
+<p>Build and keep evolving one <strong>Phase 1 proof workbench</strong>:</p>
+<ul>
+<li>one local desktop harness window</li>
+<li>one ProseMirror editor surface</li>
+<li>one explicit import slot for a real manuscript pasted from Google Docs</li>
+<li>one <code>better-sqlite3</code>-backed local database using WAL mode and <code>synchronous=FULL</code></li>
+<li>one current-state document head projection plus step log, checkpoints, events, anchor probes, matching rules, and benchmark records</li>
+<li>one save-checkpoint and reload-head path</li>
+<li>one decoration toggle that simulates derived highlights and anchor chrome without storing them in document truth</li>
+<li>one clipboard audit flow for persisted plain text plus HTML leak inspection</li>
+<li>one anchor probe surface</li>
+<li>one matching-rule workbench</li>
+<li>one replay and projection-rebuild surface</li>
+<li>one Pretext comparison surface</li>
+</ul>
+<p>This is intentionally not the truthful MVP and not the foundational shell.
+It is still a proof build, but it now carries more of the remaining Phase 1 questions in one place.</p>
+<h2>Current proof questions</h2>
+<ul>
+<li>Can Evernear store a real ProseMirror document as a SQLite head projection plus step history, reload it cleanly, and keep copy-out honest while renderer-only decorations are visible?</li>
+<li>Can one shared <code>TextAnchor</code> substrate survive live edits well enough for both boundary probes and annotations?</li>
+<li>Can visible-range matching stay explainable and cheap enough while typing and scrolling?</li>
+<li>Can checkpoints plus replay rebuild projections without drift?</li>
+<li>Does Pretext look promising enough for document-view layout work?</li>
+</ul>
+<h2>What this now proves or explores</h2>
+<ul>
+<li>The document persistence seam from <a href="adr/adr-index.html#docs-adr-adr-003-document-persistence-and-editor-state">ADR-003</a> is workable in practice, not just on paper.</li>
+<li>A real manuscript can paste into an in-app import slot, replace the persisted head, reload, and remain editable.</li>
+<li>Renderer-only highlights or anchor chrome can be audited against both plain-text parity and HTML leak checks.</li>
+<li><code>plainText</code> is trustworthy enough to act as the non-editor projection for export and verification helpers.</li>
+<li>Shared <code>TextAnchor</code> capture, visible-range matching, replay, and Pretext measurement now have one live workbench instead of paper-only plans.</li>
+</ul>
+<h2>Non-goals</h2>
+<ul>
+<li>Multi-document or folder workflows.</li>
+<li>Real Everlink behavior.</li>
+<li>Panel, modal, or layout polish.</li>
+<li>Settling the final app shell architecture.</li>
+<li>Declaring MVP readiness before the remaining Phase 1 findings are recorded.</li>
+</ul>
+<h2>Scope</h2>
+<h3>In scope</h3>
+<ul>
+<li>Launch a minimal local harness with Electron, React, TypeScript, Vite, ProseMirror, and SQLite.</li>
+<li>Open a single document from SQLite or seed it on first run.</li>
+<li>Paste or load a 50k+ word manuscript fixture.</li>
+<li>Save <code>contentFormat</code>, <code>contentSchemaVersion</code>, <code>contentJson</code>, and <code>plainText</code>.</li>
+<li>Reload the document and verify snapshot and plain-text round-trip.</li>
+<li>Toggle simulated derived decorations over the document.</li>
+<li>Verify that select-all plus copy yields plain prose, not markup or UI artifacts.</li>
+<li>Capture rough timings for paste, save, and reload.</li>
+</ul>
+<h3>Out of scope</h3>
+<ul>
+<li>Any stored entity or slice truth.</li>
+<li>Any persisted highlight records.</li>
+<li>Any &quot;smart&quot; matching.</li>
+<li>Any time-travel UI.</li>
+<li>Any collaboration or export packaging.</li>
+</ul>
+<h2>Demo script</h2>
+<ol>
+<li>Launch the harness against a fresh local SQLite file.</li>
+<li>Load or paste a 50k+ word manuscript into the editor.</li>
+<li>Save the document and show the persisted head row.</li>
+<li>Close and reopen the harness, then reload the same document.</li>
+<li>Turn simulated highlights and boundary rails on.</li>
+<li>Use ordinary <code>Ctrl+A</code> and <code>Ctrl+C</code>.</li>
+<li>Paste into a plain-text verification surface and confirm the copied text matches expected prose, not decorated output.</li>
+<li>Report paste, save, reload, and copy verification results in one short run log.</li>
+</ol>
+<h2>Exit criteria</h2>
+<ul>
+<li>The same manuscript can complete paste, save, close, reopen, and reload without structural corruption.</li>
+<li>The saved <code>plainText</code> matches the editor's plain-text extraction for the document.</li>
+<li>Decoration toggles do not change the copied text result.</li>
+<li>The editor remains usable on the long-form fixture after reload.</li>
+<li>Save and reload are fast enough to feel normal for a proof harness, even if exact budgets change later.</li>
+<li>The harness leaves behind concrete notes on what failed, what felt slow, and what must change before broader Phase 1 work.</li>
+</ul>
+<h2>Suggested working targets</h2>
+<p>These are execution targets, not permanent product promises:</p>
+<ul>
+<li>save should usually feel sub-second on the long fixture</li>
+<li>reload should usually feel sub-second on the long fixture</li>
+<li>copied text should match expected prose exactly in the verification surface</li>
+<li>the harness should reveal whether slowdown comes from editor state, SQLite writes, plain-text extraction, or decoration rendering</li>
+</ul>
+<h2>Build slices</h2>
+<ol>
+<li><strong>Harness shell</strong>
+Minimal window, editor mount, local database bootstrap, and a tiny command surface for load, save, reload, and decoration toggle.</li>
+<li><strong>Persistence seam</strong>
+One <code>documents</code> table plus the repository code that writes snapshot and plain-text projection together.</li>
+<li><strong>Fixture path</strong>
+A realistic manuscript sample and a repeatable way to seed or paste it.</li>
+<li><strong>Decoration simulation</strong>
+Fake derived highlights and boundary rails that exercise renderer-only chrome without introducing semantic truth.</li>
+<li><strong>Verification log</strong>
+A lightweight result summary covering save, reload, clipboard cleanliness, and any obvious pain points.</li>
+</ol>
+<h2>Why this first</h2>
+<p>This is the smallest deliverable that proves multiple roadmap bullets at once:</p>
+<ul>
+<li>document snapshot round-tripping through SQLite</li>
+<li>50k+ word paste-in and save-reload behavior</li>
+<li>clean copy-out even with renderer decorations present</li>
+</ul>
+<p>It also creates a concrete platform for later experiments instead of forcing every Phase 1 spike to bootstrap editor, storage, and fixture handling from scratch.</p>
+<h2>What passing unlocks</h2>
+<ul>
+<li>Safer movement into the rest of Phase 1 proof work.</li>
+<li>A real code path for <a href="experiments/experiments-index.html#docs-experiments-exp-005-event-log-and-checkpoint-replay">EXP-005</a> to build on.</li>
+<li>Better confidence that Phase 2 shell work will not hide a document-storage rewrite risk.</li>
+</ul>
+<h2>What failure would teach us</h2>
+<ul>
+<li>If snapshot reload is fragile, the storage seam is wrong before the app gets bigger.</li>
+<li>If clean copy fails under decoration, the editor integration is violating a core product promise.</li>
+<li>If 50k+ word behavior is already uncomfortable here, later matching and anchor work will only make it worse.</li>
+<li>If <code>plainText</code> drifts from the editor state, export and verification cannot be trusted yet.</li>
+</ul>
+</div>
+</article><!-- /docs-phase-1-initial-mvp -->
+<article id="docs-phase-1-gate-retrospective" class="doc-source" data-source="docs/PHASE-1-GATE-RETROSPECTIVE.md">
+<header class="source-header">
+<p class="source-path">Former source: docs/PHASE-1-GATE-RETROSPECTIVE.md</p>
+<h2>Phase 1 Gate Retrospective</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>Phase 1 Gate Retrospective</h1>
+<h2>Status</h2>
+<p>In progress — foundation hardened (Phase 1.5 landed 2026-04-18), real-manuscript proof still pending</p>
+<h2>Date</h2>
+<p>2026-04-17, updated 2026-04-19</p>
+<h2>Why this exists</h2>
+<p>The proof workbench is real enough that Phase 1 questions should be tracked as observed gates, not just planned experiments.
+This note is the lightweight checkpoint between the original single-document harness and any future Phase 2+ claim.</p>
+<h2>Passed enough to keep building</h2>
+<ul>
+<li>Snapshot persistence through local SQLite works on the <code>better-sqlite3</code> path with WAL mode and <code>synchronous=FULL</code>.</li>
+<li>The renderer has an explicit real-manuscript import slot, a persisted head reload path, and a clipboard audit path.</li>
+<li>The workbench records steps, checkpoints, events, and replays historical document versions.</li>
+<li>Shared <code>TextAnchor</code> substrate exists in <a href="../src/shared/anchoring.ts">src/shared/anchoring.ts</a>, used by both DB (boundary repair) and renderer (selection → anchor). Covered by a dedicated test suite; the <code>walkNodeText</code> off-by-one from the pre-split code has been fixed.</li>
+<li>Foundation hardened in Phase 1.5: god files split (App.tsx 1,865 → 354; workbenchRepository.ts 2,188 → 0 replaced by per-aggregate repos), schema migration framework, typed event catalog, Zod at IPC boundary, Vitest suite covering load-bearing paths. See <a href="#docs-phase-1-5-foundation-hardening">PHASE-1.5-FOUNDATION-HARDENING.md</a>.</li>
+</ul>
+<h2>Implemented but still unproven at real-manuscript scale</h2>
+<ul>
+<li>Shared anchor capture, mapping, fallback repair, and invalid or ambiguous states.</li>
+<li>Visible-range matching with literal, alias, and bounded-regex rules.</li>
+<li>Pretext comparison against the live editor surface.</li>
+<li>Replay-to-version and projection-rebuild parity under sustained writing sessions.</li>
+</ul>
+<h2>Not yet closed</h2>
+<ul>
+<li>Real-manuscript findings for anchor behavior, matching behavior, and replay performance on the 50k+ word fixture.</li>
+<li>Final clipboard confidence against the human-pasted Google Docs manuscript.</li>
+<li>A trustworthy decision on whether Pretext should be adopted, deferred, or rejected (EXP-006 still &quot;In progress&quot;).</li>
+</ul>
+<h2>Current rule</h2>
+<p>The foundation is now clean enough to build new features on, but Phase 1's load-bearing proof claims (EXP-001, 002, 005, 006) still need the adversarial pass on a real 50k+ word manuscript before they can be marked Resolved. Human delegation required — the AI should not drive the large-fixture paste itself.</p>
+</div>
+</article><!-- /docs-phase-1-gate-retrospective -->
+<article id="docs-phase-1-5-foundation-hardening" class="doc-source" data-source="docs/PHASE-1.5-FOUNDATION-HARDENING.md">
+<header class="source-header">
+<p class="source-path">Former source: docs/PHASE-1.5-FOUNDATION-HARDENING.md</p>
+<h2>Phase 1.5 Foundation Hardening</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>Phase 1.5 Foundation Hardening</h1>
+<p>Date: 2026-04-18. Branch: <code>claude/elegant-ptolemy-a80b4d</code>.</p>
+<p>MVP features were working but the foundation had two god files, no tests, no lint, no schema migrations, no IPC validation, and an off-by-one bug lurking in the anchor math. This pass closed those gaps.</p>
+<h2>What changed</h2>
+<ul>
+<li><strong>DB layer split</strong> into seven aggregate repositories under <a href="../src/db/repositories">src/db/repositories/</a>, composed by a thin <a href="../src/db/repositories/WorkspaceRepository.ts">WorkspaceRepository</a> facade. The old <code>src/db/workbenchRepository.ts</code> (2,188 lines) is gone. Cross-aggregate writes stay atomic because the facade wraps them in one <code>runInTransaction</code>.</li>
+<li><strong>Anchor math unified</strong> and moved to <a href="../src/shared/anchoring.ts">src/shared/anchoring.ts</a> — used by both DB (boundary repair after every step) and renderer (building anchors from selections). Previous duplicate lived in <code>src/renderer/editor/workbenchUtils.ts</code> (since renamed to <a href="../src/renderer/editor/editorUtils.ts">editorUtils.ts</a>).</li>
+<li><strong>walkNodeText off-by-one fixed.</strong> When descending into an inline text child, the recursion used to add <code>+1</code> (correct for nested block children, wrong for text). Result: <code>resolveAnchorWithFallback</code> produced ranges shifted by one character; the bug was latent because <code>buildTextAnchorFromSelection</code> took PM positions directly from the editor. Now repaired anchors land where they should.</li>
+<li><strong>Typed event catalog</strong> in <a href="../src/db/events.ts">src/db/events.ts</a>. Event names are a closed union; misspellings in <code>history.appendEvent(...)</code> are compile errors.</li>
+<li><strong>Schema migrations</strong> in <a href="../src/db/migrations.ts">src/db/migrations.ts</a> — <code>user_version</code>-driven, ordered, transactional. The ad-hoc <code>CREATE TABLE IF NOT EXISTS</code> + <code>ensureColumn</code> helpers from the old <code>src/db/schema.ts</code> were folded into <a href="../src/db/migrations.ts">migrations.ts</a> itself as legacy-shape repair for pre-Phase-1.5 databases; the schema now evolves through numbered migrations only.</li>
+<li><strong>Zod validation at the IPC trust boundary.</strong> Every <code>ipcMain.handle</code> wraps its payload in <a href="../src/shared/contracts/harnessSchemas.ts">parseInput</a> before reaching a repository. Malformed payloads throw before touching SQLite.</li>
+<li><strong>Renderer split.</strong> <a href="../src/renderer/App.tsx">src/renderer/App.tsx</a> went from 1,865 lines to 354 — it composes hooks (in <a href="../src/renderer/state">src/renderer/state/</a>) and feature components (in <a href="../src/renderer/features">src/renderer/features/</a>). No new features should land in App.tsx.</li>
+<li><strong>Vitest suite.</strong> <a href="../src/shared/anchoring.test.ts">src/shared/anchoring.test.ts</a> covers resolved / repaired / ambiguous / invalid outcomes for boundary repair. <a href="../src/db/repositories/WorkspaceRepository.test.ts">src/db/repositories/WorkspaceRepository.test.ts</a> covers bootstrap, CRUD, event-sourcing invariants (one-event-per-mutation, monotonic <code>aggregate_seq</code>), and cross-aggregate cascade atomicity against a real SQLite file. <code>npm run test</code> handles the better-sqlite3 Node/Electron ABI dance.</li>
+<li><strong>ESLint + Prettier.</strong> <a href="../eslint.config.mjs">eslint.config.mjs</a> enforces runtime boundaries via <code>no-restricted-imports</code>: renderer can't import from db/main, preload has no business logic, db can't pull electron, shared can't pull any platform-specific package. <code>npm run check</code> = typecheck → lint → test → build.</li>
+</ul>
+<h2>Metrics</h2>
+<ul>
+<li><code>src/db/workbenchRepository.ts</code>: 2,188 → 0 (replaced by ~1,900 lines across eight repository modules + three support modules, each within budget).</li>
+<li><code>src/renderer/App.tsx</code>: 1,865 → 354. Logic extracted into five hooks + twelve feature components + two util files + one session-types module.</li>
+<li>Tests: 0 → 20 (10 anchoring + 10 repository integration).</li>
+<li><code>npm run check</code> ran clean end to end.</li>
+</ul>
+<h2>What stays open</h2>
+<ul>
+<li><strong>C5 (workbench/workspace naming).</strong> The vocabulary now uses &quot;Workspace&quot; consistently at the class level but the folder README heading &quot;Workbench&quot; still appears in a couple of places. Worth a sweep.</li>
+<li><strong>C6 (targeted projection reads).</strong> Every mutation still returns the full <code>WorkspaceState</code>. Fine at MVP scale. When it bites, introduce a <code>WorkspaceStateDelta</code> return shape.</li>
+<li><strong>C8 (incremental decoration diffing in HarnessEditor).</strong> Same principle — wait for a profiler.</li>
+<li><strong>UI tests.</strong> The repository + anchoring suites cover the load-bearing algorithms; feature components are still untested. Prefer Playwright-style smoke tests for the Everlink + slice-commit flow if we add a runner.</li>
+<li><strong>Structured errors.</strong> <a href="../refineCode.html">AppError</a> with an enum <code>code</code> is still worth adding — right now errors surface as generic <code>Error</code> instances with stringified messages.</li>
+</ul>
+<h2>How to extend</h2>
+<p>Everything that used to require surgery on a 2,000-line file now has a small, obvious home:</p>
+<ul>
+<li>New IPC method → three files in <a href="../src/shared/contracts">src/shared/contracts/</a> + main handler + preload forwarder. Zod schema is mandatory.</li>
+<li>New event → add to <a href="../src/db/events.ts">src/db/events.ts</a>; typed payload, misspellings compile-error.</li>
+<li>New UI feature → new folder under <a href="../src/renderer/features">src/renderer/features/</a> with a README, feature components, and (if needed) a hook under <a href="../src/renderer/state">src/renderer/state/</a>.</li>
+<li>New aggregate → new repository under <a href="../src/db/repositories">src/db/repositories/</a>, wired into <a href="../src/db/repositories/WorkspaceRepository.ts">WorkspaceRepository</a>, migration added to <a href="../src/db/migrations.ts">migrations.ts</a>.</li>
+</ul>
+<p>The conventions that keep these files from regrowing into god files are in <a href="../CLAUDE.md">CLAUDE.md</a>, <a href="../refineCode.html">refineCode.md</a>, and <a href="../AGENT.md">AGENT.md</a> — in that order of depth.</p>
+</div>
+</article><!-- /docs-phase-1-5-foundation-hardening -->
+</main>
+<p class="footer">Generated from repo-authored Markdown during the HTML documentation migration. AGENT.md and CLAUDE.md remain Markdown bootstrap files by design.</p>
+</div>
+</body>
+</html>

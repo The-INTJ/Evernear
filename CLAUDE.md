@@ -8,7 +8,7 @@ The repo has a runnable Electron app (v0.3.0): ProseMirror editor, SQLite persis
 
 The two god files that earlier versions of this doc flagged — renderer `App.tsx` (~1,700 lines) and `workbenchRepository.ts` (~2,000 lines) — have been split:
 
-- DB layer split along the aggregates pre-declared in [src/db/repositories/README.md](src/db/repositories/README.md). Each aggregate owns its own repository; [WorkspaceRepository](src/db/repositories/WorkspaceRepository.ts) is a thin composition facade. Pure ProseMirror anchor math lives in [src/shared/anchoring.ts](src/shared/anchoring.ts) (used by both DB and renderer).
+- DB layer split along the aggregates pre-declared in [src/db/db-docs.html#src-db-repositories-readme](src/db/db-docs.html#src-db-repositories-readme). Each aggregate owns its own repository; [WorkspaceRepository](src/db/repositories/WorkspaceRepository.ts) is a thin composition facade. Pure ProseMirror anchor math lives in [src/shared/anchoring.ts](src/shared/anchoring.ts) (used by both DB and renderer).
 - Renderer split into hooks under [src/renderer/state/](src/renderer/state/) and feature components under [src/renderer/features/](src/renderer/features/). `App.tsx` is now a composition shell; no new features should go there.
 
 Working commands:
@@ -29,14 +29,24 @@ Before inventing a new command, read [package.json](package.json).
 
 Read in this order when you land cold:
 
-1. [Product_Guide.md](Product_Guide.md) — the north star. Deliberately short. **When it contradicts longer docs, the Product Guide wins.**
-2. [FOR_HUMAN_BUSINESS--DOC.md](FOR_HUMAN_BUSINESS--DOC.md) — product strategy and positioning.
-3. [FOR_HUMAN_CODE--DOC.md](FOR_HUMAN_CODE--DOC.md) — architecture, domain vocabulary, runtime boundaries. This is the canonical source for domain terms (`Entity`, `Slice`, `TextAnchor`, `DocumentStep`, etc.) — reuse them verbatim.
-4. [FOR_HUMAN_AND_AI_ROADMAP--DOC.md](FOR_HUMAN_AND_AI_ROADMAP--DOC.md) — phased execution plan and load-bearing spikes.
+1. [Product_Guide.html](Product_Guide.html) — the north star. Deliberately short. **When it contradicts longer docs, the Product Guide wins.**
+2. [FOR_HUMAN_BUSINESS--DOC.html](FOR_HUMAN_BUSINESS--DOC.html) — product strategy and positioning.
+3. [FOR_HUMAN_CODE--DOC.html](FOR_HUMAN_CODE--DOC.html) — architecture, domain vocabulary, runtime boundaries. This is the canonical source for domain terms (`Entity`, `Slice`, `TextAnchor`, `DocumentStep`, etc.) — reuse them verbatim.
+4. [FOR_HUMAN_AND_AI_ROADMAP--DOC.html](FOR_HUMAN_AND_AI_ROADMAP--DOC.html) — phased execution plan and load-bearing spikes.
 
-Durable decisions: [docs/adr/](docs/adr/). Workflow-level decisions more specific than the north-star docs but not durable enough to be ADRs: top-level `FB-*` docs (e.g. [docs/FB-001-selection-driven-everlink.md](docs/FB-001-selection-driven-everlink.md)). Proof work: [docs/experiments/](docs/experiments/).
+Durable decisions live in [docs/adr/adr-index.html](docs/adr/adr-index.html). Workflow-level decisions more specific than the north-star docs but not durable enough to be ADRs live in [docs/docs-index.html](docs/docs-index.html) (for example, FB-001 and FB-002). Proof work lives in [docs/experiments/experiments-index.html](docs/experiments/experiments-index.html).
 
-Coding conventions and the rules that keep the code maintainable as it scales live in [refineCode.md](refineCode.md) (the full convention layer) and [AGENT.md](AGENT.md) (a shorter hard-rules checklist an agent must pass before finishing a task). **If you are an AI agent working on code in this repo, read [AGENT.md](AGENT.md) now — it is short and the rules are enforceable.**
+Coding conventions and the rules that keep the code maintainable as it scales live in [refineCode.html](refineCode.html) (the full convention layer) and [AGENT.md](AGENT.md) (a shorter hard-rules checklist an agent must pass before finishing a task). **If you are an AI agent working on code in this repo, read [AGENT.md](AGENT.md) now — it is short and the rules are enforceable.**
+
+## HTML-first documentation rule
+
+Except for [AGENT.md](AGENT.md) and this file, durable repo docs are HTML by default. This is intentional: HTML lets humans read dense material visually while agents use explicit line ranges to avoid unnecessary context ingest.
+
+- Prefer high-density forms when they are clearer than prose: tables, grids, timelines, swimlanes, SVG/HTML diagrams, compact cards, and collapsible sections.
+- Every substantial HTML doc should be mobile responsive, directly browser-openable, and have a header with purpose, audience, stable section anchors, and an **Agent Context Index** with line ranges.
+- For dense visual sections, add hidden HTML comments when the visual is easy for a human to digest but would hide ordering, invariants, provenance, or failure-mode nuance from an agent.
+- Keep consolidation local to a folder or subsystem. Current consolidated docs are [docs/docs-index.html](docs/docs-index.html), [docs/adr/adr-index.html](docs/adr/adr-index.html), [docs/experiments/experiments-index.html](docs/experiments/experiments-index.html), [docs/templates/templates-index.html](docs/templates/templates-index.html), [src/src-docs.html](src/src-docs.html), [src/db/db-docs.html](src/db/db-docs.html), [src/renderer/renderer-docs.html](src/renderer/renderer-docs.html), and [src/shared/shared-docs.html](src/shared/shared-docs.html).
+- The key visual explainer for the product's data flow, entity interaction, and slice creation is [docs/data-flow-entity-slice-map.html](docs/data-flow-entity-slice-map.html).
 
 ## Load-bearing architectural invariants
 
@@ -51,7 +61,7 @@ These are the rules every change must preserve — violating any of them breaks 
 
 ## Stack (decided, not provisional)
 
-Electron + React + TypeScript + Vite + **ProseMirror** (locked by [ADR-005](docs/adr/ADR-005-editor-foundation-locked-to-prosemirror.md)) + SQLite. Pretext is an explicit exploratory option for long-document layout — not decided.
+Electron + React + TypeScript + Vite + **ProseMirror** (locked by [ADR-005](docs/adr/adr-index.html#docs-adr-adr-005-editor-foundation-locked-to-prosemirror)) + SQLite. Pretext is an explicit exploratory option for long-document layout — not decided.
 
 ## Runtime boundaries (pre-declared in `src/`)
 
@@ -65,13 +75,13 @@ Electron + React + TypeScript + Vite + **ProseMirror** (locked by [ADR-005](docs
 
 When a future pass writes code, it must land inside these boundaries. Don't create new top-level runtime folders without an ADR.
 
-## Folder README convention
+## Folder documentation convention
 
-Every folder under `src/` and `docs/` has a README following a consistent shape: **Status / If you landed here first / Parent reads / Owns / Does not own / Key relationships / Decided / Open / Deferred** (plus occasionally Inputs and outputs, Likely future code here, Current ADRs, etc.). When you add a new folder, follow this shape — it's the repo's chain-up rule for keeping docs discoverable.
+Every folder under `src/` and `docs/` must be represented in the matching consolidated HTML doc with a consistent shape: **Status / If you landed here first / Parent reads / Owns / Does not own / Key relationships / Decided / Open / Deferred** (plus occasionally Inputs and outputs, Likely future code here, Current ADRs, etc.). When you add a new folder, add or update that HTML section and refresh the Agent Context Index line ranges.
 
 ## File-size and decomposition rules
 
-These are how we keep god files from re-forming. Full rationale and file-by-file targets live in [refineCode.md](refineCode.md); AI enforcement checklist lives in [AGENT.md](AGENT.md).
+These are how we keep god files from re-forming. Full rationale and file-by-file targets live in [refineCode.html](refineCode.html); AI enforcement checklist lives in [AGENT.md](AGENT.md).
 
 - **Soft limits:** React component 300 lines, custom hook 150, repository module 400, IPC/preload 150. Data-only shared type modules may exceed.
 - **Hard limits (split before merge):** React component 500, custom hook 250, repository module 700, IPC/preload 250.
@@ -81,12 +91,12 @@ These are how we keep god files from re-forming. Full rationale and file-by-file
 
 ## Writing new docs
 
-- New ADR, experiment, feature brief, or retrospective: start from [docs/templates/](docs/templates/).
-- Feature briefs go at the top of `docs/` as `FB-NNN-short-slug.md` (see [FB-001](docs/FB-001-selection-driven-everlink.md)).
-- Experiments go in [docs/experiments/](docs/experiments/) as `EXP-NNN-slug.md`; move to `resolved/` once they've answered their question (see EXP-003, EXP-004).
+- New ADR, experiment, feature brief, or retrospective: start from [docs/templates/templates-index.html](docs/templates/templates-index.html), then add the new material as HTML.
+- Feature briefs belong in [docs/docs-index.html](docs/docs-index.html) unless they grow large enough to deserve their own HTML file.
+- Experiments belong in [docs/experiments/experiments-index.html](docs/experiments/experiments-index.html); keep active and resolved sections visually distinct.
 - When you materially change a top-level `FOR_HUMAN_*` doc, prepend a dated entry to its "Last change" list. Use absolute dates, not relative ones.
 - Avoid emoji in docs unless the user explicitly asks.
 
 ## Domain term discipline
 
-[FOR_HUMAN_CODE--DOC.md](FOR_HUMAN_CODE--DOC.md) has a domain vocabulary table (`Project`, `DocumentFolder`, `Document`, `DocumentOutlineNode`, `Entity`, `MatchingRule`, `TextAnchor`, `Slice`, `SliceBoundary`, `EntitySlice`, `PendingEverlinkSession`, `AnchorResolutionResult`, `Panel`, `Annotation`, `EventStream`, `DocumentStep`, `DocumentCheckpoint`, `Projection`, …). When you discuss the system, use these names exactly. If you need a new concept, add it to that table rather than inventing a parallel term in a README.
+[FOR_HUMAN_CODE--DOC.html](FOR_HUMAN_CODE--DOC.html) has a domain vocabulary table (`Project`, `DocumentFolder`, `Document`, `DocumentOutlineNode`, `Entity`, `MatchingRule`, `TextAnchor`, `Slice`, `SliceBoundary`, `EntitySlice`, `PendingEverlinkSession`, `AnchorResolutionResult`, `Panel`, `Annotation`, `EventStream`, `DocumentStep`, `DocumentCheckpoint`, `Projection`, …). When you discuss the system, use these names exactly. If you need a new concept, add it to that table rather than inventing a parallel term in another doc.

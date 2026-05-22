@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Architecture Decision Records | Evernear</title>
+  <style>:root {
+  color-scheme: light;
+  --bg: #f7f7f4;
+  --paper: #ffffff;
+  --ink: #1f2328;
+  --muted: #606a75;
+  --line: #d8ddd8;
+  --soft: #eef1ed;
+  --accent: #2563eb;
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, white);
+  --accent-line: color-mix(in srgb, var(--accent) 32%, #d8ddd8);
+  --code-bg: #151b23;
+  --code-ink: #f1f5f9;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--ink); line-height: 1.55; }
+a { color: var(--accent); text-decoration-thickness: 0.08em; text-underline-offset: 0.18em; }
+.doc-shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 56px; }
+.doc-hero { border: 1px solid var(--accent-line); background: linear-gradient(135deg, var(--paper), var(--accent-soft)); border-radius: 8px; padding: 26px; }
+.eyebrow { margin: 0 0 8px; color: var(--accent); font-weight: 800; text-transform: uppercase; letter-spacing: 0; font-size: 0.78rem; }
+h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-spacing: 0; overflow-wrap: anywhere; }
+.subtitle { margin: 14px 0 0; max-width: 820px; color: var(--muted); font-size: 1.04rem; }
+.meta-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 20px; }
+.meta-card { border: 1px solid var(--line); background: rgba(255,255,255,0.7); border-radius: 8px; padding: 12px; min-width: 0; }
+.meta-card strong { display: block; font-size: 0.76rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0; }
+.meta-card span, .meta-card a { display: block; margin-top: 3px; font-weight: 700; overflow-wrap: anywhere; }
+.context-index { margin: 18px 0; border: 1px solid var(--line); background: var(--paper); border-radius: 8px; overflow: hidden; }
+.context-index header { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 14px 16px; background: var(--soft); border-bottom: 1px solid var(--line); }
+.context-index h2 { margin: 0; font-size: 1rem; }
+.context-index p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+.index-grid { display: grid; grid-template-columns: minmax(180px, 0.9fr) minmax(150px, 0.6fr) minmax(260px, 1.7fr); }
+.index-row { display: contents; color: inherit; text-decoration: none; }
+.index-row > div { padding: 10px 14px; border-top: 1px solid var(--line); min-width: 0; }
+.index-row:first-child > div { border-top: 0; }
+.index-range { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 0.86rem; color: var(--accent); white-space: nowrap; }
+.source-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.source-pill { border: 1px solid var(--accent-line); background: var(--accent-soft); color: var(--ink); border-radius: 999px; padding: 5px 9px; font-size: 0.82rem; font-weight: 700; }
+.doc-source, .map-section { margin-top: 18px; border: 1px solid var(--line); background: var(--paper); border-radius: 8px; overflow: clip; }
+.source-header, .section-header { padding: 16px 18px; border-bottom: 1px solid var(--line); background: #fbfbf9; }
+.source-header h2, .section-header h2 { margin: 3px 0 0; font-size: 1.35rem; letter-spacing: 0; overflow-wrap: anywhere; }
+.source-header p, .section-header p { margin: 0; color: var(--muted); }
+.source-path { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 0.78rem; color: var(--muted); overflow-wrap: anywhere; }
+.md-content { padding: 18px; }
+.md-content h1 { font-size: 2rem; line-height: 1.08; margin: 0 0 14px; overflow-wrap: anywhere; }
+.md-content h2 { margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 1.25rem; overflow-wrap: anywhere; }
+.md-content h3 { margin-top: 20px; font-size: 1.06rem; overflow-wrap: anywhere; }
+.md-content p, .md-content ul, .md-content ol { max-width: 86ch; }
+.md-content table, .dense-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.94rem; }
+.md-content th, .md-content td, .dense-table th, .dense-table td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+.md-content th, .dense-table th { background: var(--soft); color: #30363d; }
+.md-content code:not(pre code) { background: var(--soft); border: 1px solid var(--line); border-radius: 5px; padding: 0.08rem 0.28rem; font-size: 0.9em; }
+.md-content pre, pre.code-block { background: var(--code-bg); color: var(--code-ink); border-radius: 8px; overflow: auto; padding: 14px; }
+.md-content pre code { color: inherit; background: transparent; border: 0; padding: 0; }
+.compact-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
+.compact-card { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 12px; min-width: 0; }
+.compact-card h3 { margin: 0 0 6px; font-size: 1rem; }
+.compact-card p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+.flow-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
+.flow-step { position: relative; border: 1px solid var(--accent-line); background: var(--accent-soft); border-radius: 8px; padding: 12px; min-height: 120px; overflow-wrap: anywhere; }
+.flow-step strong { display: block; margin-bottom: 6px; }
+.flow-step span { color: var(--muted); font-size: 0.9rem; }
+.badge-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.badge { border: 1px solid var(--line); border-radius: 999px; padding: 5px 8px; background: var(--soft); font-size: 0.82rem; font-weight: 700; }
+.mermaidless-map { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
+.entity-node { border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 8px; padding: 12px; background: #fff; }
+.entity-node strong { display: block; }
+.entity-node span { display: block; color: var(--muted); font-size: 0.88rem; margin-top: 4px; }
+.note { border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 12px 14px; border-radius: 0 8px 8px 0; }
+.footer { margin-top: 22px; color: var(--muted); font-size: 0.88rem; }
+@media (max-width: 860px) {
+  .doc-shell { width: min(100% - 20px, 1180px); padding-top: 12px; }
+  .doc-hero { padding: 18px; }
+  .meta-grid, .compact-grid, .flow-grid, .mermaidless-map { grid-template-columns: 1fr; }
+  .index-grid { grid-template-columns: 1fr; }
+  .index-row > div { border-top: 0; padding: 6px 14px; }
+  .index-row { display: block; border-top: 1px solid var(--line); padding: 8px 0; }
+  .context-index header { display: block; }
+  .md-content { padding: 14px; overflow-x: auto; }
+}</style>
+</head>
+<body style="--accent: #4338ca;">
+<div class="doc-shell">
+<header class="doc-hero">
+<p class="eyebrow">Evernear HTML documentation</p>
+<h1>Architecture Decision Records</h1>
+<p class="subtitle">All durable architectural decisions compressed into one indexed ADR atlas.</p>
+<div class="meta-grid">
+<div class="meta-card"><strong>Audience</strong><span>Agents checking invariants before changing architecture; humans reviewing decision history.</span></div>
+<div class="meta-card"><strong>Format</strong><span>Consolidated HTML, browser-openable</span></div>
+<div class="meta-card"><strong>Agent Use</strong><span>Use the line ranges below before ingesting whole files.</span></div>
+</div>
+<div class="source-list">
+<span class="source-pill">docs/adr/README.md</span>
+<span class="source-pill">docs/adr/ADR-001-stack-and-shell-baseline.md</span>
+<span class="source-pill">docs/adr/ADR-002-sqlite-first-with-portability.md</span>
+<span class="source-pill">docs/adr/ADR-003-document-persistence-and-editor-state.md</span>
+<span class="source-pill">docs/adr/ADR-004-prove-load-bearing-editor-risks-before-phase-2.md</span>
+<span class="source-pill">docs/adr/ADR-005-editor-foundation-locked-to-prosemirror.md</span>
+<span class="source-pill">docs/adr/ADR-006-event-sourced-document-and-metadata-history.md</span>
+<span class="source-pill">docs/adr/ADR-007-workbench-storage-engine-for-phase-1-proof.md</span>
+</div>
+</header>
+<nav class="context-index" aria-label="Agent Context Index">
+<header><h2>Agent Context Index</h2><p>Line ranges point into this HTML file.</p></header>
+<div class="index-grid">
+<a class="index-row" href="#docs-adr-readme"><div><strong>ADR Folder Orientation</strong></div><div class="index-range">L125-L176</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#docs-adr-adr-001-stack-and-shell-baseline"><div><strong>ADR-001 Stack And Shell Baseline</strong></div><div class="index-range">L177-L234</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#docs-adr-adr-002-sqlite-first-with-portability"><div><strong>ADR-002 SQLite First With Portability</strong></div><div class="index-range">L235-L281</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#docs-adr-adr-003-document-persistence-and-editor-state"><div><strong>ADR-003 Document Persistence And Editor State</strong></div><div class="index-range">L282-L359</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#docs-adr-adr-004-prove-load-bearing-editor-risks-before-phase-2"><div><strong>ADR-004 Prove Load-Bearing Editor Risks Before Phase 2</strong></div><div class="index-range">L360-L419</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#docs-adr-adr-005-editor-foundation-locked-to-prosemirror"><div><strong>ADR-005 Editor Foundation Locked To ProseMirror</strong></div><div class="index-range">L420-L468</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#docs-adr-adr-006-event-sourced-document-and-metadata-history"><div><strong>ADR-006 Event-Sourced Document And Metadata History</strong></div><div class="index-range">L469-L543</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#docs-adr-adr-007-workbench-storage-engine-for-phase-1-proof"><div><strong>ADR-007 Workbench Storage Engine For Phase 1 Proof</strong></div><div class="index-range">L544-L588</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+</div>
+</nav>
+<main>
+<article id="docs-adr-readme" class="doc-source" data-source="docs/adr/README.md">
+<header class="source-header">
+<p class="source-path">Former source: docs/adr/README.md</p>
+<h2>ADR Folder Orientation</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>Architecture Decision Records</h1>
+<h2>Status</h2>
+<p>MVP now</p>
+<h2>If you landed here first</h2>
+<p>Read <a href="../docs-index.html#docs-readme">docs/README.md</a> first, then <a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a>. This folder holds the decisions that should stay stable enough to reference later.</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="../docs-index.html#docs-readme">docs/README.md</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a></li>
+</ul>
+<h2>Owns</h2>
+<ul>
+<li>Durable architecture decisions with context and consequences.</li>
+</ul>
+<h2>Does not own</h2>
+<ul>
+<li>Everyday implementation notes.</li>
+<li>Product-roadmap reasoning in isolation.</li>
+</ul>
+<h2>Current ADRs</h2>
+<ul>
+<li><a href="#docs-adr-adr-001-stack-and-shell-baseline">ADR-001: Stack and Shell Baseline</a></li>
+<li><a href="#docs-adr-adr-002-sqlite-first-with-portability">ADR-002: SQLite First with Portability</a></li>
+<li><a href="#docs-adr-adr-003-document-persistence-and-editor-state">ADR-003: Document Persistence and Editor State</a></li>
+<li><a href="#docs-adr-adr-004-prove-load-bearing-editor-risks-before-phase-2">ADR-004: Prove Load-Bearing Editor Risks Before Phase 2</a></li>
+<li><a href="#docs-adr-adr-005-editor-foundation-locked-to-prosemirror">ADR-005: Editor Foundation Locked to ProseMirror</a></li>
+<li><a href="#docs-adr-adr-006-event-sourced-document-and-metadata-history">ADR-006: Event-Sourced Document and Metadata History</a></li>
+<li><a href="#docs-adr-adr-007-workbench-storage-engine-for-phase-1-proof">ADR-007: Workbench Storage Engine for Phase 1 Proof</a></li>
+</ul>
+<h2>Decided</h2>
+<ul>
+<li>ADRs should stay lightweight in this phase.</li>
+<li>The hardest editor and persistence decisions are already important enough to record here.</li>
+</ul>
+<h2>Open</h2>
+<ul>
+<li>When to start recording more granular implementation decisions here.</li>
+</ul>
+<h2>Deferred</h2>
+<ul>
+<li>A heavyweight RFC process.</li>
+</ul>
+</div>
+</article><!-- /docs-adr-readme -->
+<article id="docs-adr-adr-001-stack-and-shell-baseline" class="doc-source" data-source="docs/adr/ADR-001-stack-and-shell-baseline.md">
+<header class="source-header">
+<p class="source-path">Former source: docs/adr/ADR-001-stack-and-shell-baseline.md</p>
+<h2>ADR-001 Stack And Shell Baseline</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>ADR-001: Stack and Shell Baseline</h1>
+<h2>Status</h2>
+<p>Accepted</p>
+<h2>Date</h2>
+<p>2026-04-17</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a></li>
+<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a></li>
+</ul>
+<h2>Context</h2>
+<p>Evernear is a desktop-first, local-first writing product whose differentiator is semantic context and multi-panel re-entry flow, not cloud collaboration.
+The project needs a stack that is practical to build, supports strong local workflows, and gives the editor enough room for custom behavior without turning the shell into the main challenge.
+The editor choice has to respect the load-bearing reality that Evernear is really about anchored ranges, derived decorations, and document-adjacent context, not generic rich text.
+Long-document layout and visible-range tracking are still open enough that Pretext deserves an explicit spike before the repo commits too hard to one rendering strategy.</p>
+<h2>Decision</h2>
+<p>Use:</p>
+<ul>
+<li>Electron for the desktop shell</li>
+<li>React and TypeScript for the renderer</li>
+<li>Vite for development and build tooling</li>
+<li>ProseMirror as the editor foundation, locked in by <a href="#docs-adr-adr-005-editor-foundation-locked-to-prosemirror">ADR-005</a></li>
+<li>SQLite for local project storage</li>
+</ul>
+<p>Keep the repo as a single desktop app with strong internal boundaries instead of starting with a package workspace.</p>
+<h2>Consequences</h2>
+<ul>
+<li>The stack is familiar and buildable now.</li>
+<li>Runtime boundaries are explicit: <code>main</code>, <code>preload</code>, <code>renderer</code>, <code>shared</code>, <code>db</code>.</li>
+<li>We accept Electron overhead in exchange for speed of execution and ecosystem support.</li>
+<li>We accept ProseMirror's extra upfront schema and plugin ceremony because transaction mapping and decorations better match Evernear's anchored-range problems.</li>
+<li>We keep long-document layout strategy somewhat open until the Pretext spike says whether it meaningfully changes document-view or viewport-mapping design.</li>
+<li>We avoid early package extraction until the codebase creates real pressure for it.</li>
+</ul>
+<h2>Decided</h2>
+<ul>
+<li>This is the working baseline for implementation planning.</li>
+</ul>
+<h2>Open</h2>
+<ul>
+<li>Exact state-management and migration-tool choices within the baseline.</li>
+<li>Whether to use raw ProseMirror or a TipTap-style React wrapper at the renderer seam.</li>
+<li>Whether Pretext belongs as a document-view helper, a broader layout primitive, or not at all.</li>
+</ul>
+<h2>Deferred</h2>
+<ul>
+<li>Alternative shells or editor foundations unless the chosen stack proves inadequate.</li>
+</ul>
+</div>
+</article><!-- /docs-adr-adr-001-stack-and-shell-baseline -->
+<article id="docs-adr-adr-002-sqlite-first-with-portability" class="doc-source" data-source="docs/adr/ADR-002-sqlite-first-with-portability.md">
+<header class="source-header">
+<p class="source-path">Former source: docs/adr/ADR-002-sqlite-first-with-portability.md</p>
+<h2>ADR-002 SQLite First With Portability</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>ADR-002: SQLite First with Portability</h1>
+<h2>Status</h2>
+<p>Accepted</p>
+<h2>Date</h2>
+<p>2026-04-16</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a></li>
+</ul>
+<h2>Context</h2>
+<p>Evernear needs structured local storage for documents, entities, matching rules, slice associations, reusable slice boundaries, annotations, and persistent layout state.
+The core workflow also benefits from reliable querying and transactions.
+At the same time, the product philosophy rejects trapping authors in an opaque or hostile format.</p>
+<h2>Decision</h2>
+<p>Make SQLite the canonical runtime store for a local project.
+Treat portability as a core requirement by planning first-class export or package support from the start.
+The likely project shape is a local project directory that contains the database and any adjacent asset or export material.</p>
+<h2>Consequences</h2>
+<ul>
+<li>Querying and consistency become simpler than a purely file-first design.</li>
+<li>Structured concepts such as entities, slices, slice boundaries, and layout state fit naturally.</li>
+<li>We must design export and package behavior intentionally so author ownership remains real.</li>
+<li>The database layer now owns part of the product trust story, not just persistence mechanics.</li>
+</ul>
+<h2>Decided</h2>
+<ul>
+<li>SQLite-first is not allowed to become user-hostile.</li>
+</ul>
+<h2>Open</h2>
+<ul>
+<li>Exact project directory and package format.</li>
+<li>Whether export should default to a bundle, plain-text files, or both.</li>
+</ul>
+<h2>Deferred</h2>
+<ul>
+<li>Remote sync and any network-aware persistence model.</li>
+</ul>
+</div>
+</article><!-- /docs-adr-adr-002-sqlite-first-with-portability -->
+<article id="docs-adr-adr-003-document-persistence-and-editor-state" class="doc-source" data-source="docs/adr/ADR-003-document-persistence-and-editor-state.md">
+<header class="source-header">
+<p class="source-path">Former source: docs/adr/ADR-003-document-persistence-and-editor-state.md</p>
+<h2>ADR-003 Document Persistence And Editor State</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>ADR-003: Document Persistence and Editor State</h1>
+<h2>Status</h2>
+<p>Accepted</p>
+<h2>Date</h2>
+<p>2026-04-17</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a></li>
+<li><a href="../../src/db/db-docs.html#src-db-readme">src/db/README.md</a></li>
+<li><a href="../../src/renderer/renderer-docs.html#src-renderer-editor-readme">src/renderer/editor/README.md</a></li>
+</ul>
+<h2>Context</h2>
+<p>The document row is the seam between the editor host and SQLite.
+If that seam stays vague, the editor choice can quietly dictate the whole architecture.</p>
+<p>Evernear is currently single-user-first and local-first.
+It needs:</p>
+<ul>
+<li>reliable document round-tripping</li>
+<li>a plain-text projection for export and other non-editor text utilities</li>
+<li>clean separation between persisted truth and transient editor UI state</li>
+<li>room for slice boundaries and annotations to live outside the editor's ephemeral runtime objects</li>
+</ul>
+<p>Delta streams and diff-on-save both add complexity before they solve a real problem here.</p>
+<h2>Decision</h2>
+<p>Persist each document as a full snapshot write plus a plain-text projection.</p>
+<p>The working row shape is:</p>
+<ul>
+<li><code>contentFormat</code>: identifies the editor schema family</li>
+<li><code>contentSchemaVersion</code>: identifies the stored snapshot version</li>
+<li><code>contentJson</code>: stores the canonical structured document snapshot</li>
+<li><code>plainText</code>: stores the denormalized text projection used by search, export, and other non-editor helpers</li>
+</ul>
+<p>Do not persist:</p>
+<ul>
+<li>active selection</li>
+<li>undo or redo history</li>
+<li>active decorations</li>
+<li>transient plugin state</li>
+<li>renderer-only interaction state</li>
+</ul>
+<p>Save using whole-snapshot writes on debounce or explicit commit, not a delta stream.</p>
+<p>Slice boundaries and annotations must not depend on ephemeral editor node keys alone.
+They persist through shared <code>TextAnchor</code> payloads that can be mapped forward during live edits and re-resolved later if mapping alone is not enough.</p>
+<h2>Consequences</h2>
+<ul>
+<li>The storage model stays understandable and debuggable.</li>
+<li>The editor host can be swapped only through an explicit migration, which is acceptable because <code>contentFormat</code> and <code>contentSchemaVersion</code> make that blast radius visible.</li>
+<li>Export and other non-editor helpers can work from <code>plainText</code> without having to parse editor internals every time.</li>
+<li>Collaboration-oriented storage patterns are deliberately deferred.</li>
+</ul>
+<h2>Decided</h2>
+<ul>
+<li>The canonical persistence model for current-state is snapshot-based, not delta-based.</li>
+<li>Snapshot writes are reused as checkpoints by the history layer defined in <a href="#docs-adr-adr-006-event-sourced-document-and-metadata-history">ADR-006</a>.</li>
+</ul>
+<h2>Open</h2>
+<ul>
+<li>Exact save cadence and batching policy.</li>
+<li>Exact SQLite column names and whether <code>plainText</code> should live in the same table or a tightly-coupled companion table.</li>
+</ul>
+<h2>Deferred</h2>
+<ul>
+<li>Collaboration-first document storage.</li>
+</ul>
+<h2>Superseded deferrals</h2>
+<ul>
+<li>Persisted edit history. Lifted by <a href="#docs-adr-adr-006-event-sourced-document-and-metadata-history">ADR-006</a>, which adds an event-sourced history layer that reuses these snapshots as checkpoints.</li>
+</ul>
+</div>
+</article><!-- /docs-adr-adr-003-document-persistence-and-editor-state -->
+<article id="docs-adr-adr-004-prove-load-bearing-editor-risks-before-phase-2" class="doc-source" data-source="docs/adr/ADR-004-prove-load-bearing-editor-risks-before-phase-2.md">
+<header class="source-header">
+<p class="source-path">Former source: docs/adr/ADR-004-prove-load-bearing-editor-risks-before-phase-2.md</p>
+<h2>ADR-004 Prove Load-Bearing Editor Risks Before Phase 2</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>ADR-004: Prove Load-Bearing Risks Before Phase 2</h1>
+<h2>Status</h2>
+<p>Accepted</p>
+<h2>Date</h2>
+<p>2026-04-17</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="../experiments/experiments-index.html#docs-experiments-readme">docs/experiments/README.md</a></li>
+</ul>
+<h2>Context</h2>
+<p>The most expensive rewrite risks in Evernear are not shell setup risks.
+They are:</p>
+<ul>
+<li>anchored ranges surviving live edits</li>
+<li>live visible-range matching, rule normalization, and invalidation while typing</li>
+<li>event-log and checkpoint replay drifting from current-state projections</li>
+<li>understanding whether Pretext changes the long-document layout picture</li>
+<li>keeping document persistence simple enough to trust</li>
+</ul>
+<p>Editor-host fit was part of this risk bundle originally and is now resolved by EXP-003, EXP-004, and ADR-005. The remaining Phase 1 proof work still blocks the foundational shell.</p>
+<p>If feature work starts before these are proven well enough, the codebase can look productive while still heading toward a rewrite.</p>
+<h2>Decision</h2>
+<p>Phase 2 is gated by Phase 1 proof work.</p>
+<p>Before the foundational shell is treated as settled, the repo should have current experiment records for:</p>
+<ul>
+<li>shared anchor healing for slice boundaries and annotations</li>
+<li>live visible-range matching and rule normalization</li>
+<li>event-log and checkpoint replay, including rebuild-from-log verification</li>
+<li>Pretext layout viability</li>
+<li>document snapshot round-tripping</li>
+</ul>
+<h2>Consequences</h2>
+<ul>
+<li>Early progress becomes slightly slower on paper, but much safer in practice.</li>
+<li>The hard problems stay explicit instead of being buried under feature checklists.</li>
+<li>Future AI passes have a clear rule for when to stop adding product surface and return to proof work.</li>
+</ul>
+<h2>Decided</h2>
+<ul>
+<li>Load-bearing proof now is cheaper than architectural regret later.</li>
+</ul>
+<h2>Open</h2>
+<ul>
+<li>The exact numeric thresholds for matching, anchor-healing, and replay acceptance.</li>
+</ul>
+<h2>Deferred</h2>
+<ul>
+<li>A broader milestone governance process beyond what this repo currently needs.</li>
+</ul>
+</div>
+</article><!-- /docs-adr-adr-004-prove-load-bearing-editor-risks-before-phase-2 -->
+<article id="docs-adr-adr-005-editor-foundation-locked-to-prosemirror" class="doc-source" data-source="docs/adr/ADR-005-editor-foundation-locked-to-prosemirror.md">
+<header class="source-header">
+<p class="source-path">Former source: docs/adr/ADR-005-editor-foundation-locked-to-prosemirror.md</p>
+<h2>ADR-005 Editor Foundation Locked To ProseMirror</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>ADR-005: Editor Foundation Locked to ProseMirror</h1>
+<h2>Status</h2>
+<p>Accepted</p>
+<h2>Date</h2>
+<p>2026-04-17</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="#docs-adr-adr-001-stack-and-shell-baseline">ADR-001</a></li>
+<li><a href="#docs-adr-adr-003-document-persistence-and-editor-state">ADR-003</a></li>
+<li><a href="../experiments/experiments-index.html#docs-experiments-resolved-exp-003-lexical-prototype-walkthrough">EXP-003</a></li>
+<li><a href="../experiments/experiments-index.html#docs-experiments-resolved-exp-004-prosemirror-prototype-walkthrough">EXP-004</a></li>
+</ul>
+<h2>Context</h2>
+<p>ADR-001 left the editor choice open pending the walkthroughs captured in EXP-003 and EXP-004. Those walkthroughs showed that ProseMirror's transactions, <code>Mapping</code>, and <code>Decoration</code> model line up directly with Evernear's core problems: anchor healing, derived highlights, boundary editing, and a history layer that can be built on <code>Step</code>. Lexical would push the same work into bespoke infrastructure around the editor rather than through primitives inside it.</p>
+<p>ADR-006 makes a history subsystem that rides on ProseMirror <code>Step</code> records a first-class concern, which means the editor choice has to be a floor that later decisions can stand on rather than a soft preference.</p>
+<h2>Decision</h2>
+<p>ProseMirror is the editor foundation for Evernear. All planning and implementation passes should treat it as assumed rather than pending. Lexical is rejected. The question is closed unless a concrete ProseMirror-specific blocker surfaces.</p>
+<h2>Consequences</h2>
+<ul>
+<li>Planning docs and code-facing READMEs stop treating the editor choice as tentative.</li>
+<li>Anchor healing under edits rides on ProseMirror transaction <code>Mapping</code>.</li>
+<li>Derived entity highlights and quiet annotation underlines are ProseMirror <code>Decoration</code> objects.</li>
+<li>The history layer in ADR-006 can assume <code>Step</code> as a stable primitive.</li>
+<li>The React seam question - raw ProseMirror versus a TipTap-style wrapper - lives inside this decision rather than as a cross-cutting open question.</li>
+</ul>
+<h2>Decided</h2>
+<ul>
+<li>ProseMirror is the editor foundation.</li>
+<li>Lexical is no longer under consideration.</li>
+</ul>
+<h2>Open</h2>
+<ul>
+<li>Whether to use raw ProseMirror or a TipTap-style React wrapper at the renderer seam.</li>
+<li>Which plugins belong in the Phase 2 foundational shell versus later.</li>
+</ul>
+<h2>Deferred</h2>
+<ul>
+<li>Any re-evaluation of the editor foundation unless a concrete ProseMirror blocker appears.</li>
+</ul>
+</div>
+</article><!-- /docs-adr-adr-005-editor-foundation-locked-to-prosemirror -->
+<article id="docs-adr-adr-006-event-sourced-document-and-metadata-history" class="doc-source" data-source="docs/adr/ADR-006-event-sourced-document-and-metadata-history.md">
+<header class="source-header">
+<p class="source-path">Former source: docs/adr/ADR-006-event-sourced-document-and-metadata-history.md</p>
+<h2>ADR-006 Event-Sourced Document And Metadata History</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>ADR-006: Event-Sourced Document and Metadata History</h1>
+<h2>Status</h2>
+<p>Accepted</p>
+<h2>Date</h2>
+<p>2026-04-17</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a></li>
+<li><a href="#docs-adr-adr-002-sqlite-first-with-portability">ADR-002</a></li>
+<li><a href="#docs-adr-adr-003-document-persistence-and-editor-state">ADR-003</a></li>
+<li><a href="#docs-adr-adr-005-editor-foundation-locked-to-prosemirror">ADR-005</a></li>
+</ul>
+<h2>Context</h2>
+<p>Writers need more than session-scoped undo. They need time travel across prose, entities, matching rules, slices, slice boundaries, and annotations, plus the reassurance that text cannot silently vanish. Source-control abstractions like diff, merge, and rebase are the wrong mental model for this audience. CRDTs are overkill for a single-user local-first product. Temporal-column schemas bloat badly for long prose.</p>
+<p>ADR-003 chose document snapshot writes as the canonical current-state for a document and deferred persisted edit history. That deferral now costs more than it saves: slice-boundary history, annotation history, and prose history all want the same machinery, and the product promise of author ownership weakens if a project's past cannot travel with it.</p>
+<h2>Decision</h2>
+<p>Add an event-sourced history layer that coexists with ADR-003's snapshot model. Current-state tables remain the fast path for everyday queries. They are projections of append-only history.</p>
+<p>History is stored in two append-only streams inside the project SQLite database:</p>
+<ol>
+<li><strong>Domain event log</strong> - every semantic mutation to <code>Entity</code>, <code>MatchingRule</code>, <code>Slice</code>, <code>SliceBoundary</code>, <code>EntitySlice</code>, <code>Annotation</code>, and project-level objects emits a typed event.</li>
+<li><strong>Document step log</strong> - every ProseMirror transaction produces <code>Step</code> records that are persisted with their inverses, keyed to a document and a version.</li>
+</ol>
+<p>ADR-003 snapshot writes continue to define current document state. In this history model:</p>
+<ul>
+<li>the <code>documents</code> row is the head current-state projection for a document</li>
+<li><code>document_checkpoints</code> stores historical replay bases</li>
+<li>opening a historical document version loads the nearest checkpoint and replays forward steps</li>
+</ul>
+<p>MVP writes commit as append-then-project inside one SQLite transaction. Async projection maintenance is explicitly deferred.</p>
+<p>Slice boundary and annotation history rides on the same <code>Mapping</code> substrate as live anchor migration. Every semantic anchor mutation records the anchor payload together with <code>documentVersionSeen</code>. To reconstruct an anchor at version <code>V</code>, start from the latest anchor event at or before <code>V</code>, then map it forward through subsequent document steps. If mapping collapses or deletes the range, the anchor becomes invalid rather than being silently healed.</p>
+<p>A unified timeline remains the long-term product shape, but the first writer-visible surface can be a minimal restore-previous-version action.</p>
+<h2>Consequences</h2>
+<ul>
+<li>ADR-003's <code>Deferred: Persisted edit history</code> line is lifted by this ADR. Its snapshot model for current-state remains in force and is repurposed as the checkpoint primitive.</li>
+<li>Every mutation path must append to the appropriate log before updating projections, inside a single SQLite transaction.</li>
+<li>Current-state tables stop being the source of truth. Projections are rebuildable from the logs and checkpoints.</li>
+<li>Portability must package logs and checkpoints, not just the current projection, or history is lost on export.</li>
+<li>The schema gains <code>events</code>, <code>document_steps</code>, and <code>document_checkpoints</code> table families.</li>
+<li>The repository layer gains append-only history writers plus read paths for checkpoint load, document replay, and projection rebuild.</li>
+<li>Merge, conflict resolution, CRDTs, and collaboration remain permanently out of scope.</li>
+</ul>
+<h2>Decided</h2>
+<ul>
+<li>History is event-sourced.</li>
+<li>ProseMirror <code>Step</code> is the document-content history primitive.</li>
+<li>Boundary and annotation time travel ride on ProseMirror <code>Mapping</code>.</li>
+<li>ADR-003 snapshot writes are reused as checkpoints.</li>
+<li>The <code>documents</code> row remains current state; <code>document_checkpoints</code> stores historical replay bases.</li>
+<li>MVP history writes append then project inline inside one SQLite transaction.</li>
+<li>The first writer-visible history surface can be a minimal restore-previous-version action.</li>
+<li>Merge, conflict resolution, branching as a product feature, and collaboration stay out of scope.</li>
+</ul>
+<h2>Open</h2>
+<ul>
+<li>Checkpoint cadence beyond every explicit save, and whether writers can name a checkpoint directly.</li>
+<li>Event payload versioning conventions as event shapes evolve.</li>
+<li>Exact UI behavior when an invalidated <code>SliceBoundary</code> or <code>Annotation</code> needs repair.</li>
+</ul>
+<h2>Deferred</h2>
+<ul>
+<li>A scrubbable unified timeline UI beyond the initial restore-first surface.</li>
+<li>Named branches as a product feature.</li>
+<li>Async projection maintenance or catch-up barriers.</li>
+<li>Cross-project history sync.</li>
+</ul>
+</div>
+</article><!-- /docs-adr-adr-006-event-sourced-document-and-metadata-history -->
+<article id="docs-adr-adr-007-workbench-storage-engine-for-phase-1-proof" class="doc-source" data-source="docs/adr/ADR-007-workbench-storage-engine-for-phase-1-proof.md">
+<header class="source-header">
+<p class="source-path">Former source: docs/adr/ADR-007-workbench-storage-engine-for-phase-1-proof.md</p>
+<h2>ADR-007 Workbench Storage Engine For Phase 1 Proof</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>ADR-007: Workbench Storage Engine for Phase 1 Proof</h1>
+<h2>Status</h2>
+<p>Accepted</p>
+<h2>Date</h2>
+<p>2026-04-17</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="#docs-adr-adr-002-sqlite-first-with-portability">ADR-002: SQLite First with Portability</a></li>
+<li><a href="#docs-adr-adr-003-document-persistence-and-editor-state">ADR-003: Document Persistence and Editor State</a></li>
+<li><a href="#docs-adr-adr-006-event-sourced-document-and-metadata-history">ADR-006: Event-Sourced Document and Metadata History</a></li>
+</ul>
+<h2>Context</h2>
+<p>The original proof harness used <code>sql.js</code> and rewrote the whole database file on commit.
+That was acceptable for a narrow snapshot-only proof, but it would give misleading results once the Phase 1 workbench started appending document steps, checkpoints, and event rows at typing pace.</p>
+<h2>Decision</h2>
+<p>Use <code>better-sqlite3</code> as the local runtime store for the Phase 1 proof workbench.</p>
+<p>Run the workbench with:</p>
+<ul>
+<li>SQLite WAL mode</li>
+<li><code>synchronous=FULL</code> as the default proof setting</li>
+<li>one local process-owned database file under <code>.local/</code></li>
+</ul>
+<h2>Consequences</h2>
+<ul>
+<li>The proof workbench measures against a storage path that is much closer to the real local-app reality.</li>
+<li>Local upgrades need a simple schema-reset path for old proof databases.</li>
+<li>The workbench remains explicitly local-only; this ADR does not change any future portability or packaging decision from ADR-002.</li>
+</ul>
+<h2>Decided</h2>
+<ul>
+<li>The proof layer should not prove history performance on top of a file-rewrite artifact.</li>
+</ul>
+<h2>Open</h2>
+<ul>
+<li>Whether later product builds should keep <code>synchronous=FULL</code> or compare it more directly against <code>NORMAL</code> once the history path is exercised on real prose.</li>
+</ul>
+</div>
+</article><!-- /docs-adr-adr-007-workbench-storage-engine-for-phase-1-proof -->
+</main>
+<p class="footer">Generated from repo-authored Markdown during the HTML documentation migration. AGENT.md and CLAUDE.md remain Markdown bootstrap files by design.</p>
+</div>
+</body>
+</html>

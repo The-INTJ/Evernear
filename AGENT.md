@@ -5,8 +5,9 @@ Short hard-rules checklist for AI agents working on this repo. Read this *first*
 Other docs give the *why*. This doc gives the *check*.
 
 - [CLAUDE.md](CLAUDE.md) — invariants and boundaries.
-- [refineCode.md](refineCode.md) — conventions, file-by-file extraction targets, PR checklist.
-- [FOR_HUMAN_CODE--DOC.md](FOR_HUMAN_CODE--DOC.md) — domain vocabulary. Use these names verbatim.
+- [refineCode.html](refineCode.html) — conventions, file-by-file extraction targets, PR checklist.
+- [FOR_HUMAN_CODE--DOC.html](FOR_HUMAN_CODE--DOC.html) — domain vocabulary. Use these names verbatim.
+- [docs/data-flow-entity-slice-map.html](docs/data-flow-entity-slice-map.html) — visual map of data flow, entity interaction, and slice creation.
 
 ---
 
@@ -34,9 +35,20 @@ ESLint's `no-restricted-imports` enforces runtime boundaries automatically. If t
 If you just arrived and don't remember the codebase:
 
 1. Read [CLAUDE.md](CLAUDE.md). Invariants, boundaries, and stack are there.
-2. Scan [refineCode.md](refineCode.md) §"What to preserve" — these are the conventions, not suggestions.
-3. Skim the folder README for the folder you're about to edit. Every `src/*` folder has one in the canonical shape (Status / Owns / Does not own / …).
+2. Scan [refineCode.html](refineCode.html) §"What to preserve" — these are the conventions, not suggestions.
+3. Skim the matching consolidated HTML doc for the folder you're about to edit. Use its **Agent Context Index** line ranges instead of ingesting the whole file when a narrow slice is enough.
 4. Check [package.json](package.json) scripts before inventing commands. `npm run check` is the canonical gate — typecheck → lint → test → build. Vitest is wired in; `npm run test` handles the better-sqlite3 Node/Electron ABI rebuild dance.
+
+---
+
+## HTML-first documentation rule
+
+Except for this file and [CLAUDE.md](CLAUDE.md), durable repo docs are HTML by default. Do not add new Markdown docs.
+
+- Prefer high-density forms when they make the material easier to scan: tables, grids, timelines, swimlanes, SVG/HTML diagrams, compact cards, and collapsible sections.
+- Every substantial HTML doc should be mobile responsive, directly browser-openable, and have a header with purpose, audience, included former sources where relevant, stable section anchors, and an **Agent Context Index** with line ranges.
+- Use hidden HTML comments for agent-only context where a dense visual compresses ordering, invariants, provenance, or failure-mode nuance that would otherwise be easier for an agent to understand in prose.
+- Keep consolidation local to a folder or clear subsystem. Current consolidated docs: [docs/docs-index.html](docs/docs-index.html), [docs/adr/adr-index.html](docs/adr/adr-index.html), [docs/experiments/experiments-index.html](docs/experiments/experiments-index.html), [docs/templates/templates-index.html](docs/templates/templates-index.html), [src/src-docs.html](src/src-docs.html), [src/db/db-docs.html](src/db/db-docs.html), [src/renderer/renderer-docs.html](src/renderer/renderer-docs.html), and [src/shared/shared-docs.html](src/shared/shared-docs.html).
 
 ---
 
@@ -88,11 +100,11 @@ If you find yourself threading a new concept through App.tsx and five utilities 
 
 ### R4. Domain vocabulary
 
-Use the terms from the vocabulary table in [FOR_HUMAN_CODE--DOC.md](FOR_HUMAN_CODE--DOC.md): `Project`, `DocumentFolder`, `Document`, `DocumentOutlineNode`, `Entity`, `MatchingRule`, `TextAnchor`, `Slice`, `SliceBoundary`, `EntitySlice`, `PendingEverlinkSession`, `AnchorResolutionResult`, `Panel`, `Annotation`, `EventStream`, `DocumentStep`, `DocumentCheckpoint`, `Projection`.
+Use the terms from the vocabulary table in [FOR_HUMAN_CODE--DOC.html](FOR_HUMAN_CODE--DOC.html): `Project`, `DocumentFolder`, `Document`, `DocumentOutlineNode`, `Entity`, `MatchingRule`, `TextAnchor`, `Slice`, `SliceBoundary`, `EntitySlice`, `PendingEverlinkSession`, `AnchorResolutionResult`, `Panel`, `Annotation`, `EventStream`, `DocumentStep`, `DocumentCheckpoint`, `Projection`.
 
 - Do not invent synonyms.
 - If you need a new concept, add it to the vocabulary table *before* naming the type.
-- "Workspace" is the canonical term; "workbench" survives only in a couple of CSS classes and the Phase 1 proof-workbench planning docs — don't introduce new "workbench" identifiers in code. See [refineCode.md](refineCode.md) §C5.
+- "Workspace" is the canonical term; "workbench" survives only in a couple of CSS classes and the Phase 1 proof-workbench planning docs — don't introduce new "workbench" identifiers in code. See [refineCode.html](refineCode.html) §C5.
 
 ### R5. Type discipline
 
@@ -130,9 +142,9 @@ Default is no comments. Write a comment only when:
 
 Do not write comments that re-state what the code does; well-named identifiers already do that. Do not reference "the fix for ticket X" or "the caller at Y" — that rots.
 
-### R9. New folder → new README
+### R9. New folder → update consolidated HTML docs
 
-Every `src/*` and `docs/*` folder you create must have a README in the canonical shape: **Status / If you landed here first / Parent reads / Owns / Does not own / Key relationships / Decided / Open / Deferred**. No exceptions.
+Every `src/*` and `docs/*` folder you create must be represented in the relevant consolidated HTML doc with the canonical shape: **Status / If you landed here first / Parent reads / Owns / Does not own / Key relationships / Decided / Open / Deferred**. Add or refresh the Agent Context Index line ranges after editing. No exceptions.
 
 ### R10. No premature abstractions
 
@@ -147,7 +159,7 @@ Run through this before saying "done":
 - [ ] Invariants (R1, R2, R4, R5) preserved — no renderer-side SQL, no raw rows outside `src/db/`, no invented domain terms, no mutation without event append in a transaction.
 - [ ] IPC additions touch exactly the four files listed in R3.
 - [ ] No file exceeded its hard limit (R6); no growth in the two flagged god files (R7).
-- [ ] New folder → new README (R9).
+- [ ] New folder → consolidated HTML doc entry with current line ranges (R9).
 - [ ] `npm run check` passes (typecheck → lint → test → build).
 - [ ] If you touched behavior near an `EXTRACT →` marker, you either extracted first or recorded in the PR description why you deferred.
 - [ ] No emoji in code or docs unless the user explicitly asked for it.

@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>For Human Business Doc | Evernear</title>
+  <style>:root {
+  color-scheme: light;
+  --bg: #f7f7f4;
+  --paper: #ffffff;
+  --ink: #1f2328;
+  --muted: #606a75;
+  --line: #d8ddd8;
+  --soft: #eef1ed;
+  --accent: #2563eb;
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, white);
+  --accent-line: color-mix(in srgb, var(--accent) 32%, #d8ddd8);
+  --code-bg: #151b23;
+  --code-ink: #f1f5f9;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--ink); line-height: 1.55; }
+a { color: var(--accent); text-decoration-thickness: 0.08em; text-underline-offset: 0.18em; }
+.doc-shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 56px; }
+.doc-hero { border: 1px solid var(--accent-line); background: linear-gradient(135deg, var(--paper), var(--accent-soft)); border-radius: 8px; padding: 26px; }
+.eyebrow { margin: 0 0 8px; color: var(--accent); font-weight: 800; text-transform: uppercase; letter-spacing: 0; font-size: 0.78rem; }
+h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-spacing: 0; overflow-wrap: anywhere; }
+.subtitle { margin: 14px 0 0; max-width: 820px; color: var(--muted); font-size: 1.04rem; }
+.meta-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 20px; }
+.meta-card { border: 1px solid var(--line); background: rgba(255,255,255,0.7); border-radius: 8px; padding: 12px; min-width: 0; }
+.meta-card strong { display: block; font-size: 0.76rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0; }
+.meta-card span, .meta-card a { display: block; margin-top: 3px; font-weight: 700; overflow-wrap: anywhere; }
+.context-index { margin: 18px 0; border: 1px solid var(--line); background: var(--paper); border-radius: 8px; overflow: hidden; }
+.context-index header { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 14px 16px; background: var(--soft); border-bottom: 1px solid var(--line); }
+.context-index h2 { margin: 0; font-size: 1rem; }
+.context-index p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+.index-grid { display: grid; grid-template-columns: minmax(180px, 0.9fr) minmax(150px, 0.6fr) minmax(260px, 1.7fr); }
+.index-row { display: contents; color: inherit; text-decoration: none; }
+.index-row > div { padding: 10px 14px; border-top: 1px solid var(--line); min-width: 0; }
+.index-row:first-child > div { border-top: 0; }
+.index-range { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 0.86rem; color: var(--accent); white-space: nowrap; }
+.source-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.source-pill { border: 1px solid var(--accent-line); background: var(--accent-soft); color: var(--ink); border-radius: 999px; padding: 5px 9px; font-size: 0.82rem; font-weight: 700; }
+.doc-source, .map-section { margin-top: 18px; border: 1px solid var(--line); background: var(--paper); border-radius: 8px; overflow: clip; }
+.source-header, .section-header { padding: 16px 18px; border-bottom: 1px solid var(--line); background: #fbfbf9; }
+.source-header h2, .section-header h2 { margin: 3px 0 0; font-size: 1.35rem; letter-spacing: 0; overflow-wrap: anywhere; }
+.source-header p, .section-header p { margin: 0; color: var(--muted); }
+.source-path { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 0.78rem; color: var(--muted); overflow-wrap: anywhere; }
+.md-content { padding: 18px; }
+.md-content h1 { font-size: 2rem; line-height: 1.08; margin: 0 0 14px; overflow-wrap: anywhere; }
+.md-content h2 { margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 1.25rem; overflow-wrap: anywhere; }
+.md-content h3 { margin-top: 20px; font-size: 1.06rem; overflow-wrap: anywhere; }
+.md-content p, .md-content ul, .md-content ol { max-width: 86ch; }
+.md-content table, .dense-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.94rem; }
+.md-content th, .md-content td, .dense-table th, .dense-table td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+.md-content th, .dense-table th { background: var(--soft); color: #30363d; }
+.md-content code:not(pre code) { background: var(--soft); border: 1px solid var(--line); border-radius: 5px; padding: 0.08rem 0.28rem; font-size: 0.9em; }
+.md-content pre, pre.code-block { background: var(--code-bg); color: var(--code-ink); border-radius: 8px; overflow: auto; padding: 14px; }
+.md-content pre code { color: inherit; background: transparent; border: 0; padding: 0; }
+.compact-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
+.compact-card { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 12px; min-width: 0; }
+.compact-card h3 { margin: 0 0 6px; font-size: 1rem; }
+.compact-card p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+.flow-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
+.flow-step { position: relative; border: 1px solid var(--accent-line); background: var(--accent-soft); border-radius: 8px; padding: 12px; min-height: 120px; overflow-wrap: anywhere; }
+.flow-step strong { display: block; margin-bottom: 6px; }
+.flow-step span { color: var(--muted); font-size: 0.9rem; }
+.badge-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.badge { border: 1px solid var(--line); border-radius: 999px; padding: 5px 8px; background: var(--soft); font-size: 0.82rem; font-weight: 700; }
+.mermaidless-map { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
+.entity-node { border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 8px; padding: 12px; background: #fff; }
+.entity-node strong { display: block; }
+.entity-node span { display: block; color: var(--muted); font-size: 0.88rem; margin-top: 4px; }
+.note { border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 12px 14px; border-radius: 0 8px 8px 0; }
+.footer { margin-top: 22px; color: var(--muted); font-size: 0.88rem; }
+@media (max-width: 860px) {
+  .doc-shell { width: min(100% - 20px, 1180px); padding-top: 12px; }
+  .doc-hero { padding: 18px; }
+  .meta-grid, .compact-grid, .flow-grid, .mermaidless-map { grid-template-columns: 1fr; }
+  .index-grid { grid-template-columns: 1fr; }
+  .index-row > div { border-top: 0; padding: 6px 14px; }
+  .index-row { display: block; border-top: 1px solid var(--line); padding: 8px 0; }
+  .context-index header { display: block; }
+  .md-content { padding: 14px; overflow-x: auto; }
+}</style>
+</head>
+<body style="--accent: #a16207;">
+<div class="doc-shell">
+<header class="doc-hero">
+<p class="eyebrow">Evernear HTML documentation</p>
+<h1>For Human Business Doc</h1>
+<p class="subtitle">Product strategy and positioning context for implementation choices.</p>
+<div class="meta-grid">
+<div class="meta-card"><strong>Audience</strong><span>Humans evaluating product direction; agents preserving intent.</span></div>
+<div class="meta-card"><strong>Format</strong><span>Standalone HTML, browser-openable</span></div>
+<div class="meta-card"><strong>Agent Use</strong><span>Use the line ranges below before ingesting whole files.</span></div>
+</div>
+<div class="source-list">
+<span class="source-pill">FOR_HUMAN_BUSINESS--DOC.md</span>
+</div>
+</header>
+<nav class="context-index" aria-label="Agent Context Index">
+<header><h2>Agent Context Index</h2><p>Line ranges point into this HTML file.</p></header>
+<div class="index-grid">
+<a class="index-row" href="#for-human-business-doc"><div><strong>FOR_HUMAN_BUSINESS--DOC.md</strong></div><div class="index-range">L111-L233</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+</div>
+</nav>
+<main>
+<article id="for-human-business-doc" class="doc-source" data-source="FOR_HUMAN_BUSINESS--DOC.md">
+<header class="source-header">
+<p class="source-path">Former source: FOR_HUMAN_BUSINESS--DOC.md</p>
+<h2>FORHUMANBUSINESS--DOC</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>FOR_HUMAN_BUSINESS--DOC</h1>
+<h2>Last change</h2>
+<p>2026-04-19: marked the Phase 0 &quot;doc-only&quot; note below as historical — the repo has had runnable code since commit <code>d0ea627</code> and is now in Phase 1.5 foundation-hardened shape.
+2026-04-17: defined selection-driven Everlink authoring as selection-bootstrapped entity plus slice creation with panel-based target editing and fail-closed anchor repair.
+2026-04-17: defined document organization as folders plus generic documents, reserved anchored outline nodes, and made clean copy/paste plus future slice-preserving text transfer phase-zero concerns.
+2026-04-17: cleaned the merged planning pass, aligned the history promise with the actual MVP architecture, and removed stale editor-choice language.
+2026-04-17: clarified entities as match-rule and slice libraries, made matching explicitly live rather than precomputed, and added Pretext as an exploratory layout spike.
+2026-04-17: locked ProseMirror in as the editor foundation and added event-sourced history as part of the product's ownership and re-entry promises.</p>
+<h2>Current core</h2>
+<p>Evernear is a local-first desktop writing environment for complex fiction, especially fantasy.
+Its job is not merely to store prose. Its job is to reduce context re-entry pain when a writer returns to an old project after time away.
+The core product loop is:</p>
+<ul>
+<li>write or reread story text</li>
+<li>see meaningful entities surface as derived highlights in context</li>
+<li>preview related slices without leaving flow</li>
+<li>open a persistent panel for deeper reference when needed</li>
+</ul>
+<p>A quieter but foundational promise supports the loop: a writer's work is never lost or flattened. Every prose change, entity definition, matching rule, slice, and boundary is captured in append-only history that can later support a unified timeline.
+The first writing workflow must also respect how real projects arrive: paste in a huge manuscript, paste in world docs, organize them without ceremony, and still be able to <code>Ctrl+A</code> and <code>Ctrl+C</code> clean prose back out whenever needed.</p>
+<h2>Important structure</h2>
+<ul>
+<li>The product is organized around <code>Project</code>, <code>DocumentFolder</code>, <code>Document</code>, <code>DocumentOutlineNode</code>, <code>Entity</code>, <code>MatchingRule</code>, <code>Slice</code>, <code>SliceBoundary</code>, <code>TextAnchor</code>, <code>Annotation</code>, and <code>Panel/LayoutState</code>.</li>
+<li><code>DocumentFolder</code> and later <code>DocumentOutlineNode</code> exist to organize navigation and re-entry; they do not define meaning.</li>
+<li>An <code>Entity</code> owns a list of things that should match in text plus the library of slices those matches should open.</li>
+<li>Manual <code>Everlink it!</code> authoring is allowed as a bootstrap into entity truth, but it must create or extend the entity and slice model rather than leave stored hyperlink markup behind in the manuscript.</li>
+<li>Documents stay generic in the first build. <code>book</code>, <code>part</code>, <code>chapter</code>, and <code>section</code> belong to outline navigation later, not to a behavior-heavy document taxonomy now.</li>
+<li><code>TextAnchor</code> is the load-bearing idea behind both reusable slice boundaries and direct document annotations.</li>
+<li>Slice boundaries are stored as anchored ranges with exact text plus context and an optional coarse jump hint; line or position readouts may help the UI, but they are not the truth that later repair trusts.</li>
+<li>A future text-transfer seam must be able to preserve slice meaning across move or copy workflows without making ordinary editing or clipboard behavior weird in the meantime.</li>
+<li>An annotation is a quiet personal note anchored straight to the main document, not a collaborative comment system and not a second-class afterthought.</li>
+<li>The app is organized around <code>main</code>, <code>preload</code>, <code>renderer</code>, <code>shared</code>, and <code>db</code> so product ideas map cleanly to runtime boundaries.</li>
+<li>The runnable Phase 1.5 app implements this organization with strict boundaries enforced by ESLint; each source folder has a canonical README explaining its ownership and chain-up reads.</li>
+<li>SQLite is the canonical project store, with explicit author-ownership protections through export and package support that carries history, not just current state.</li>
+<li>Highlights are derived from entity matches and should not become stored records.</li>
+<li>History is event-sourced: an append-only domain event log plus the ProseMirror step log are the canonical record; the tables writers query are rebuildable projections.</li>
+</ul>
+<h2>Truthful MVP</h2>
+<ul>
+<li>Open a local project.</li>
+<li>Organize material with folders and generic documents.</li>
+<li>Paste in large story or reference text and edit it normally.</li>
+<li>Copy clean prose back out with ordinary select-all and copy behavior.</li>
+<li>Create entities with matching rules and associate them with slices.</li>
+<li>Bootstrap a new entity or extend an existing one from selected story text through <code>Everlink it!</code>, without any fuzzy auto-reuse of merely similar entities.</li>
+<li>Live-calculate entity matches inside visible story text and render derived highlights when highlighting is enabled.</li>
+<li>Use hover to open a modal with the slice viewer and click to open a persistent panel.</li>
+<li>Place and edit new slice content inside a panel document view, with empty pending slices auto-filling from the source selection on commit or blur.</li>
+<li>Persist enough local state that the workflow survives closing and reopening the app.</li>
+<li>Capture history from day one, even if the first visible surface is only a simple restore-previous-version action after MVP.</li>
+</ul>
+<p>The full annotation surface can land after the central loop proves itself, but its design cannot wait because it rides on the same anchoring substrate as slice boundaries. Internal outline navigation can land after that same anchor model proves itself, because it should reuse the anchored substrate rather than inventing a second positioning system. The full timeline UI can land after the truthful MVP, but the history plumbing cannot, because retrofitting it would mean rewriting the write path.</p>
+<h2>Major risks</h2>
+<ul>
+<li>Shared anchor healing under live edits could fail in ways that break both slice boundaries and annotations.</li>
+<li>Duplicate or heavily revised lore text could make slice repair drift unless ambiguous anchor resolution fails closed.</li>
+<li>Too much entity highlighting can make the document harder to read.</li>
+<li>Matching normalization can become either too weak to trust or too aggressive to trust, especially with aliases, capitalization, and possessives.</li>
+<li>Long-document layout and viewport tracking can become more expensive than the matching itself if the app has to keep asking the DOM where text lives.</li>
+<li>A too-clever organization model could accidentally recreate heavyweight binder software before the core writing loop earns it.</li>
+<li>Editor-specific copy or paste behavior could make imported prose feel trapped instead of owned.</li>
+<li>SQLite-first storage can feel opaque if export and ownership are treated as an afterthought, and history doubles what export must carry.</li>
+<li>Event-sourced history pays off only if every mutation writes through the log; any backdoor around it silently corrupts the guarantee.</li>
+</ul>
+<h2>Future considerations</h2>
+<ul>
+<li>Internal outline nodes for <code>book</code>, <code>part</code>, <code>chapter</code>, <code>section</code>, or custom navigation inside a large document.</li>
+<li>Boundary editing and reusable slice-boundary management.</li>
+<li><code>All Slices</code> mode, overlap inspection, and merge or link workflows.</li>
+<li>Annotation style controls built on the same shared anchor substrate.</li>
+<li>Slice-preserving text transfer such as <code>Move Slice</code> once anchors, clipboard provenance, and history are trustworthy enough.</li>
+<li>Whether Pretext materially improves long-document layout and visible-range tracking.</li>
+<li>Better panel persistence and multi-monitor friendliness.</li>
+<li>Full document view from a slice inside the panel.</li>
+<li>Shared-slice and co-occurrence graph views later if they prove useful.</li>
+<li>Strong project export and import that carries history so the app remains respectful of author ownership.</li>
+<li>A writer-facing timeline that unifies prose edits and metadata changes.</li>
+<li>Named checkpoints such as &quot;before Chapter 3 rewrite.&quot;</li>
+</ul>
+<h2>Decided</h2>
+<ul>
+<li>Desktop-first, local-first, single-user-first.</li>
+<li>The product is story-centric and entity-aware, not a generic notes tool.</li>
+<li>The first organization model is a lightweight tree of folders plus generic documents.</li>
+<li>Organization is orthogonal to entity semantics.</li>
+<li>Copy/paste portability matters more than editor-local cleverness.</li>
+<li>Entities define meaning, not visuals.</li>
+<li>Matches are live-calculated from current text when needed, never stored or precomputed as document truth.</li>
+<li>Highlights are derived, never stored.</li>
+<li>Modal and panel are different views over the same slice data.</li>
+<li>The working stack baseline is Electron, React, TypeScript, Vite, ProseMirror, and SQLite.</li>
+<li>History is event-sourced. Writers eventually get time travel over prose and metadata on the same timeline.</li>
+<li>The first visible history surface can be a minimal restore-previous-version action; the broader timeline comes later.</li>
+<li>Merge, conflict resolution, and collaboration are permanently out of scope.</li>
+</ul>
+<h2>Open</h2>
+<ul>
+<li>How aggressive entity highlighting should be before it becomes visual spam.</li>
+<li>What the first folder and tree interaction model should feel like in the everyday writing workflow.</li>
+<li>What exact project packaging and export format best balances portability and simplicity when history must travel with the project.</li>
+<li>Whether Pretext changes the long-document rendering or document-view strategy enough to reshape the current layout recommendation.</li>
+<li>How explicit outline-node authoring should be once anchored document navigation lands.</li>
+<li>How much boundary editing and annotation authoring belong in the first build that proves the product loop.</li>
+<li>How much history UI ships with the truthful MVP beyond the underlying storage.</li>
+</ul>
+<h2>Deferred</h2>
+<ul>
+<li>Collaboration workflows.</li>
+<li>Cloud sync.</li>
+<li>Plugin ecosystems.</li>
+<li>Mobile.</li>
+<li>AI-assisted authoring as a core product identity.</li>
+<li>Branching as a visible product feature.</li>
+</ul>
+</div>
+</article><!-- /for-human-business-doc -->
+</main>
+<p class="footer">Generated from repo-authored Markdown during the HTML documentation migration. AGENT.md and CLAUDE.md remain Markdown bootstrap files by design.</p>
+</div>
+</body>
+</html>

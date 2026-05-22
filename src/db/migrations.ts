@@ -16,7 +16,7 @@
 //   - No business logic in here — just schema shape. Data transformations
 //     that depend on domain logic belong in a repository method, not here.
 //
-// Rationale: see refineCode.md §C7. Previously the codebase relied on
+// Rationale: see refineCode.html §C7. Previously the codebase relied on
 // CREATE TABLE IF NOT EXISTS + ad-hoc ALTER TABLE checks in schema.ts;
 // that works for MVP but will quietly fail once real users have real
 // files with columns we want to change.

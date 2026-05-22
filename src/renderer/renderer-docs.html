@@ -1,0 +1,1212 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Renderer Docs | Evernear</title>
+  <style>:root {
+  color-scheme: light;
+  --bg: #f7f7f4;
+  --paper: #ffffff;
+  --ink: #1f2328;
+  --muted: #606a75;
+  --line: #d8ddd8;
+  --soft: #eef1ed;
+  --accent: #2563eb;
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, white);
+  --accent-line: color-mix(in srgb, var(--accent) 32%, #d8ddd8);
+  --code-bg: #151b23;
+  --code-ink: #f1f5f9;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--ink); line-height: 1.55; }
+a { color: var(--accent); text-decoration-thickness: 0.08em; text-underline-offset: 0.18em; }
+.doc-shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 56px; }
+.doc-hero { border: 1px solid var(--accent-line); background: linear-gradient(135deg, var(--paper), var(--accent-soft)); border-radius: 8px; padding: 26px; }
+.eyebrow { margin: 0 0 8px; color: var(--accent); font-weight: 800; text-transform: uppercase; letter-spacing: 0; font-size: 0.78rem; }
+h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-spacing: 0; overflow-wrap: anywhere; }
+.subtitle { margin: 14px 0 0; max-width: 820px; color: var(--muted); font-size: 1.04rem; }
+.meta-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 20px; }
+.meta-card { border: 1px solid var(--line); background: rgba(255,255,255,0.7); border-radius: 8px; padding: 12px; min-width: 0; }
+.meta-card strong { display: block; font-size: 0.76rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0; }
+.meta-card span, .meta-card a { display: block; margin-top: 3px; font-weight: 700; overflow-wrap: anywhere; }
+.context-index { margin: 18px 0; border: 1px solid var(--line); background: var(--paper); border-radius: 8px; overflow: hidden; }
+.context-index header { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 14px 16px; background: var(--soft); border-bottom: 1px solid var(--line); }
+.context-index h2 { margin: 0; font-size: 1rem; }
+.context-index p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+.index-grid { display: grid; grid-template-columns: minmax(180px, 0.9fr) minmax(150px, 0.6fr) minmax(260px, 1.7fr); }
+.index-row { display: contents; color: inherit; text-decoration: none; }
+.index-row > div { padding: 10px 14px; border-top: 1px solid var(--line); min-width: 0; }
+.index-row:first-child > div { border-top: 0; }
+.index-range { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 0.86rem; color: var(--accent); white-space: nowrap; }
+.source-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.source-pill { border: 1px solid var(--accent-line); background: var(--accent-soft); color: var(--ink); border-radius: 999px; padding: 5px 9px; font-size: 0.82rem; font-weight: 700; }
+.doc-source, .map-section { margin-top: 18px; border: 1px solid var(--line); background: var(--paper); border-radius: 8px; overflow: clip; }
+.source-header, .section-header { padding: 16px 18px; border-bottom: 1px solid var(--line); background: #fbfbf9; }
+.source-header h2, .section-header h2 { margin: 3px 0 0; font-size: 1.35rem; letter-spacing: 0; overflow-wrap: anywhere; }
+.source-header p, .section-header p { margin: 0; color: var(--muted); }
+.source-path { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 0.78rem; color: var(--muted); overflow-wrap: anywhere; }
+.md-content { padding: 18px; }
+.md-content h1 { font-size: 2rem; line-height: 1.08; margin: 0 0 14px; overflow-wrap: anywhere; }
+.md-content h2 { margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 1.25rem; overflow-wrap: anywhere; }
+.md-content h3 { margin-top: 20px; font-size: 1.06rem; overflow-wrap: anywhere; }
+.md-content p, .md-content ul, .md-content ol { max-width: 86ch; }
+.md-content table, .dense-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.94rem; }
+.md-content th, .md-content td, .dense-table th, .dense-table td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+.md-content th, .dense-table th { background: var(--soft); color: #30363d; }
+.md-content code:not(pre code) { background: var(--soft); border: 1px solid var(--line); border-radius: 5px; padding: 0.08rem 0.28rem; font-size: 0.9em; }
+.md-content pre, pre.code-block { background: var(--code-bg); color: var(--code-ink); border-radius: 8px; overflow: auto; padding: 14px; }
+.md-content pre code { color: inherit; background: transparent; border: 0; padding: 0; }
+.compact-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
+.compact-card { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 12px; min-width: 0; }
+.compact-card h3 { margin: 0 0 6px; font-size: 1rem; }
+.compact-card p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+.flow-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
+.flow-step { position: relative; border: 1px solid var(--accent-line); background: var(--accent-soft); border-radius: 8px; padding: 12px; min-height: 120px; overflow-wrap: anywhere; }
+.flow-step strong { display: block; margin-bottom: 6px; }
+.flow-step span { color: var(--muted); font-size: 0.9rem; }
+.badge-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.badge { border: 1px solid var(--line); border-radius: 999px; padding: 5px 8px; background: var(--soft); font-size: 0.82rem; font-weight: 700; }
+.mermaidless-map { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
+.entity-node { border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 8px; padding: 12px; background: #fff; }
+.entity-node strong { display: block; }
+.entity-node span { display: block; color: var(--muted); font-size: 0.88rem; margin-top: 4px; }
+.note { border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 12px 14px; border-radius: 0 8px 8px 0; }
+.footer { margin-top: 22px; color: var(--muted); font-size: 0.88rem; }
+@media (max-width: 860px) {
+  .doc-shell { width: min(100% - 20px, 1180px); padding-top: 12px; }
+  .doc-hero { padding: 18px; }
+  .meta-grid, .compact-grid, .flow-grid, .mermaidless-map { grid-template-columns: 1fr; }
+  .index-grid { grid-template-columns: 1fr; }
+  .index-row > div { border-top: 0; padding: 6px 14px; }
+  .index-row { display: block; border-top: 1px solid var(--line); padding: 8px 0; }
+  .context-index header { display: block; }
+  .md-content { padding: 14px; overflow-x: auto; }
+}</style>
+</head>
+<body style="--accent: #be123c;">
+<div class="doc-shell">
+<header class="doc-hero">
+<p class="eyebrow">Evernear HTML documentation</p>
+<h1>Renderer Docs</h1>
+<p class="subtitle">Renderer flow, editor, state, feature surfaces, styles, UI primitives, and utilities.</p>
+<div class="meta-grid">
+<div class="meta-card"><strong>Audience</strong><span>Agents changing React UI, editor behavior, or renderer-side workflows.</span></div>
+<div class="meta-card"><strong>Format</strong><span>Consolidated HTML, browser-openable</span></div>
+<div class="meta-card"><strong>Agent Use</strong><span>Use the line ranges below before ingesting whole files.</span></div>
+</div>
+<div class="source-list">
+<span class="source-pill">src/renderer/README.md</span>
+<span class="source-pill">src/renderer/FLOW.md</span>
+<span class="source-pill">src/renderer/editor/README.md</span>
+<span class="source-pill">src/renderer/editor/OPEN_QUESTIONS.md</span>
+<span class="source-pill">src/renderer/state/README.md</span>
+<span class="source-pill">src/renderer/features/README.md</span>
+<span class="source-pill">src/renderer/features/annotations/README.md</span>
+<span class="source-pill">src/renderer/features/chrome/README.md</span>
+<span class="source-pill">src/renderer/features/documents/README.md</span>
+<span class="source-pill">src/renderer/features/documents/nav/README.md</span>
+<span class="source-pill">src/renderer/features/entities/README.md</span>
+<span class="source-pill">src/renderer/features/help/README.md</span>
+<span class="source-pill">src/renderer/features/history/README.md</span>
+<span class="source-pill">src/renderer/features/panes/README.md</span>
+<span class="source-pill">src/renderer/features/projects/README.md</span>
+<span class="source-pill">src/renderer/styles/README.md</span>
+<span class="source-pill">src/renderer/ui/README.md</span>
+<span class="source-pill">src/renderer/utils/README.md</span>
+</div>
+</header>
+<nav class="context-index" aria-label="Agent Context Index">
+<header><h2>Agent Context Index</h2><p>Line ranges point into this HTML file.</p></header>
+<div class="index-grid">
+<a class="index-row" href="#src-renderer-readme"><div><strong>Renderer Folder Orientation</strong></div><div class="index-range">L145-L209</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#src-renderer-flow"><div><strong>Renderer Flow</strong></div><div class="index-range">L210-L259</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#src-renderer-editor-readme"><div><strong>Editor</strong></div><div class="index-range">L260-L332</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#src-renderer-editor-open-questions"><div><strong>Editor Open Questions</strong></div><div class="index-range">L333-L377</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#src-renderer-state-readme"><div><strong>Renderer State</strong></div><div class="index-range">L378-L433</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#src-renderer-features-readme"><div><strong>Features</strong></div><div class="index-range">L434-L487</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#src-renderer-features-annotations-readme"><div><strong>Annotations Feature</strong></div><div class="index-range">L488-L552</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#src-renderer-features-chrome-readme"><div><strong>Chrome Feature</strong></div><div class="index-range">L553-L604</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#src-renderer-features-documents-readme"><div><strong>Documents Feature</strong></div><div class="index-range">L605-L675</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#src-renderer-features-documents-nav-readme"><div><strong>Document Navigation</strong></div><div class="index-range">L676-L738</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#src-renderer-features-entities-readme"><div><strong>Entities Feature</strong></div><div class="index-range">L739-L813</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#src-renderer-features-help-readme"><div><strong>Help Feature</strong></div><div class="index-range">L814-L861</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#src-renderer-features-history-readme"><div><strong>History Feature</strong></div><div class="index-range">L862-L929</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#src-renderer-features-panes-readme"><div><strong>Panes Feature</strong></div><div class="index-range">L930-L995</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#src-renderer-features-projects-readme"><div><strong>Projects Feature</strong></div><div class="index-range">L996-L1055</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#src-renderer-styles-readme"><div><strong>Styles</strong></div><div class="index-range">L1056-L1107</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#src-renderer-ui-readme"><div><strong>UI Primitives</strong></div><div class="index-range">L1108-L1155</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#src-renderer-utils-readme"><div><strong>Renderer Utils</strong></div><div class="index-range">L1156-L1207</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+</div>
+</nav>
+<main>
+<article id="src-renderer-readme" class="doc-source" data-source="src/renderer/README.md">
+<header class="source-header">
+<p class="source-path">Former source: src/renderer/README.md</p>
+<h2>Renderer Folder Orientation</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>Renderer</h1>
+<h2>Status</h2>
+<p>MVP now</p>
+<h2>If you landed here first</h2>
+<p>Read <a href="../src-docs.html#src-readme">src/README.md</a>, then <a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a>. If you care about product flow more than folder shape, also read <a href="#src-renderer-flow">FLOW.md</a>.</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="../src-docs.html#src-readme">src/README.md</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a></li>
+</ul>
+<h2>Owns</h2>
+<ul>
+<li>React app shell.</li>
+<li>Panel orchestration and workspace state at the UI layer.</li>
+<li>Editor hosting and feature composition.</li>
+<li>User-facing interaction flow.</li>
+</ul>
+<h2>Does not own</h2>
+<ul>
+<li>Raw SQL or schema details.</li>
+<li>Broad privileged access.</li>
+<li>Cross-runtime contract definitions.</li>
+</ul>
+<h2>Inputs and outputs</h2>
+<ul>
+<li>Inputs: typed bridge calls, domain DTOs, persisted workspace state.</li>
+<li>Outputs: user interactions, feature requests, panel/layout updates, edit intents.</li>
+</ul>
+<h2>Key relationships</h2>
+<ul>
+<li>Uses <code>editor</code> for the writing surface.</li>
+<li>Uses <code>features/*</code> for product-facing workflows.</li>
+<li>Relies on <code>shared/domain</code> and <code>shared/contracts</code> instead of inventing local terms.</li>
+</ul>
+<h2>Likely future code here</h2>
+<ul>
+<li><code>app-shell</code></li>
+<li><code>workspace</code></li>
+<li><code>routes</code> or <code>screens</code> if needed</li>
+<li>composition around editor and feature areas</li>
+</ul>
+<h2>Decided</h2>
+<ul>
+<li>The renderer should stay UI-focused.</li>
+<li>Persistent panels are part of the honest core workflow, not an optional flourish.</li>
+</ul>
+<h2>Open</h2>
+<ul>
+<li>Exact renderer state-management approach.</li>
+<li>Whether document navigation needs lightweight routing or can stay shell-local for a while.</li>
+</ul>
+<h2>Deferred</h2>
+<ul>
+<li>Detached windows and multi-monitor sophistication beyond what proves the core product loop.</li>
+</ul>
+</div>
+</article><!-- /src-renderer-readme -->
+<article id="src-renderer-flow" class="doc-source" data-source="src/renderer/FLOW.md">
+<header class="source-header">
+<p class="source-path">Former source: src/renderer/FLOW.md</p>
+<h2>Renderer Flow</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>Renderer Flow</h1>
+<h2>Status</h2>
+<p>MVP now</p>
+<h2>If you landed here first</h2>
+<p>Read <a href="#src-renderer-readme">README.md</a> for folder ownership, then <a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a> for the product loop this flow is serving.</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="#src-renderer-readme">README.md</a></li>
+<li><a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+</ul>
+<h2>Owns</h2>
+<ul>
+<li>A narrative of the expected UI loop through the renderer.</li>
+</ul>
+<h2>Does not own</h2>
+<ul>
+<li>Final implementation details for each feature.</li>
+</ul>
+<h2>Flow</h2>
+<ol>
+<li>Open a project and restore the last useful workspace state.</li>
+<li>Show a document list or current draft alongside any pinned panels.</li>
+<li>Render derived highlights from entity matches in the editor without overwhelming the page.</li>
+<li>Hover a highlight to open a modal with the slice viewer.</li>
+<li>Click a highlight to open a persistent panel, then optionally a deeper document view for a slice.</li>
+<li>Let the writer keep working without losing their place.</li>
+<li>Persist relevant panel layout and interaction state locally.</li>
+</ol>
+<h2>Decided</h2>
+<ul>
+<li>Hover, click, modal behavior, and panel persistence are renderer concerns even when data comes from deeper layers.</li>
+</ul>
+<h2>Open</h2>
+<ul>
+<li>How much of this flow should be explicit shell state versus feature-owned state.</li>
+</ul>
+<h2>Deferred</h2>
+<ul>
+<li>Advanced workflow visualizations and secondary dashboards.</li>
+</ul>
+</div>
+</article><!-- /src-renderer-flow -->
+<article id="src-renderer-editor-readme" class="doc-source" data-source="src/renderer/editor/README.md">
+<header class="source-header">
+<p class="source-path">Former source: src/renderer/editor/README.md</p>
+<h2>Editor</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>Editor</h1>
+<h2>Status</h2>
+<p>MVP now</p>
+<h2>If you landed here first</h2>
+<p>Read <a href="#src-renderer-readme">src/renderer/README.md</a> first. Then read <a href="../shared/shared-docs.html#src-shared-domain-readme">src/shared/domain/README.md</a> so the editor behavior stays grounded in domain language rather than ad hoc UI terms.</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="#src-renderer-readme">src/renderer/README.md</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="../shared/shared-docs.html#src-shared-domain-readme">src/shared/domain/README.md</a></li>
+</ul>
+<h2>Owns</h2>
+<ul>
+<li>The editor host setup.</li>
+<li>Rendering and interaction hooks for derived highlights.</li>
+<li>Selection affordances that can start or edit an <code>Everlink it!</code> flow from current text.</li>
+<li>Selection, hover, click, and document-view boundary affordances inside the writing surface.</li>
+<li>Temporary pending-slice rails and local range growth behavior inside panel document view.</li>
+<li>The editor-local mapping and decoration path for shared anchors.</li>
+</ul>
+<h2>Does not own</h2>
+<ul>
+<li>Canonical entity data.</li>
+<li>Database access.</li>
+<li>Project lifecycle logic.</li>
+</ul>
+<h2>Inputs and outputs</h2>
+<ul>
+<li>Inputs: document content, derived highlight results, active slice boundaries, active interaction state, pending Everlink session state.</li>
+<li>Outputs: edit events, hover and click events, selection anchors, Everlink intents, boundary-edit gestures, display-ready decorations.</li>
+</ul>
+<h2>Key relationships</h2>
+<ul>
+<li>Receives domain results from feature or shared layers.</li>
+<li>Feeds interaction intents back into panel and feature workflows.</li>
+<li>Must stay separable from persistence and OS concerns.</li>
+</ul>
+<h2>Likely future code here</h2>
+<ul>
+<li><code>prosemirror-host</code></li>
+<li><code>decorations</code></li>
+<li><code>transaction-bridge</code></li>
+<li><code>interaction-handlers</code></li>
+<li><code>selection-everlink</code></li>
+<li><code>selection-anchor</code> helpers</li>
+<li><code>boundary-handle</code> helpers for document view</li>
+</ul>
+<h2>Decided</h2>
+<ul>
+<li>ProseMirror is the editor foundation.</li>
+<li>Semantic behavior should layer onto the editor rather than redefine the whole app around editor internals.</li>
+<li>Derived highlights and quiet annotation underlines should ride on editor decorations, not stored document marks.</li>
+<li>Selection-driven Everlink authoring should begin from editor affordances, but the manuscript itself should remain free of stored link markup.</li>
+<li><code>Step</code> and <code>Mapping</code> are the editor-side primitives that feed document history and anchor migration.</li>
+</ul>
+<h2>Open</h2>
+<ul>
+<li>The minimum prose-first schema needed before formatting ambitions start to sprawl.</li>
+<li>How far widget or node-view work should go before the core workflow is proven.</li>
+</ul>
+<h2>Deferred</h2>
+<ul>
+<li>Rich formatting ambitions that do not directly serve writing and re-entry.</li>
+</ul>
+</div>
+</article><!-- /src-renderer-editor-readme -->
+<article id="src-renderer-editor-open-questions" class="doc-source" data-source="src/renderer/editor/OPEN_QUESTIONS.md">
+<header class="source-header">
+<p class="source-path">Former source: src/renderer/editor/OPEN_QUESTIONS.md</p>
+<h2>Editor Open Questions</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>Editor Open Questions</h1>
+<h2>Status</h2>
+<p>MVP now</p>
+<h2>If you landed here first</h2>
+<p>Read <a href="#src-renderer-editor-readme">README.md</a> first, then <a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a> for the current architectural recommendation.</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="#src-renderer-editor-readme">README.md</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a></li>
+</ul>
+<h2>Owns</h2>
+<ul>
+<li>The editor-specific questions that are important enough to track early.</li>
+</ul>
+<h2>Does not own</h2>
+<ul>
+<li>Final product decisions outside the writing surface.</li>
+</ul>
+<h2>Open questions</h2>
+<ul>
+<li>What highlight density feels informative rather than noisy in a long fantasy chapter?</li>
+<li>How should live visible-range matching be invalidated while typing and scrolling?</li>
+<li>How should matching rules be normalized when capitalization, punctuation, aliases, or possessives vary?</li>
+<li>Does the first shared-anchor spike keep slice boundaries and annotations stable enough under normal edits?</li>
+<li>Does Pretext materially improve long-document layout or visible-range mapping enough to change the document-view design?</li>
+<li>Which interactions belong directly inside the editor, and which should be handled by surrounding panels or feature controllers?</li>
+</ul>
+<h2>Decided</h2>
+<ul>
+<li>These questions are important enough to track now because the editor can silently shape the whole product.</li>
+</ul>
+<h2>Deferred</h2>
+<ul>
+<li>Typography and deep visual polish experiments.</li>
+</ul>
+</div>
+</article><!-- /src-renderer-editor-open-questions -->
+<article id="src-renderer-state-readme" class="doc-source" data-source="src/renderer/state/README.md">
+<header class="source-header">
+<p class="source-path">Former source: src/renderer/state/README.md</p>
+<h2>Renderer State</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>Renderer State</h1>
+<h2>Status</h2>
+<p>MVP now</p>
+<h2>If you landed here first</h2>
+<p>Read <a href="#src-renderer-readme">src/renderer/README.md</a> first. The hooks here are the renderer's seam between the IPC bridge and feature components — App.tsx composes them and threads their results into <code>src/renderer/features/</code>.</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="#src-renderer-readme">src/renderer/README.md</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="../shared/shared-docs.html#src-shared-domain-readme">src/shared/domain/README.md</a></li>
+</ul>
+<h2>Owns</h2>
+<ul>
+<li>Workspace lifecycle and persistence orchestration (<a href="state/useWorkspace.ts">useWorkspace.ts</a>).</li>
+<li>Per-aggregate mutation dispatch tables: project, document, entity, slice/layout actions, composed by <a href="state/useWorkspaceActions.ts">useWorkspaceActions.ts</a>.</li>
+<li>Selection-driven Everlink flow split across <a href="state/useEverlinkSession.ts">useEverlinkSession.ts</a> (entity / target document choice) and <a href="state/usePendingPlacement.ts">usePendingPlacement.ts</a> (in-editor placement + commit).</li>
+<li>Memoised id-indexed projections of the workspace (<a href="state/useWorkspaceLookups.ts">useWorkspaceLookups.ts</a>).</li>
+<li>Editor-surface selection state (<a href="state/useEditorSelections.ts">useEditorSelections.ts</a>).</li>
+<li>Short-lived UI session shapes that are not persisted (<a href="state/sessionTypes.ts">sessionTypes.ts</a>).</li>
+</ul>
+<h2>Does not own</h2>
+<ul>
+<li>Persistence (lives behind the IPC bridge in <code>src/main/</code> and <code>src/db/</code>).</li>
+<li>Editor view internals (lives in <code>src/renderer/editor/</code>).</li>
+<li>Feature-specific layout (lives in <code>src/renderer/features/</code>).</li>
+<li>React component rendering — these are hooks and types only.</li>
+</ul>
+<h2>Key relationships</h2>
+<ul>
+<li><code>useWorkspace</code> is the source of truth for the loaded <code>WorkspaceState</code>; the action hooks call its <code>runMutation</code> to fan out IPC calls and apply the returned snapshot.</li>
+<li>The Everlink split is deliberate: session orchestration (entity creation, rule upsert, target document creation) ↔ placement orchestration (pending range, anchor build, slice creation). FB-002 Everslice will land as a third sibling, not a merge.</li>
+<li>Mutation hooks never reach into the editor refs — placement does, because it owns the in-editor pending range.</li>
+</ul>
+<h2>Decided</h2>
+<ul>
+<li>Hooks are split per concern, not per file size. The 250-line hard cap from CLAUDE.md is enforced — <code>useEverlinkPlacement</code> and <code>useWorkspaceActions</code> were both split when they crossed it.</li>
+<li>The action-hook split is by aggregate (project / document / entity / slice+layout). Adding a new mutation goes into the matching per-aggregate hook, not the composition facade.</li>
+<li><code>commitInFlightRef</code> and <code>placementRef</code> are refs (not state) because the commit window must read the latest values synchronously after <code>await flushPersistence()</code> — see the comment block in <a href="state/usePendingPlacement.ts">usePendingPlacement.ts</a> for the race-window history.</li>
+</ul>
+<h2>Open</h2>
+<ul>
+<li>Whether the action hooks should adopt a typed reducer pattern as the surface grows. Today the dispatch-table style is fine; revisit when one of them passes the 150-line soft cap.</li>
+</ul>
+<h2>Deferred</h2>
+<ul>
+<li>A renderer-side projection cache layer (refineCode C6) — wait until profiling shows the lookups are the bottleneck.</li>
+</ul>
+</div>
+</article><!-- /src-renderer-state-readme -->
+<article id="src-renderer-features-readme" class="doc-source" data-source="src/renderer/features/README.md">
+<header class="source-header">
+<p class="source-path">Former source: src/renderer/features/README.md</p>
+<h2>Features</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>Renderer Features</h1>
+<h2>Status</h2>
+<p>MVP now</p>
+<h2>If you landed here first</h2>
+<p>Read <a href="#src-renderer-readme">src/renderer/README.md</a> first. This folder groups user-facing capability areas without pretending each one is already a separate package.</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="#src-renderer-readme">src/renderer/README.md</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a></li>
+</ul>
+<h2>Owns</h2>
+<ul>
+<li>Product-facing workflows organized by capability.</li>
+<li>The boundary between app shell concerns and feature concerns in the renderer.</li>
+</ul>
+<h2>Does not own</h2>
+<ul>
+<li>Cross-runtime contract definitions.</li>
+<li>Database implementation details.</li>
+<li>Global Electron lifecycle policy.</li>
+</ul>
+<h2>Key relationships</h2>
+<ul>
+<li><code>projects</code>: opening and managing a project in the UI.</li>
+<li><code>documents</code>: listing, opening, and organizing writing material; includes the main editor pane.</li>
+<li><code>entities</code>: creating and using semantic context, including the Everlink chooser.</li>
+<li><code>panes</code>: persistent panel, slice-viewer, document-view, hover preview, and pending slice placement.</li>
+<li><code>annotations</code>: low-noise note capture built on the same anchor substrate as slice boundaries.</li>
+<li><code>chrome</code>: app-level chrome and status surfaces that don't belong to any single feature.</li>
+<li><code>history</code>: workspace-level run log and history-surface components.</li>
+<li><code>help</code>: in-app shortcut and workflow guidance opened from the custom chrome.</li>
+</ul>
+<h2>Decided</h2>
+<ul>
+<li>Feature folders exist to make the product shape readable early, not to force premature micro-architecture.</li>
+</ul>
+<h2>Open</h2>
+<ul>
+<li>Whether any of these areas should later merge or split based on actual code pressure.</li>
+</ul>
+<h2>Deferred</h2>
+<ul>
+<li>A plugin-like internal feature system.</li>
+</ul>
+</div>
+</article><!-- /src-renderer-features-readme -->
+<article id="src-renderer-features-annotations-readme" class="doc-source" data-source="src/renderer/features/annotations/README.md">
+<header class="source-header">
+<p class="source-path">Former source: src/renderer/features/annotations/README.md</p>
+<h2>Annotations Feature</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>Annotation Features</h1>
+<h2>Status</h2>
+<p>MVP now</p>
+<h2>If you landed here first</h2>
+<p>Read <a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a> first. Annotations are designed now because they ride on the same anchor substrate as slice boundaries, even if their full UI lands after the central loop.</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="#src-renderer-features-readme">src/renderer/features/README.md</a></li>
+<li><a href="#src-renderer-readme">src/renderer/README.md</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="../../docs/experiments/experiments-index.html#docs-experiments-exp-001-shared-anchor-substrate">docs/experiments/EXP-001-shared-anchor-substrate.md</a></li>
+</ul>
+<h2>Owns</h2>
+<ul>
+<li>Low-noise personal notes tied to reading or writing context.</li>
+<li>Minimal annotation UI that does not behave like collaborative review software.</li>
+<li>The quiet visual treatment for direct document anchors that are not entity matches.</li>
+</ul>
+<h2>Does not own</h2>
+<ul>
+<li>The main entity-matching loop.</li>
+<li>Comment-heavy collaboration workflows.</li>
+<li>Slice or entity truth.</li>
+</ul>
+<h2>Inputs and outputs</h2>
+<ul>
+<li>Inputs: shared text anchors, document context, annotation records, annotation style preferences.</li>
+<li>Outputs: create, edit, and delete note intents plus subtle display state.</li>
+</ul>
+<h2>Key relationships</h2>
+<ul>
+<li>Uses the same underlying anchor-healing model as slice boundaries.</li>
+<li>Conceptually behaves like a direct document anchor with no matching-rule lookup.</li>
+<li>Should coexist quietly with derived highlights and panel workflows.</li>
+</ul>
+<h2>Likely future code here</h2>
+<ul>
+<li><code>annotation-underlines</code></li>
+<li><code>annotation-editor</code></li>
+<li><code>annotation-style-settings</code></li>
+<li><code>annotation-list</code> if needed</li>
+</ul>
+<h2>Decided</h2>
+<ul>
+<li>Annotation is part of the initial design pass, not a vague later add-on.</li>
+<li>The default annotation affordance should be quieter than entity highlights, such as a dotted gray underline.</li>
+<li>The author should be able to tune that visual style later without changing the underlying anchor model.</li>
+</ul>
+<h2>Open</h2>
+<ul>
+<li>Whether the first version needs click-only notes, selection-based notes, or both on day one.</li>
+</ul>
+<h2>Deferred</h2>
+<ul>
+<li>Collaboration, notifications, or review-style threading.</li>
+</ul>
+</div>
+</article><!-- /src-renderer-features-annotations-readme -->
+<article id="src-renderer-features-chrome-readme" class="doc-source" data-source="src/renderer/features/chrome/README.md">
+<header class="source-header">
+<p class="source-path">Former source: src/renderer/features/chrome/README.md</p>
+<h2>Chrome Feature</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>Renderer Chrome</h1>
+<h2>Status</h2>
+<p>MVP now</p>
+<h2>If you landed here first</h2>
+<p>Read <a href="#src-renderer-features-readme">src/renderer/features/README.md</a>, then <a href="../src-docs.html#src-main-readme">src/main/README.md</a>. The chrome surface bridges Electron window policy and the renderer's React tree.</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="#src-renderer-features-readme">src/renderer/features/README.md</a></li>
+<li><a href="#src-renderer-readme">src/renderer/README.md</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+</ul>
+<h2>Owns</h2>
+<ul>
+<li>The custom title bar that replaces the OS frame.</li>
+<li>The drag region (<code>-webkit-app-region: drag</code>) and which controls opt out.</li>
+<li>Workspace-level chrome controls: project switcher, &quot;New Project&quot;, panel toggle.</li>
+</ul>
+<h2>Does not own</h2>
+<ul>
+<li>The OS-rendered min/max/close buttons (Electron's <code>titleBarOverlay</code> paints those).</li>
+<li>Per-pane chrome (e.g. PanelDocumentView's &quot;Edit slices&quot; / &quot;Close&quot; strip).</li>
+<li>Project mutations themselves — those live in <code>useWorkspaceActions</code>.</li>
+</ul>
+<h2>Key relationships</h2>
+<ul>
+<li>Reads from <code>WorkspaceState</code> (<code>projects</code>, <code>layout.activeProjectId</code>, <code>layout.panelOpen</code>).</li>
+<li>Calls back into <code>useWorkspaceActions</code> for <code>switchProject</code>, <code>createProject</code>, <code>togglePanel</code>.</li>
+<li>Coordinates with <code>src/main/index.ts</code> BrowserWindow options (<code>frame: false</code>, <code>titleBarStyle: &quot;hidden&quot;</code>, <code>titleBarOverlay</code>).</li>
+</ul>
+<h2>Decided</h2>
+<ul>
+<li>Chrome lives in renderer, not main. Main only declares window-policy primitives.</li>
+<li>The title bar is a single thin row; we do not stack a separate menu band on top.</li>
+</ul>
+<h2>Open</h2>
+<ul>
+<li>Whether per-document tabs eventually live here or in their own row.</li>
+</ul>
+<h2>Deferred</h2>
+<ul>
+<li>Custom min/max/close buttons (we lean on <code>titleBarOverlay</code> for now).</li>
+<li>macOS/Linux variants — current overlay tuning is Windows-first.</li>
+</ul>
+</div>
+</article><!-- /src-renderer-features-chrome-readme -->
+<article id="src-renderer-features-documents-readme" class="doc-source" data-source="src/renderer/features/documents/README.md">
+<header class="source-header">
+<p class="source-path">Former source: src/renderer/features/documents/README.md</p>
+<h2>Documents Feature</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>Document Features</h1>
+<h2>Status</h2>
+<p>MVP now</p>
+<h2>If you landed here first</h2>
+<p>Read <a href="#src-renderer-features-readme">src/renderer/features/README.md</a>, then <a href="../shared/shared-docs.html#src-shared-domain-readme">src/shared/domain/README.md</a>. Documents are where writing happens, but their meaning comes from the shared model.</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="#src-renderer-features-readme">src/renderer/features/README.md</a></li>
+<li><a href="#src-renderer-readme">src/renderer/README.md</a></li>
+<li><a href="../shared/shared-docs.html#src-shared-domain-readme">src/shared/domain/README.md</a></li>
+</ul>
+<h2>Owns</h2>
+<ul>
+<li>Project tree, document folders, open state, and document-focused UI workflows.</li>
+<li>Lightweight organization such as folder assignment, ordering, and move or reorder intents.</li>
+<li>Document metadata presentation such as title; kinds stay generic at first.</li>
+<li>Renderer-side handling of active document context.</li>
+<li>Generic-document creation and open flows that selection-driven Everlink can reuse when the writer chooses <code>create new doc</code>.</li>
+</ul>
+<h2>Does not own</h2>
+<ul>
+<li>Editor internals.</li>
+<li>Canonical storage schema.</li>
+<li>Entity matching rules or slice-boundary definitions.</li>
+</ul>
+<h2>Inputs and outputs</h2>
+<ul>
+<li>Inputs: project folder and document metadata, active document content, ordering info, later anchored outline metadata.</li>
+<li>Outputs: open-document intents, active-document state, create/move/reorder intents for folders and documents, later outline-navigation intents.</li>
+</ul>
+<h2>Key relationships</h2>
+<ul>
+<li>Works closely with <code>editor</code> for content editing.</li>
+<li>Works with <code>projects</code> to present a usable project tree instead of a flat document bucket.</li>
+<li>Supplies document context to <code>entities</code>, <code>annotations</code>, and <code>panes</code>.</li>
+<li>Reopens newly created target documents directly into the pending Everlink panel flow when needed.</li>
+<li>Provides the content over which slices and slice boundaries are resolved.</li>
+<li>Should preserve ordinary select, copy, and paste expectations even when semantic overlays are visible.</li>
+<li>Depends on repositories and contracts for persistence, not raw storage code.</li>
+</ul>
+<h2>Likely future code here</h2>
+<ul>
+<li><code>project-tree</code></li>
+<li><code>document-folder-tree</code></li>
+<li><code>document-list</code></li>
+<li><code>document-tabs</code> or <code>document-switcher</code></li>
+<li><code>active-document-context</code></li>
+<li><code>outline-node-navigator</code></li>
+</ul>
+<h2>Decided</h2>
+<ul>
+<li>Documents remain a first-class concept even though the product is more than a document editor.</li>
+<li>The first organization model is folders plus generic documents.</li>
+</ul>
+<h2>Open</h2>
+<ul>
+<li>How much outline-node navigation should live here versus in <code>editor</code> or <code>panes</code> once anchored navigation lands.</li>
+</ul>
+<h2>Deferred</h2>
+<ul>
+<li>Binder-like manuscript tooling beyond the lightweight tree and later anchored outline nodes.</li>
+</ul>
+</div>
+</article><!-- /src-renderer-features-documents-readme -->
+<article id="src-renderer-features-documents-nav-readme" class="doc-source" data-source="src/renderer/features/documents/nav/README.md">
+<header class="source-header">
+<p class="source-path">Former source: src/renderer/features/documents/nav/README.md</p>
+<h2>Document Navigation</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1><code>src/renderer/features/documents/nav/</code></h1>
+<h2>Status</h2>
+<p>Active. Owns the side-nav tree UI: nested folders, drag-and-drop reorder/reparent, inline rename, and the right-click context menu.</p>
+<h2>If you landed here first</h2>
+<p>Read these in order:</p>
+<ol>
+<li><a href="features/documents/NavPanel.tsx">../NavPanel.tsx</a> — the composition shell that mounts <code>&lt;NavTree/&gt;</code> plus the project header and footer buttons. The shell is intentionally thin — all tree behavior is here.</li>
+<li><a href="features/documents/nav/NavTree.tsx">NavTree.tsx</a> — composition root for the tree. Owns context-menu state, rename-draft state, and the <code>DndContext</code> from <code>@dnd-kit/core</code>.</li>
+<li><a href="features/documents/nav/useNavTreeStructure.ts">useNavTreeStructure.ts</a> — pure helper that pivots the flat <code>WorkspaceState</code> lists into <code>Map&lt;parentId|null, folders[]&gt;</code> and a descendant-set index used for cycle detection.</li>
+<li><a href="features/documents/nav/useNavTreeDnd.ts">useNavTreeDnd.ts</a> — DnD glue. Encodes drag/drop ids, resolves drop zone (<code>above</code>/<code>onto</code>/<code>below</code>) into <code>moveFolder</code> / <code>moveDocument</code> IPC calls, and runs the auto-expand-on-hover timer.</li>
+</ol>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="#src-renderer-features-documents-readme">../README.md</a> — the documents feature folder.</li>
+<li><a href="state/useDocumentActions.ts">../../../state/useDocumentActions.ts</a> — the action hook that fronts the IPC bridge methods used here.</li>
+<li><a href="../shared/domain/workspace.ts">../../../../shared/domain/workspace.ts</a> — <code>DocumentFolderRecord</code>, <code>DocumentSummary</code>, <code>MoveFolderInput</code>, <code>MoveDocumentInput</code>.</li>
+</ul>
+<h2>Owns</h2>
+<ul>
+<li>Recursive folder tree rendering with depth-based indent.</li>
+<li>Drag-and-drop with three drop zones per folder row (above / onto / below) and two per document row (above / below).</li>
+<li>Inline rename for both folders and documents (shared <code>&lt;NavInlineRename/&gt;</code>).</li>
+<li>Right-click context menu with target-aware action lists (root, unfiled, folder, document).</li>
+<li>Auto-expand of a collapsed folder after ~500 ms of drag-hover.</li>
+</ul>
+<h2>Does not own</h2>
+<ul>
+<li>Persistence. All mutations go out through <code>useDocumentActions</code>'s callbacks → <code>window.evernear.*</code> IPC → main → <code>WorkspaceRepository</code>.</li>
+<li>Cycle prevention as a data invariant — the renderer pre-disables impossible drops for UX, but <code>FolderRepository.moveFolder</code> is the authority and rejects with an error if the renderer ever sends an invalid move.</li>
+<li>Project-level UI (project switcher, &quot;+ Folder&quot; / &quot;+ Document&quot; footer buttons stay in <code>NavPanel.tsx</code>).</li>
+</ul>
+<h2>Key relationships</h2>
+<ul>
+<li><code>&lt;NavTree/&gt;</code> consumes <code>WorkspaceState</code> and the action callbacks; emits IPC mutations through them.</li>
+<li><code>&lt;NavTreeFolder/&gt;</code> recurses into itself for sub-folders and renders <code>&lt;NavTreeDocument/&gt;</code> for child docs. Both row types are draggable + droppable; each registers multiple sub-droppables that share an absolutely-positioned overlay so dnd-kit's <code>pointerWithin</code> collision detection picks the right zone.</li>
+<li>The <code>dropzone:&lt;zone&gt;:&lt;kind&gt;:&lt;id&gt;</code> and <code>drag:&lt;kind&gt;:&lt;id&gt;</code> ids in <code>useNavTreeDnd.ts</code> are the contract between the components and the hook.</li>
+</ul>
+<h2>Decided</h2>
+<ul>
+<li>DnD library is <code>@dnd-kit/core</code> + <code>@dnd-kit/sortable</code>. Native HTML5 was rejected for poor keyboard accessibility and clunky drop indicators inside scrollable nested lists.</li>
+<li>Folder delete reparents children (sub-folders and documents) to the deleted folder's parent — symmetric with the existing single-level &quot;un-file&quot; behavior. Server-side in <code>FolderRepository.deleteFolder</code>.</li>
+<li>Sibling ordering is sparse INTEGER (1024 step) with lazy per-sibling-group recompaction when the gap between neighbors shrinks to 1. See <code>FolderRepository.computeMoveOrdering</code> and the parallel implementation in <code>DocumentRepository</code>.</li>
+<li>&quot;Rename&quot; does not require a new IPC. Folder rename routes through <code>updateFolder</code>; document rename routes through <code>updateDocumentMeta</code>. Both already emit the right events.</li>
+</ul>
+<h2>Open</h2>
+<ul>
+<li>Drag preview component is plain CSS (<code>.rowDragging</code> reduces opacity). A richer overlay using <code>@dnd-kit/core</code>'s <code>&lt;DragOverlay/&gt;</code> would render above all rows and follow the pointer; deferred until users find the current preview confusing.</li>
+<li>Keyboard-driven drag (via <code>KeyboardSensor</code>) works at the dnd-kit level but the visual indication of which drop slot is currently focused is minimal — mostly relies on screen reader announcements. Audit before MVP if accessibility becomes a hard requirement.</li>
+</ul>
+<h2>Deferred</h2>
+<ul>
+<li>Multi-select drag (move multiple documents at once). Single-item drag covers the common case and avoids the reorder + selection state interaction.</li>
+<li>Custom indent guides (vertical lines connecting parent and child rows). Aesthetic; depth indent alone reads cleanly today.</li>
+</ul>
+</div>
+</article><!-- /src-renderer-features-documents-nav-readme -->
+<article id="src-renderer-features-entities-readme" class="doc-source" data-source="src/renderer/features/entities/README.md">
+<header class="source-header">
+<p class="source-path">Former source: src/renderer/features/entities/README.md</p>
+<h2>Entities Feature</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>Entity Features</h1>
+<h2>Status</h2>
+<p>MVP now</p>
+<h2>If you landed here first</h2>
+<p>Read <a href="#src-renderer-features-readme">src/renderer/features/README.md</a>, then <a href="../shared/shared-docs.html#src-shared-domain-readme">src/shared/domain/README.md</a>, then <a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a>. This area is the heart of the product idea.</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="#src-renderer-features-readme">src/renderer/features/README.md</a></li>
+<li><a href="#src-renderer-readme">src/renderer/README.md</a></li>
+<li><a href="../shared/shared-docs.html#src-shared-domain-readme">src/shared/domain/README.md</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+</ul>
+<h2>Owns</h2>
+<ul>
+<li>Entity creation and editing UI.</li>
+<li>Editing the list of things an entity should match in text.</li>
+<li>Editing the slice library an entity should surface when one of those matches is activated.</li>
+<li>Selection-driven <code>Everlink it!</code> entry, chooser flow, and explicit attach-to-existing-entity behavior.</li>
+<li>Showing derived highlights inside story text.</li>
+<li>Hover modal requests and click-to-open panel behavior.</li>
+<li>Renderer-side management of how entities expose their associated slices.</li>
+</ul>
+<h2>Does not own</h2>
+<ul>
+<li>Canonical entity storage.</li>
+<li>Full editor host behavior.</li>
+<li>Slice-boundary persistence or document-view editing.</li>
+</ul>
+<h2>Inputs and outputs</h2>
+<ul>
+<li>Inputs: entities, matching rules, slice associations, visible-range derived match results, local interaction state, highlight mode, current selection context.</li>
+<li>Outputs: create/edit entity intents, Everlink chooser intents, modal requests, panel-open intents, local presentation state.</li>
+</ul>
+<h2>Key relationships</h2>
+<ul>
+<li>Depends on <code>shared/domain</code> for the canonical model.</li>
+<li>Works with <code>editor</code> to render in-text affordances.</li>
+<li>Works with <code>panes</code> to host the persistent panel and slice viewer.</li>
+<li>Relies on <code>db</code> through contracts and repositories for truth.</li>
+</ul>
+<h2>Likely future code here</h2>
+<ul>
+<li><code>entity-explorer</code></li>
+<li><code>entity-editor</code></li>
+<li><code>slice-association-editor</code></li>
+<li><code>everlink-chooser</code></li>
+<li><code>highlight-controller</code></li>
+</ul>
+<h2>Decided</h2>
+<ul>
+<li>Entities are a first-class feature area, not a helper for hyperlinks.</li>
+<li>Entity matches are derived live from current text, not precomputed and stored.</li>
+<li>Selection-driven Everlink may bootstrap or extend an entity, but it must not auto-reuse merely similar entities without explicit author choice.</li>
+<li>Hover modal and persistent panel behavior belong in the honest core workflow.</li>
+<li>Live matching should be disable-able so writing mode can stay visually quiet.</li>
+</ul>
+<h2>Open</h2>
+<ul>
+<li>How match confidence or ambiguity should be presented when matching rules overlap.</li>
+<li>Whether the first workflow should start with whole-document slices before boundary editing lands.</li>
+<li>Whether highlighting-off while writing should fully skip matching work or just suppress rendering.</li>
+</ul>
+<h2>Deferred</h2>
+<ul>
+<li>Advanced matching logic beyond the rules needed to prove the concept.</li>
+</ul>
+</div>
+</article><!-- /src-renderer-features-entities-readme -->
+<article id="src-renderer-features-help-readme" class="doc-source" data-source="src/renderer/features/help/README.md">
+<header class="source-header">
+<p class="source-path">Former source: src/renderer/features/help/README.md</p>
+<h2>Help Feature</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>Help Feature</h1>
+<h2>Status</h2>
+<p>MVP now</p>
+<h2>If you landed here first</h2>
+<p>Read <a href="#src-renderer-features-readme">src/renderer/features/README.md</a> and <a href="#src-renderer-readme">src/renderer/README.md</a>. This folder owns user-facing guidance that is displayed inside the app.</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="#src-renderer-features-readme">src/renderer/features/README.md</a></li>
+<li><a href="#src-renderer-readme">src/renderer/README.md</a></li>
+<li><a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a></li>
+</ul>
+<h2>Owns</h2>
+<ul>
+<li>In-app help and shortcut guidance.</li>
+<li>Workspace-level instructional pages opened from the custom chrome.</li>
+</ul>
+<h2>Does not own</h2>
+<ul>
+<li>Product documentation outside the app.</li>
+<li>Editor command implementations.</li>
+<li>Navigation or persistence state beyond entering and leaving help views.</li>
+</ul>
+<h2>Key relationships</h2>
+<ul>
+<li>Opens from <code>features/chrome</code>.</li>
+<li>Explains workflows hosted by <code>features/documents</code>, <code>features/entities</code>, and <code>features/panes</code>.</li>
+</ul>
+<h2>Decided</h2>
+<ul>
+<li>Help is an in-app page so authors can read it without leaving the desktop workspace.</li>
+</ul>
+<h2>Open</h2>
+<ul>
+<li>Whether later help pages should become searchable.</li>
+</ul>
+<h2>Deferred</h2>
+<ul>
+<li>Deep contextual help tied to individual panes.</li>
+</ul>
+</div>
+</article><!-- /src-renderer-features-help-readme -->
+<article id="src-renderer-features-history-readme" class="doc-source" data-source="src/renderer/features/history/README.md">
+<header class="source-header">
+<p class="source-path">Former source: src/renderer/features/history/README.md</p>
+<h2>History Feature</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>History Features</h1>
+<h2>Status</h2>
+<p>Soon</p>
+<h2>If you landed here first</h2>
+<p>Read <a href="#src-renderer-features-readme">src/renderer/features/README.md</a> first, then <a href="../../docs/adr/adr-index.html#docs-adr-adr-006-event-sourced-document-and-metadata-history">ADR-006</a>. History storage is foundational, but the writer-facing surface lands right after the truthful MVP proves itself.</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="#src-renderer-features-readme">src/renderer/features/README.md</a></li>
+<li><a href="#src-renderer-readme">src/renderer/README.md</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="../../docs/adr/adr-index.html#docs-adr-adr-006-event-sourced-document-and-metadata-history">ADR-006</a></li>
+</ul>
+<h2>Owns</h2>
+<ul>
+<li>Writer-facing history surfaces: restore, named checkpoints, and later the unified timeline.</li>
+<li>Presentation of document step history and domain events as one chronological story once timeline work lands.</li>
+<li>Renderer-side interaction for viewing a document and its slice boundaries and annotations at historical versions.</li>
+</ul>
+<h2>Does not own</h2>
+<ul>
+<li>Event and step persistence - that is a <code>db</code> concern.</li>
+<li>Projection rebuild mechanics.</li>
+<li>ProseMirror <code>Step</code> and <code>Mapping</code> primitives directly - those live under <code>editor</code>.</li>
+</ul>
+<h2>Inputs and outputs</h2>
+<ul>
+<li>Inputs: restore queries over the event and step logs, current projection state, and checkpoint metadata.</li>
+<li>Outputs: restore intents, named-checkpoint create or rename intents, and time-travel view requests.</li>
+</ul>
+<h2>Key relationships</h2>
+<ul>
+<li>Reads history through repositories exposed by contracts in <code>shared/contracts</code>.</li>
+<li>Coordinates with <code>editor</code> to render a historical document view with boundaries and annotations mapped to that version.</li>
+<li>Coordinates with <code>panes</code> so later timeline surfaces can sit alongside live work without hijacking the main surface.</li>
+</ul>
+<h2>Likely future code here</h2>
+<ul>
+<li><code>restore-controller</code></li>
+<li><code>checkpoint-manager</code></li>
+<li><code>time-travel-viewer</code></li>
+<li><code>timeline</code></li>
+</ul>
+<h2>Decided</h2>
+<ul>
+<li>History storage is foundational.</li>
+<li>The first writer-visible surface is a minimal restore-previous-version action immediately after the truthful MVP.</li>
+<li>Branches and merge are not part of this feature area.</li>
+</ul>
+<h2>Open</h2>
+<ul>
+<li>How named checkpoints are surfaced to the writer.</li>
+<li>When the unified timeline becomes worth shipping beyond restore-first behavior.</li>
+</ul>
+<h2>Deferred</h2>
+<ul>
+<li>Branching UX.</li>
+<li>Diff-style comparisons between arbitrary versions.</li>
+<li>Any merge or reconciliation workflow.</li>
+</ul>
+</div>
+</article><!-- /src-renderer-features-history-readme -->
+<article id="src-renderer-features-panes-readme" class="doc-source" data-source="src/renderer/features/panes/README.md">
+<header class="source-header">
+<p class="source-path">Former source: src/renderer/features/panes/README.md</p>
+<h2>Panes Feature</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>Panel Features</h1>
+<h2>Status</h2>
+<p>MVP now</p>
+<h2>If you landed here first</h2>
+<p>Read <a href="#src-renderer-readme">src/renderer/README.md</a> and <a href="../../FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a>. Panels matter because persistent side context is part of the core promise, not just layout chrome.</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="#src-renderer-features-readme">src/renderer/features/README.md</a></li>
+<li><a href="#src-renderer-readme">src/renderer/README.md</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+</ul>
+<h2>Owns</h2>
+<ul>
+<li>Persistent panel orchestration.</li>
+<li>Slice-viewer hosting and document-view transitions.</li>
+<li>Target-document placement and pending-slice editing for selection-driven Everlink flows.</li>
+<li>Renderer-side layout state and panel interactions.</li>
+</ul>
+<h2>Does not own</h2>
+<ul>
+<li>OS-level multi-window behavior.</li>
+<li>Canonical storage implementation.</li>
+<li>Editor matching logic.</li>
+</ul>
+<h2>Inputs and outputs</h2>
+<ul>
+<li>Inputs: panel-open intents, slice-viewer state, pending Everlink session state, persisted layout data.</li>
+<li>Outputs: panel open, close, pin, document-view navigation actions, pending-slice commit intents, plus layout updates.</li>
+</ul>
+<h2>Key relationships</h2>
+<ul>
+<li>Receives intents from <code>entities</code>, <code>documents</code>, and <code>annotations</code>.</li>
+<li>Persists layout through contracts backed by <code>db</code>.</li>
+<li>Should stay simpler than a full IDE docking framework until the core flow is proven.</li>
+<li>Hosts the persistent panel view for slices and the deeper document view when needed.</li>
+<li>Keeps hover preview read-only and quick while authoring and boundary mutation live in persistent panel document view.</li>
+</ul>
+<h2>Likely future code here</h2>
+<ul>
+<li><code>panel-manager</code></li>
+<li><code>slice-viewer-panel</code></li>
+<li><code>document-view-shell</code></li>
+<li><code>layout-persistence</code></li>
+</ul>
+<h2>Decided</h2>
+<ul>
+<li>A persistent panel is part of the truthful MVP.</li>
+<li>Selection-driven slice placement happens in persistent panel document view, not inside a transient hover modal.</li>
+</ul>
+<h2>Open</h2>
+<ul>
+<li>How much layout flexibility the first version really needs.</li>
+</ul>
+<h2>Deferred</h2>
+<ul>
+<li>Detachable panels and multi-monitor choreography.</li>
+</ul>
+</div>
+</article><!-- /src-renderer-features-panes-readme -->
+<article id="src-renderer-features-projects-readme" class="doc-source" data-source="src/renderer/features/projects/README.md">
+<header class="source-header">
+<p class="source-path">Former source: src/renderer/features/projects/README.md</p>
+<h2>Projects Feature</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>Project Features</h1>
+<h2>Status</h2>
+<p>MVP now</p>
+<h2>If you landed here first</h2>
+<p>Read <a href="#src-renderer-features-readme">src/renderer/features/README.md</a>, then <a href="../src-docs.html#src-main-readme">src/main/README.md</a>. Project UX touches both renderer and main boundaries.</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="#src-renderer-features-readme">src/renderer/features/README.md</a></li>
+<li><a href="#src-renderer-readme">src/renderer/README.md</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+</ul>
+<h2>Owns</h2>
+<ul>
+<li>Project picker and project-open UI.</li>
+<li>Recent project affordances if they appear.</li>
+<li>Renderer-side state around the active project session.</li>
+</ul>
+<h2>Does not own</h2>
+<ul>
+<li>Database bootstrap internals.</li>
+<li>Raw filesystem dialogs or privileged file access.</li>
+<li>Document editing rules.</li>
+</ul>
+<h2>Inputs and outputs</h2>
+<ul>
+<li>Inputs: project metadata, open/close intents, session restore info.</li>
+<li>Outputs: active-project state, open-project requests, recent-project display state.</li>
+</ul>
+<h2>Key relationships</h2>
+<ul>
+<li>Delegates privileged open operations to <code>main</code> through the preload bridge.</li>
+<li>Feeds project context into documents, entities, panes, and annotations.</li>
+</ul>
+<h2>Likely future code here</h2>
+<ul>
+<li><code>project-picker</code></li>
+<li><code>recent-projects</code></li>
+<li><code>active-project-context</code></li>
+</ul>
+<h2>Decided</h2>
+<ul>
+<li>The project boundary should be explicit in the UI, not hidden as a background implementation detail.</li>
+</ul>
+<h2>Open</h2>
+<ul>
+<li>Whether the first version needs recent-project UX or only explicit open/create.</li>
+</ul>
+<h2>Deferred</h2>
+<ul>
+<li>Multi-project workspaces.</li>
+</ul>
+</div>
+</article><!-- /src-renderer-features-projects-readme -->
+<article id="src-renderer-styles-readme" class="doc-source" data-source="src/renderer/styles/README.md">
+<header class="source-header">
+<p class="source-path">Former source: src/renderer/styles/README.md</p>
+<h2>Styles</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>Renderer Styles</h1>
+<h2>Status</h2>
+<p>MVP now</p>
+<h2>If you landed here first</h2>
+<p>Read <a href="#src-renderer-readme">../README.md</a>, then <a href="../src-docs.html#src-readme">../../README.md</a>. Global styles here are for app-wide foundations only; component styles belong beside the component as CSS Modules.</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="#src-renderer-readme">../README.md</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">../../../FOR_HUMAN_CODE--DOC.md</a></li>
+</ul>
+<h2>Owns</h2>
+<ul>
+<li>Design tokens and theme aliases.</li>
+<li>Browser reset and base renderer behavior.</li>
+<li>Top-level app layout classes.</li>
+<li>ProseMirror/editor decoration classes that are emitted outside React CSS Modules.</li>
+</ul>
+<h2>Does not own</h2>
+<ul>
+<li>Feature-specific visual layout.</li>
+<li>Component button, input, card, menu, or modal styling.</li>
+<li>Product workflow state.</li>
+</ul>
+<h2>Key relationships</h2>
+<ul>
+<li><code>index.css</code> is the only global stylesheet imported by the renderer entrypoint.</li>
+<li><code>tokens.css</code> is the design-review seam; visual changes should start there before touching feature modules.</li>
+<li>CSS Modules in <code>features/*</code> and <code>ui/*</code> consume these custom properties.</li>
+</ul>
+<h2>Decided</h2>
+<ul>
+<li>Plain CSS and CSS Modules are the default styling path.</li>
+<li>SCSS is deferred until the codebase earns preprocessor features.</li>
+<li>ProseMirror decoration classes stay global because they are applied by editor plugins and DOM widgets, not by React components.</li>
+</ul>
+<h2>Open</h2>
+<ul>
+<li>Whether a later design system pass should add lint rules for raw colors and spacing.</li>
+</ul>
+<h2>Deferred</h2>
+<ul>
+<li>Theme switching and author-configurable annotation visuals.</li>
+</ul>
+</div>
+</article><!-- /src-renderer-styles-readme -->
+<article id="src-renderer-ui-readme" class="doc-source" data-source="src/renderer/ui/README.md">
+<header class="source-header">
+<p class="source-path">Former source: src/renderer/ui/README.md</p>
+<h2>UI Primitives</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>Renderer UI</h1>
+<h2>Status</h2>
+<p>MVP now</p>
+<h2>If you landed here first</h2>
+<p>Read <a href="#src-renderer-readme">../README.md</a>, then <a href="#src-renderer-styles-readme">../styles/README.md</a>. This folder holds small renderer-only primitives that keep repeated visual controls out of feature components.</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="#src-renderer-readme">../README.md</a></li>
+<li><a href="#src-renderer-styles-readme">../styles/README.md</a></li>
+</ul>
+<h2>Owns</h2>
+<ul>
+<li>Reusable buttons, inputs, selects, panels, cards, menus, and modal shells.</li>
+<li>CSS Module styles for those primitives.</li>
+</ul>
+<h2>Does not own</h2>
+<ul>
+<li>Feature-specific content or workflow decisions.</li>
+<li>Domain terms or persistence behavior.</li>
+<li>ProseMirror editor decoration classes.</li>
+</ul>
+<h2>Key relationships</h2>
+<ul>
+<li>Feature components import these primitives instead of sharing global utility class names.</li>
+<li>Primitive styles consume custom properties from <code>src/renderer/styles/tokens.css</code>.</li>
+</ul>
+<h2>Decided</h2>
+<ul>
+<li>Keep primitives thin and boring: no hidden state, no domain behavior, no variant expansion before a feature actually needs it.</li>
+<li>Prefer composition over a large design-system abstraction.</li>
+</ul>
+<h2>Open</h2>
+<ul>
+<li>Whether icon-only button variants should land with the design review.</li>
+</ul>
+<h2>Deferred</h2>
+<ul>
+<li>Form validation components and theme switching controls.</li>
+</ul>
+</div>
+</article><!-- /src-renderer-ui-readme -->
+<article id="src-renderer-utils-readme" class="doc-source" data-source="src/renderer/utils/README.md">
+<header class="source-header">
+<p class="source-path">Former source: src/renderer/utils/README.md</p>
+<h2>Renderer Utils</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>Renderer Utilities</h1>
+<h2>Status</h2>
+<p>MVP now</p>
+<h2>If you landed here first</h2>
+<p>Read <a href="#src-renderer-readme">src/renderer/README.md</a> first. The modules here are pure helpers — no React state, no IPC, no DOM. If you find yourself needing one of those, the file does not belong in this folder.</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="#src-renderer-readme">src/renderer/README.md</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+</ul>
+<h2>Owns</h2>
+<ul>
+<li>Small text and number formatters used across feature components (<a href="utils/formatting.ts">formatting.ts</a>).</li>
+<li>Pure read helpers over <code>WorkspaceState</code> that derive lookups without React state (<a href="utils/workspace.ts">workspace.ts</a>).</li>
+<li>Renderer-side feature flags driven by <code>import.meta.env</code> (<a href="utils/devFlags.ts">devFlags.ts</a>).</li>
+<li>Dev-only in-memory mock of <code>window.evernear</code> for plain-browser previews of the renderer (<a href="utils/devBrowserBridge.ts">devBrowserBridge.ts</a>).</li>
+</ul>
+<h2>Does not own</h2>
+<ul>
+<li>React hooks (those live in <a href="#src-renderer-state-readme">src/renderer/state/</a>).</li>
+<li>IPC contracts (those live in <a href="../shared/shared-docs.html#src-shared-contracts-readme">src/shared/contracts/</a>).</li>
+<li>Domain types (those live in <a href="../shared/shared-docs.html#src-shared-domain-readme">src/shared/domain/</a>).</li>
+<li>Editor view code (those live in <a href="#src-renderer-editor-readme">src/renderer/editor/</a>).</li>
+</ul>
+<h2>Key relationships</h2>
+<ul>
+<li>Feature components import the formatters and workspace lookups directly; they never reach for React state from this folder.</li>
+<li>The dev browser bridge is conditionally installed by <code>main.tsx</code> only when <code>contextBridge</code> has not exposed <code>window.evernear</code> (i.e. running outside Electron). The Electron build never touches it.</li>
+<li><code>DEBUG_PANELS</code> from devFlags gates the optional run log, engine metrics, and editor legend panels — used in feature components to keep the production shell clean.</li>
+</ul>
+<h2>Decided</h2>
+<ul>
+<li>Pure functions only. Anything that holds state, talks to IPC, or touches the DOM goes elsewhere.</li>
+<li>The dev browser bridge is the one allowed <code>as unknown as HarnessBridge</code> cast in the renderer; everything else uses the typed bridge from preload.</li>
+</ul>
+<h2>Open</h2>
+<ul>
+<li>Whether <code>formatting.ts</code> should split into per-domain formatters (e.g. <code>documentFormatting</code>, <code>entityFormatting</code>) once it crosses ~150 lines.</li>
+</ul>
+<h2>Deferred</h2>
+<ul>
+<li>A renderer-side i18n layer. Today every formatter assumes <code>en-US</code>.</li>
+</ul>
+</div>
+</article><!-- /src-renderer-utils-readme -->
+</main>
+<p class="footer">Generated from repo-authored Markdown during the HTML documentation migration. AGENT.md and CLAUDE.md remain Markdown bootstrap files by design.</p>
+</div>
+</body>
+</html>

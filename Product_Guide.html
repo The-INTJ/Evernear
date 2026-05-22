@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Evernear Product Guide | Evernear</title>
+  <style>:root {
+  color-scheme: light;
+  --bg: #f7f7f4;
+  --paper: #ffffff;
+  --ink: #1f2328;
+  --muted: #606a75;
+  --line: #d8ddd8;
+  --soft: #eef1ed;
+  --accent: #2563eb;
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, white);
+  --accent-line: color-mix(in srgb, var(--accent) 32%, #d8ddd8);
+  --code-bg: #151b23;
+  --code-ink: #f1f5f9;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--ink); line-height: 1.55; }
+a { color: var(--accent); text-decoration-thickness: 0.08em; text-underline-offset: 0.18em; }
+.doc-shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 56px; }
+.doc-hero { border: 1px solid var(--accent-line); background: linear-gradient(135deg, var(--paper), var(--accent-soft)); border-radius: 8px; padding: 26px; }
+.eyebrow { margin: 0 0 8px; color: var(--accent); font-weight: 800; text-transform: uppercase; letter-spacing: 0; font-size: 0.78rem; }
+h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-spacing: 0; overflow-wrap: anywhere; }
+.subtitle { margin: 14px 0 0; max-width: 820px; color: var(--muted); font-size: 1.04rem; }
+.meta-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 20px; }
+.meta-card { border: 1px solid var(--line); background: rgba(255,255,255,0.7); border-radius: 8px; padding: 12px; min-width: 0; }
+.meta-card strong { display: block; font-size: 0.76rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0; }
+.meta-card span, .meta-card a { display: block; margin-top: 3px; font-weight: 700; overflow-wrap: anywhere; }
+.context-index { margin: 18px 0; border: 1px solid var(--line); background: var(--paper); border-radius: 8px; overflow: hidden; }
+.context-index header { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 14px 16px; background: var(--soft); border-bottom: 1px solid var(--line); }
+.context-index h2 { margin: 0; font-size: 1rem; }
+.context-index p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+.index-grid { display: grid; grid-template-columns: minmax(180px, 0.9fr) minmax(150px, 0.6fr) minmax(260px, 1.7fr); }
+.index-row { display: contents; color: inherit; text-decoration: none; }
+.index-row > div { padding: 10px 14px; border-top: 1px solid var(--line); min-width: 0; }
+.index-row:first-child > div { border-top: 0; }
+.index-range { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 0.86rem; color: var(--accent); white-space: nowrap; }
+.source-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.source-pill { border: 1px solid var(--accent-line); background: var(--accent-soft); color: var(--ink); border-radius: 999px; padding: 5px 9px; font-size: 0.82rem; font-weight: 700; }
+.doc-source, .map-section { margin-top: 18px; border: 1px solid var(--line); background: var(--paper); border-radius: 8px; overflow: clip; }
+.source-header, .section-header { padding: 16px 18px; border-bottom: 1px solid var(--line); background: #fbfbf9; }
+.source-header h2, .section-header h2 { margin: 3px 0 0; font-size: 1.35rem; letter-spacing: 0; overflow-wrap: anywhere; }
+.source-header p, .section-header p { margin: 0; color: var(--muted); }
+.source-path { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 0.78rem; color: var(--muted); overflow-wrap: anywhere; }
+.md-content { padding: 18px; }
+.md-content h1 { font-size: 2rem; line-height: 1.08; margin: 0 0 14px; overflow-wrap: anywhere; }
+.md-content h2 { margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 1.25rem; overflow-wrap: anywhere; }
+.md-content h3 { margin-top: 20px; font-size: 1.06rem; overflow-wrap: anywhere; }
+.md-content p, .md-content ul, .md-content ol { max-width: 86ch; }
+.md-content table, .dense-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.94rem; }
+.md-content th, .md-content td, .dense-table th, .dense-table td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+.md-content th, .dense-table th { background: var(--soft); color: #30363d; }
+.md-content code:not(pre code) { background: var(--soft); border: 1px solid var(--line); border-radius: 5px; padding: 0.08rem 0.28rem; font-size: 0.9em; }
+.md-content pre, pre.code-block { background: var(--code-bg); color: var(--code-ink); border-radius: 8px; overflow: auto; padding: 14px; }
+.md-content pre code { color: inherit; background: transparent; border: 0; padding: 0; }
+.compact-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
+.compact-card { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 12px; min-width: 0; }
+.compact-card h3 { margin: 0 0 6px; font-size: 1rem; }
+.compact-card p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+.flow-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
+.flow-step { position: relative; border: 1px solid var(--accent-line); background: var(--accent-soft); border-radius: 8px; padding: 12px; min-height: 120px; overflow-wrap: anywhere; }
+.flow-step strong { display: block; margin-bottom: 6px; }
+.flow-step span { color: var(--muted); font-size: 0.9rem; }
+.badge-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.badge { border: 1px solid var(--line); border-radius: 999px; padding: 5px 8px; background: var(--soft); font-size: 0.82rem; font-weight: 700; }
+.mermaidless-map { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
+.entity-node { border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 8px; padding: 12px; background: #fff; }
+.entity-node strong { display: block; }
+.entity-node span { display: block; color: var(--muted); font-size: 0.88rem; margin-top: 4px; }
+.note { border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 12px 14px; border-radius: 0 8px 8px 0; }
+.footer { margin-top: 22px; color: var(--muted); font-size: 0.88rem; }
+@media (max-width: 860px) {
+  .doc-shell { width: min(100% - 20px, 1180px); padding-top: 12px; }
+  .doc-hero { padding: 18px; }
+  .meta-grid, .compact-grid, .flow-grid, .mermaidless-map { grid-template-columns: 1fr; }
+  .index-grid { grid-template-columns: 1fr; }
+  .index-row > div { border-top: 0; padding: 6px 14px; }
+  .index-row { display: block; border-top: 1px solid var(--line); padding: 8px 0; }
+  .context-index header { display: block; }
+  .md-content { padding: 14px; overflow-x: auto; }
+}</style>
+</head>
+<body style="--accent: #be123c;">
+<div class="doc-shell">
+<header class="doc-hero">
+<p class="eyebrow">Evernear HTML documentation</p>
+<h1>Evernear Product Guide</h1>
+<p class="subtitle">North-star product explanation, core loop, and non-negotiables.</p>
+<div class="meta-grid">
+<div class="meta-card"><strong>Audience</strong><span>Humans deciding what Evernear is for; agents checking product intent.</span></div>
+<div class="meta-card"><strong>Format</strong><span>Standalone HTML, browser-openable</span></div>
+<div class="meta-card"><strong>Agent Use</strong><span>Use the line ranges below before ingesting whole files.</span></div>
+</div>
+<div class="source-list">
+<span class="source-pill">Product_Guide.md</span>
+</div>
+</header>
+<nav class="context-index" aria-label="Agent Context Index">
+<header><h2>Agent Context Index</h2><p>Line ranges point into this HTML file.</p></header>
+<div class="index-grid">
+<a class="index-row" href="#product-guide"><div><strong>Product_Guide.md</strong></div><div class="index-range">L111-L165</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+</div>
+</nav>
+<main>
+<article id="product-guide" class="doc-source" data-source="Product_Guide.md">
+<header class="source-header">
+<p class="source-path">Former source: Product_Guide.md</p>
+<h2>Evernear — Product Guide</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>Evernear — Product Guide</h1>
+<p>This is the north star for the product. It is deliberately short. Longer planning material lives in <a href="FOR_HUMAN_BUSINESS--DOC.html">FOR_HUMAN_BUSINESS--DOC.md</a>, <a href="FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a>, and <a href="FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a>; anything here that contradicts those docs is the side that should win.</p>
+<h2>For authors and anyone curious</h2>
+<p>Evernear is a desktop writing environment built for the moment you open a fantasy project you haven't touched in months and realize you don't quite remember your own world anymore. You can keep writing wherever you already write — Google Docs, Scrivener, whatever — and Evernear is the place you come back to when you want your characters, places, lore, and the structure of your manuscript to greet you again.</p>
+<p>Here's the trick: <strong>you never hand-link anything.</strong> You tell Evernear once, the first time you 'link' a word or phrase, that &quot;Harry Potter&quot; should reference this spot in your character doc. From then on, every time you paste or type that word(s) or phrase, the app instantly knows. No right-clicking, no wiki-style <code>[[brackets]]</code>, no tagging — you just write, and the people and places you've defined light up on their own. Hover one, and a little window snaps straight to the doc you linked.</p>
+<p>More than one doc? No problem, you can link as many as you want, and scroll in the pop-up, or click into it to get a whole panel -- with live editing!</p>
+<h2>For writers who also program</h2>
+<p>Evernear is a local-first Electron + ProseMirror desktop app whose central loop is <em>frictionless rehydration</em>. An author who edited their manuscript elsewhere — Google Docs, Scrivener, a round of copy edits from a year ago — can paste the entire exported document into Evernear and have it light up immediately.</p>
+<p>The architecture that makes a full destructive re-paste safe is a strict separation between <strong>truth</strong> and <strong>projection surface</strong>:</p>
+<ul>
+<li><strong>Entities are the truth.</strong> Aliases, matching rules, slices, slice boundaries, and annotations all live as Entities, event-sourced and durable. They are the canonical record.</li>
+<li><strong>No document holds truth.</strong> They hold prose and nothing else. They don't own links, slice data, or highlight records. They are streams of text that entity rules are evaluated <em>against</em> to produce derived decorations live.</li>
+</ul>
+<p>Because no document carries any of the load-bearing metadata, blowing it away and pasting a fresh copy is not destructive — it's just feeding new text into the same regex pipeline. Entity detection is regex-based matching rules (literals, aliases, patterns) evaluated live over visible text; document <em>structure</em> (book, part, chapter, section) is likewise regex against the pasted prose, so the outline rehydrates with no author annotation. Slice boundaries and annotations ride a shared <code>TextAnchor</code> substrate and re-resolve against the new text. Everything is append-only event-sourced, so nothing is lost. Clipboard output stays clean — <code>Ctrl+A</code> / <code>Ctrl+C</code> yields prose, never editor chrome — so the round trip back out to Google Docs or Scrivener is as frictionless as the one in.</p>
+<h2>The laser-focused core loop</h2>
+<ol>
+<li>An author returns to a manuscript after months. They made edits — possibly a full round of copy edits — in Google Docs, Scrivener, or similar, and <em>never</em> synced those edits back into Evernear.</li>
+<li>They don't remember their world as well as they used to. The people, places, and rules have drifted out of working memory.</li>
+<li>They export the document from the external tool and paste the whole thing into Evernear.</li>
+<li>Evernear's entity regex-highlighting and regex-based document-structure matching hydrate the manuscript on the spot: entity matches become live highlights, chapter / part / book structure is re-derived, existing entity-to-slice links continue to resolve against the new prose, and the edits from the external tool are now simply present. The manuscript is a fresh projection surface; the entity truth underneath it never moved.</li>
+<li>From that frictionless paste, the panel workflow — hover to preview, click to pin, persistent slice viewer — is equally frictionless. Re-entry is achieved without bookkeeping.</li>
+</ol>
+<p>The mirror case matters equally: an author can paste <em>out</em> of Evernear into Scrivener, Google Docs, edit on the go, and paste back. Round-tripping — including into and out of sliced regions — must stay clean.</p>
+<h2>Unapologetic desktop UI</h2>
+<p>Evernear is a desktop application built precisely for a multi-monitor writing workflow.</p>
+<ul>
+<li><strong>Panels are draggable and stackable.</strong> Context is summoned as first-class panels that can be moved, docked, and piled. When a panel stacks over another, a back arrow takes the author <em>back</em> rather than leaving them lost three lore-hops deep.</li>
+<li><strong>Slices are delineated, not boxed in.</strong> Inside a document, slice regions are marked with subtle horizontal and vertical colored bars — quiet edge indicators that respect the prose. No heavy cards, no framed boxes, no chrome crowding the text.</li>
+<li><strong>Annotations stay quieter still.</strong> Default styling is something like a dotted gray underline; the author's eye goes to the words, not to our affordances.</li>
+<li><strong>Built for our workflow first.</strong> The layout assumes multiple monitors, persistent side panels, and serious long sessions. We take advantage of the space instead of hiding from it.</li>
+</ul>
+<h2>What we are not</h2>
+<p>Evernear is not a cloud SaaS, not a collaboration tool, not a generic notes app, and not a manual-linking wiki. Links are derived from entity rules, not hand-placed. Structure is derived from regex, not laboriously tagged. The author's prose is never held hostage by our decorations, and the UI is not negotiated down to a lowest common denominator.</p>
+<h2>Non-negotiables</h2>
+<ul>
+<li>The least manual linking, ever. Define an entity once; matches happen on their own, forever.</li>
+<li>Entities hold truth. Docs are a projection surface, safe to destroy and re-paste.</li>
+<li>Paste-in and paste-out stay frictionless. Clipboard output is clean prose; clipboard input hydrates fully.</li>
+<li>Entities and document structure are regex matching rules evaluated against current text, never stored as document truth.</li>
+<li>Slice boundaries and annotations share one anchor substrate so they survive edits, including full re-paste.</li>
+<li>History is event-sourced; nothing the author does is lost.</li>
+<li>The UI is opinionated, desktop-native, and built for multi-monitor work.</li>
+<li>Local-first, desktop-first, single-user-first. The author owns the file.</li>
+</ul>
+<h2>One-sentence identity</h2>
+<p><strong>Evernear is the desktop writing environment an author pastes their manuscript into after months away, and instantly gets their world, their structure, and their links back — with no ceremony in, and clean prose on the way back out.</strong></p>
+</div>
+</article><!-- /product-guide -->
+</main>
+<p class="footer">Generated from repo-authored Markdown during the HTML documentation migration. AGENT.md and CLAUDE.md remain Markdown bootstrap files by design.</p>
+</div>
+</body>
+</html>

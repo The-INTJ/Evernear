@@ -1,0 +1,880 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Experiment Atlas | Evernear</title>
+  <style>:root {
+  color-scheme: light;
+  --bg: #f7f7f4;
+  --paper: #ffffff;
+  --ink: #1f2328;
+  --muted: #606a75;
+  --line: #d8ddd8;
+  --soft: #eef1ed;
+  --accent: #2563eb;
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, white);
+  --accent-line: color-mix(in srgb, var(--accent) 32%, #d8ddd8);
+  --code-bg: #151b23;
+  --code-ink: #f1f5f9;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--ink); line-height: 1.55; }
+a { color: var(--accent); text-decoration-thickness: 0.08em; text-underline-offset: 0.18em; }
+.doc-shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 56px; }
+.doc-hero { border: 1px solid var(--accent-line); background: linear-gradient(135deg, var(--paper), var(--accent-soft)); border-radius: 8px; padding: 26px; }
+.eyebrow { margin: 0 0 8px; color: var(--accent); font-weight: 800; text-transform: uppercase; letter-spacing: 0; font-size: 0.78rem; }
+h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-spacing: 0; overflow-wrap: anywhere; }
+.subtitle { margin: 14px 0 0; max-width: 820px; color: var(--muted); font-size: 1.04rem; }
+.meta-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 20px; }
+.meta-card { border: 1px solid var(--line); background: rgba(255,255,255,0.7); border-radius: 8px; padding: 12px; min-width: 0; }
+.meta-card strong { display: block; font-size: 0.76rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0; }
+.meta-card span, .meta-card a { display: block; margin-top: 3px; font-weight: 700; overflow-wrap: anywhere; }
+.context-index { margin: 18px 0; border: 1px solid var(--line); background: var(--paper); border-radius: 8px; overflow: hidden; }
+.context-index header { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 14px 16px; background: var(--soft); border-bottom: 1px solid var(--line); }
+.context-index h2 { margin: 0; font-size: 1rem; }
+.context-index p { margin: 0; color: var(--muted); font-size: 0.9rem; }
+.index-grid { display: grid; grid-template-columns: minmax(180px, 0.9fr) minmax(150px, 0.6fr) minmax(260px, 1.7fr); }
+.index-row { display: contents; color: inherit; text-decoration: none; }
+.index-row > div { padding: 10px 14px; border-top: 1px solid var(--line); min-width: 0; }
+.index-row:first-child > div { border-top: 0; }
+.index-range { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 0.86rem; color: var(--accent); white-space: nowrap; }
+.source-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.source-pill { border: 1px solid var(--accent-line); background: var(--accent-soft); color: var(--ink); border-radius: 999px; padding: 5px 9px; font-size: 0.82rem; font-weight: 700; }
+.doc-source, .map-section { margin-top: 18px; border: 1px solid var(--line); background: var(--paper); border-radius: 8px; overflow: clip; }
+.source-header, .section-header { padding: 16px 18px; border-bottom: 1px solid var(--line); background: #fbfbf9; }
+.source-header h2, .section-header h2 { margin: 3px 0 0; font-size: 1.35rem; letter-spacing: 0; overflow-wrap: anywhere; }
+.source-header p, .section-header p { margin: 0; color: var(--muted); }
+.source-path { font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace; font-size: 0.78rem; color: var(--muted); overflow-wrap: anywhere; }
+.md-content { padding: 18px; }
+.md-content h1 { font-size: 2rem; line-height: 1.08; margin: 0 0 14px; overflow-wrap: anywhere; }
+.md-content h2 { margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 1.25rem; overflow-wrap: anywhere; }
+.md-content h3 { margin-top: 20px; font-size: 1.06rem; overflow-wrap: anywhere; }
+.md-content p, .md-content ul, .md-content ol { max-width: 86ch; }
+.md-content table, .dense-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 0.94rem; }
+.md-content th, .md-content td, .dense-table th, .dense-table td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+.md-content th, .dense-table th { background: var(--soft); color: #30363d; }
+.md-content code:not(pre code) { background: var(--soft); border: 1px solid var(--line); border-radius: 5px; padding: 0.08rem 0.28rem; font-size: 0.9em; }
+.md-content pre, pre.code-block { background: var(--code-bg); color: var(--code-ink); border-radius: 8px; overflow: auto; padding: 14px; }
+.md-content pre code { color: inherit; background: transparent; border: 0; padding: 0; }
+.compact-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
+.compact-card { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 12px; min-width: 0; }
+.compact-card h3 { margin: 0 0 6px; font-size: 1rem; }
+.compact-card p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+.flow-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
+.flow-step { position: relative; border: 1px solid var(--accent-line); background: var(--accent-soft); border-radius: 8px; padding: 12px; min-height: 120px; overflow-wrap: anywhere; }
+.flow-step strong { display: block; margin-bottom: 6px; }
+.flow-step span { color: var(--muted); font-size: 0.9rem; }
+.badge-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.badge { border: 1px solid var(--line); border-radius: 999px; padding: 5px 8px; background: var(--soft); font-size: 0.82rem; font-weight: 700; }
+.mermaidless-map { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
+.entity-node { border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 8px; padding: 12px; background: #fff; }
+.entity-node strong { display: block; }
+.entity-node span { display: block; color: var(--muted); font-size: 0.88rem; margin-top: 4px; }
+.note { border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 12px 14px; border-radius: 0 8px 8px 0; }
+.footer { margin-top: 22px; color: var(--muted); font-size: 0.88rem; }
+@media (max-width: 860px) {
+  .doc-shell { width: min(100% - 20px, 1180px); padding-top: 12px; }
+  .doc-hero { padding: 18px; }
+  .meta-grid, .compact-grid, .flow-grid, .mermaidless-map { grid-template-columns: 1fr; }
+  .index-grid { grid-template-columns: 1fr; }
+  .index-row > div { border-top: 0; padding: 6px 14px; }
+  .index-row { display: block; border-top: 1px solid var(--line); padding: 8px 0; }
+  .context-index header { display: block; }
+  .md-content { padding: 14px; overflow-x: auto; }
+}</style>
+</head>
+<body style="--accent: #7c3aed;">
+<div class="doc-shell">
+<header class="doc-hero">
+<p class="eyebrow">Evernear HTML documentation</p>
+<h1>Experiment Atlas</h1>
+<p class="subtitle">Active and resolved proof work in one indexed experiment file.</p>
+<div class="meta-grid">
+<div class="meta-card"><strong>Audience</strong><span>Agents validating risky assumptions; humans reviewing proof status.</span></div>
+<div class="meta-card"><strong>Format</strong><span>Consolidated HTML, browser-openable</span></div>
+<div class="meta-card"><strong>Agent Use</strong><span>Use the line ranges below before ingesting whole files.</span></div>
+</div>
+<div class="source-list">
+<span class="source-pill">docs/experiments/README.md</span>
+<span class="source-pill">docs/experiments/EXP-001-shared-anchor-substrate.md</span>
+<span class="source-pill">docs/experiments/EXP-002-matching-normalization-and-scale.md</span>
+<span class="source-pill">docs/experiments/EXP-005-event-log-and-checkpoint-replay.md</span>
+<span class="source-pill">docs/experiments/EXP-006-pretext-layout-viability.md</span>
+<span class="source-pill">docs/experiments/resolved/EXP-003-lexical-prototype-walkthrough.md</span>
+<span class="source-pill">docs/experiments/resolved/EXP-004-prosemirror-prototype-walkthrough.md</span>
+</div>
+</header>
+<nav class="context-index" aria-label="Agent Context Index">
+<header><h2>Agent Context Index</h2><p>Line ranges point into this HTML file.</p></header>
+<div class="index-grid">
+<a class="index-row" href="#docs-experiments-readme"><div><strong>Experiments Folder Orientation</strong></div><div class="index-range">L123-L185</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#docs-experiments-exp-001-shared-anchor-substrate"><div><strong>EXP-001 Shared Anchor Substrate</strong></div><div class="index-range">L186-L293</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#docs-experiments-exp-002-matching-normalization-and-scale"><div><strong>EXP-002 Matching Normalization And Scale</strong></div><div class="index-range">L294-L416</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#docs-experiments-exp-005-event-log-and-checkpoint-replay"><div><strong>EXP-005 Event Log And Checkpoint Replay</strong></div><div class="index-range">L417-L560</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#docs-experiments-exp-006-pretext-layout-viability"><div><strong>EXP-006 Pretext Layout Viability</strong></div><div class="index-range">L561-L666</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#docs-experiments-resolved-exp-003-lexical-prototype-walkthrough"><div><strong>EXP-003 Lexical Prototype Walkthrough</strong></div><div class="index-range">L667-L770</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+<a class="index-row" href="#docs-experiments-resolved-exp-004-prosemirror-prototype-walkthrough"><div><strong>EXP-004 ProseMirror Prototype Walkthrough</strong></div><div class="index-range">L771-L875</div><div>Read this slice for the content formerly held in this Markdown file.</div></a>
+</div>
+</nav>
+<main>
+<article id="docs-experiments-readme" class="doc-source" data-source="docs/experiments/README.md">
+<header class="source-header">
+<p class="source-path">Former source: docs/experiments/README.md</p>
+<h2>Experiments Folder Orientation</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>Experiments</h1>
+<h2>Status</h2>
+<p>MVP now</p>
+<h2>If you landed here first</h2>
+<p>Read <a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a> first, then <a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a>. This folder holds the proof work for questions big enough to force a rewrite if guessed wrong.</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="../docs-index.html#docs-readme">docs/README.md</a></li>
+<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+</ul>
+<h2>Owns</h2>
+<ul>
+<li>Load-bearing experiment briefs.</li>
+<li>Pseudo-build walkthroughs when they are enough to expose architectural friction early.</li>
+<li>Acceptance criteria for spikes that gate later phases.</li>
+</ul>
+<h2>Does not own</h2>
+<ul>
+<li>Final architecture decisions by itself.</li>
+<li>Routine implementation notes that are not rewrite-risk material.</li>
+</ul>
+<h2>In progress</h2>
+<p>All four are implemented in the live app but still need real-manuscript (50k+ word) findings before they can be marked Resolved.</p>
+<ul>
+<li><a href="#docs-experiments-exp-001-shared-anchor-substrate">EXP-001: Shared Anchor Substrate Under Live Edits</a></li>
+<li><a href="#docs-experiments-exp-002-matching-normalization-and-scale">EXP-002: Matching Normalization and Chapter-Scale Performance</a></li>
+<li><a href="#docs-experiments-exp-005-event-log-and-checkpoint-replay">EXP-005: Event Log and Checkpoint Replay</a></li>
+<li><a href="#docs-experiments-exp-006-pretext-layout-viability">EXP-006: Pretext Layout Viability</a></li>
+</ul>
+<h2>Resolved</h2>
+<ul>
+<li><a href="#docs-experiments-resolved-exp-003-lexical-prototype-walkthrough">EXP-003: Lexical Prototype Walkthrough</a></li>
+<li><a href="#docs-experiments-resolved-exp-004-prosemirror-prototype-walkthrough">EXP-004: ProseMirror Prototype Walkthrough</a></li>
+</ul>
+<h2>Conventions</h2>
+<ul>
+<li>Each experiment uses <code>EXP-NNN-&lt;slug&gt;</code> and a <code>Status</code> of <code>Planned</code>, <code>Running</code>, <code>Resolved</code>, or <code>Abandoned</code>.</li>
+<li>Resolved experiments move into <code>resolved/</code>. They are the memory of why the project did not pick the other thing.</li>
+<li>Experiments that resolve should produce or update an ADR, then link to it.</li>
+</ul>
+<h2>Decided</h2>
+<ul>
+<li>Experiments exist to make the expensive unknowns obvious early.</li>
+<li>Resolved experiments remain in the repo rather than being deleted.</li>
+</ul>
+<h2>Open</h2>
+<ul>
+<li>Which acceptance thresholds should become numeric versus descriptive after the first runnable spikes.</li>
+</ul>
+<h2>Deferred</h2>
+<ul>
+<li>Low-stakes polish studies.</li>
+</ul>
+</div>
+</article><!-- /docs-experiments-readme -->
+<article id="docs-experiments-exp-001-shared-anchor-substrate" class="doc-source" data-source="docs/experiments/EXP-001-shared-anchor-substrate.md">
+<header class="source-header">
+<p class="source-path">Former source: docs/experiments/EXP-001-shared-anchor-substrate.md</p>
+<h2>EXP-001 Shared Anchor Substrate</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>EXP-001: Shared Anchor Substrate Under Live Edits</h1>
+<h2>Status</h2>
+<p>In progress</p>
+<h2>Date</h2>
+<p>2026-04-17</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="../../src/db/db-docs.html#src-db-readme">src/db/README.md</a></li>
+<li><a href="../../src/renderer/renderer-docs.html#src-renderer-features-annotations-readme">src/renderer/features/annotations/README.md</a></li>
+</ul>
+<h2>Question</h2>
+<p>Can one anchor-healing model serve both reusable slice boundaries and direct document annotations under normal writing edits?</p>
+<h2>Why this is load-bearing</h2>
+<p>If this fails, both boundary-aware slices and low-noise annotations become fragile.
+That would undercut one of Evernear's clearest differentiators and likely force a redesign.</p>
+<h2>Working hypothesis</h2>
+<p>The right model is:</p>
+<ul>
+<li>shared <code>TextAnchor</code> payloads for both slice boundaries and annotations</li>
+<li>transaction or change mapping as the first repair step during live editing</li>
+<li>exact-text plus context re-resolution as the fallback when mapping alone is not enough</li>
+</ul>
+<h2>Proposed anchor shape</h2>
+<pre><code class="language-ts">type TextAnchor = {
+  documentId: string;
+  from: number;
+  to: number;
+  exact: string;
+  prefix: string;
+  suffix: string;
+  blockPath: number[];
+  approxPlainTextOffset?: number;
+  versionSeen: number;
+};
+</code></pre>
+<h2>Pseudo-code sketch</h2>
+<pre><code class="language-ts">function mapAnchorForward(anchor: TextAnchor, changeMap: ChangeMap, nextDoc: Doc): TextAnchor | null {
+  const mapped = changeMap.mapRange(anchor.from, anchor.to);
+  if (mapped &amp;&amp; stillLooksRight(nextDoc, mapped, anchor.exact)) {
+    return {...anchor, from: mapped.from, to: mapped.to};
+  }
+
+  const repaired = reResolveByExactAndContext(nextDoc, anchor);
+  if (repaired) {
+    return {...anchor, ...repaired};
+  }
+
+  return null;
+}
+
+function applyDocumentEdit(nextDoc: Doc, changeMap: ChangeMap, boundaries: TextAnchor[], annotations: TextAnchor[]) {
+  return {
+    boundaries: boundaries.map((anchor) =&gt; mapAnchorForward(anchor, changeMap, nextDoc)).filter(Boolean),
+    annotations: annotations.map((anchor) =&gt; mapAnchorForward(anchor, changeMap, nextDoc)).filter(Boolean),
+  };
+}
+</code></pre>
+<h2>Spike plan</h2>
+<ul>
+<li>Seed a document with several paragraph-spanning slice boundaries.</li>
+<li>Add annotations that overlap, sit adjacent to, and sit inside those boundaries.</li>
+<li>Run edit cases:
+<ul>
+<li>insert inside range</li>
+<li>delete inside range</li>
+<li>insert before range</li>
+<li>delete across range start or end</li>
+<li>split paragraph</li>
+<li>join paragraphs</li>
+<li>duplicate a paragraph</li>
+</ul>
+</li>
+<li>Log whether mapping alone works and when fallback re-resolution is needed.</li>
+</ul>
+<h2>Acceptance criteria</h2>
+<ul>
+<li>Most local edits heal through mapping alone.</li>
+<li>Re-resolution is rare, explainable, and does not jump to obviously wrong duplicate text.</li>
+<li>Slice boundaries and annotations use the same payload and repair path.</li>
+<li>Failure states are detectable instead of silently drifting.</li>
+</ul>
+<h2>Notes for later pass</h2>
+<ul>
+<li>If this only works cleanly in ProseMirror because of transaction mapping, that is an editor-fit signal, not an implementation detail to ignore.</li>
+</ul>
+<h2>Current workbench implementation</h2>
+<ul>
+<li>The proof workbench now stores one shared <code>TextAnchor</code> payload for boundary and annotation probes.</li>
+<li>Live probe updates map forward through ProseMirror <code>Mapping</code> first, then fall back to exact-text plus context re-resolution.</li>
+<li>The workbench surfaces <code>resolved</code>, <code>repaired</code>, <code>ambiguous</code>, and <code>invalid</code> states directly in the UI.</li>
+<li>A small scenario runner is implemented for repaired, ambiguous, and invalid outcomes.</li>
+</ul>
+<h2>Still to learn</h2>
+<ul>
+<li>How this behaves against a real 53k manuscript under repeated structural edits.</li>
+<li>Whether duplicate-text ambiguity remains acceptable once the prose gets much less synthetic.</li>
+</ul>
+</div>
+</article><!-- /docs-experiments-exp-001-shared-anchor-substrate -->
+<article id="docs-experiments-exp-002-matching-normalization-and-scale" class="doc-source" data-source="docs/experiments/EXP-002-matching-normalization-and-scale.md">
+<header class="source-header">
+<p class="source-path">Former source: docs/experiments/EXP-002-matching-normalization-and-scale.md</p>
+<h2>EXP-002 Matching Normalization And Scale</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>EXP-002: Live Visible-Range Matching and Rule Normalization</h1>
+<h2>Status</h2>
+<p>In progress</p>
+<h2>Date</h2>
+<p>2026-04-17</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="../../src/renderer/renderer-docs.html#src-renderer-editor-open-questions">src/renderer/editor/OPEN_QUESTIONS.md</a></li>
+</ul>
+<h2>Question</h2>
+<p>Can live visible-range matching stay trustworthy and fast while typing and scrolling, without ever precomputing stored document match sets?</p>
+<h2>Why this is load-bearing</h2>
+<p>Entity-aware reading falls apart if matching is either too noisy, too brittle, or too slow in the exact moment text is on screen.</p>
+<h2>Working hypothesis</h2>
+<p>The practical early pipeline is:</p>
+<ul>
+<li>normalize text and rules in the same way</li>
+<li>keep literal and alias rules on a fast path</li>
+<li>keep regex or exotic rules on a clearly bounded slow path</li>
+<li>compile entity rules when entities change</li>
+<li>derive the visible text range from current layout state</li>
+<li>live-calculate matches only for the visible range when highlighting is enabled</li>
+<li>allow live matching to be disabled while writing</li>
+</ul>
+<h2>Normalization sketch</h2>
+<pre><code class="language-ts">function normalizeForMatch(input: string): string {
+  return input
+    .normalize(&quot;NFKC&quot;)
+    .replace(/[’']/g, &quot;'&quot;)
+    .replace(/\s+/g, &quot; &quot;)
+    .toLocaleLowerCase();
+}
+
+function normalizeRule(pattern: string, options: RuleOptions): NormalizedRule {
+  return {
+    raw: pattern,
+    normalized: normalizeForMatch(pattern),
+    allowPossessive: options.allowPossessive ?? true,
+    matchWholeWord: options.matchWholeWord ?? true,
+    kind: options.kind ?? &quot;literal&quot;,
+  };
+}
+</code></pre>
+<h2>Matching sketch</h2>
+<pre><code class="language-ts">function compileRules(rules: NormalizedRule[]) {
+  return {
+    fastPath: buildLiteralAliasIndex(rules.filter((rule) =&gt; rule.kind !== &quot;regex&quot;)),
+    slowPath: rules.filter((rule) =&gt; rule.kind === &quot;regex&quot;),
+  };
+}
+
+function matchVisibleRange(visibleText: string, compiled: CompiledRules): MatchHit[] {
+  const normalizedText = normalizeForMatch(visibleText);
+  const fastHits = compiled.fastPath.scan(normalizedText);
+  const slowHits = compiled.slowPath.flatMap((rule) =&gt; runBoundedRegex(rule, normalizedText));
+  return postProcessHits([...fastHits, ...slowHits]);
+}
+
+function deriveVisibleMatches(state: ViewState) {
+  if (!state.highlightingEnabled) {
+    return [];
+  }
+
+  const visibleText = materializeVisibleText(state.visibleRange);
+  return matchVisibleRange(visibleText, state.compiledRules);
+}
+</code></pre>
+<h2>Spike plan</h2>
+<ul>
+<li>Build a corpus with:
+<ul>
+<li>capitalization variants</li>
+<li>possessives</li>
+<li>short aliases that risk false positives</li>
+<li>duplicate names across contexts</li>
+</ul>
+</li>
+<li>Test one long chapter and a few extreme viewport sizes.</li>
+<li>Compare:
+<ul>
+<li>naive regex union over visible text</li>
+<li>normalized literal or alias index plus bounded regex fallback</li>
+</ul>
+</li>
+<li>Record latency while typing, scrolling, toggling highlighting, and switching visible spans.</li>
+<li>Confirm that no document-level or project-level match table is introduced.</li>
+</ul>
+<h2>Acceptance criteria</h2>
+<ul>
+<li>Visible-range recompute feels instant enough for typing and rereading.</li>
+<li>Disabling highlighting cleanly removes matching work from the writing path.</li>
+<li>Possessives, capitalization shifts, and aliases are explainable from the rule model.</li>
+<li>The first implementation path stays simple enough to debug.</li>
+</ul>
+<h2>Notes for later pass</h2>
+<ul>
+<li>If the fast path is good enough, stop there.</li>
+<li>Do not build precomputed document match tables just because whole-corpus indexing sounds impressive.</li>
+</ul>
+<h2>Current workbench implementation</h2>
+<ul>
+<li>The workbench now supports literal, alias, and bounded-regex rules in the UI.</li>
+<li>Matching normalizes both rules and visible text with NFKC, apostrophe normalization, whitespace collapse, and lowercase.</li>
+<li>Matching only runs over the current visible block range when overlays are enabled.</li>
+<li>The editor emits visible-range recompute timing so the workbench can record benchmark rows.</li>
+<li>A small scenario runner is implemented for whole-word behavior, possessives, and regex matching.</li>
+</ul>
+<h2>Still to learn</h2>
+<ul>
+<li>How the visible-range matcher behaves on the real imported manuscript while typing and scrolling.</li>
+<li>Whether short aliases stay trustworthy enough without a more explicit rule compiler.</li>
+</ul>
+</div>
+</article><!-- /docs-experiments-exp-002-matching-normalization-and-scale -->
+<article id="docs-experiments-exp-005-event-log-and-checkpoint-replay" class="doc-source" data-source="docs/experiments/EXP-005-event-log-and-checkpoint-replay.md">
+<header class="source-header">
+<p class="source-path">Former source: docs/experiments/EXP-005-event-log-and-checkpoint-replay.md</p>
+<h2>EXP-005 Event Log And Checkpoint Replay</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>EXP-005: Event Log and Checkpoint Replay</h1>
+<h2>Status</h2>
+<p>In progress</p>
+<h2>Date</h2>
+<p>2026-04-17</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="../adr/adr-index.html#docs-adr-adr-006-event-sourced-document-and-metadata-history">ADR-006</a></li>
+<li><a href="../../src/db/db-docs.html#src-db-readme">src/db/README.md</a></li>
+</ul>
+<h2>Question</h2>
+<p>Can the event-sourced history layer carry real writing sessions without making normal saves feel slow, normal opens feel slow, or projections drift from the logs?</p>
+<h2>Why this is load-bearing</h2>
+<p>If the log and projection model is fragile in any of these dimensions, the whole history subsystem either never ships or silently corrupts. Every downstream promise - time travel, restore, named checkpoints, and history-preserving export - depends on this substrate being boring and trustworthy.</p>
+<h2>Working hypothesis</h2>
+<ul>
+<li>A single SQLite transaction per mutation - log append plus projection update - is fast enough at typing pace.</li>
+<li>Nearest-checkpoint plus forward <code>Step</code> replay opens a document inside an acceptable budget on realistic prose sizes.</li>
+<li>Explicit save plus periodic checkpointing, starting around every 200 steps, bounds open cost without bloating the database unacceptably.</li>
+<li>Projection rebuild from logs plus checkpoints produces identical current-state to the live-maintained tables.</li>
+<li>Anchor replay that starts from the latest anchor event at or before a target version and then maps forward stays honest enough for boundary and annotation history.</li>
+</ul>
+<h2>MVP row envelopes</h2>
+<pre><code class="language-ts">type EventRow = {
+  id: string;
+  aggregateType: string;
+  aggregateId: string;
+  aggregateSeq: number;
+  eventType: string;
+  eventVersion: number;
+  payloadJson: string;
+  createdAt: string;
+};
+
+type DocumentStepRow = {
+  id: string;
+  documentId: string;
+  version: number;
+  stepJson: string;
+  inverseStepJson: string;
+  createdAt: string;
+};
+
+type DocumentCheckpointRow = {
+  documentId: string;
+  version: number;
+  contentFormat: string;
+  contentSchemaVersion: number;
+  contentJson: string;
+  plainText: string;
+  label: string | null;
+  createdAt: string;
+};
+</code></pre>
+<p><code>documents</code> is not a checkpoint table. It stays the head current-state projection for a document. <code>document_checkpoints</code> stores historical replay bases.</p>
+<h2>MVP repository and projection seams</h2>
+<ul>
+<li><code>appendDomainEvents(events)</code></li>
+<li><code>appendDocumentSteps(documentId, baseVersion, steps, inverses)</code></li>
+<li><code>loadNearestCheckpoint(documentId, targetVersion)</code></li>
+<li><code>replayDocumentToVersion(documentId, targetVersion)</code></li>
+<li><code>rebuildProjectionsFromHistory()</code></li>
+</ul>
+<p>All of these run on the same inline write path for MVP. Async projection maintenance is out of scope for this experiment.</p>
+<h2>Pseudo-code sketch</h2>
+<pre><code class="language-ts">function commitMutation(input: MutationInput) {
+  db.transaction(() =&gt; {
+    const domainEvents = deriveDomainEvents(input);
+    const documentSteps = deriveDocumentSteps(input);
+
+    appendDomainEvents(domainEvents);
+    appendDocumentSteps(input.documentId, input.baseVersion, documentSteps.steps, documentSteps.inverses);
+    projectCurrentState(domainEvents, documentSteps);
+
+    if (shouldCheckpoint(input.saveIntent, documentSteps.nextVersion)) {
+      writeDocumentCheckpoint(input.documentId, documentSteps.nextVersion);
+    }
+  });
+}
+
+function replayDocumentToVersion(documentId: string, targetVersion: number): EditorState {
+  const checkpoint = loadNearestCheckpoint(documentId, targetVersion);
+  const steps = loadStepsAfterVersion(documentId, checkpoint.version, targetVersion);
+  return replaySteps(checkpoint, steps);
+}
+
+function resolveAnchorAtVersion(anchorEvents: AnchorEvent[], targetVersion: number): ResolvedAnchor {
+  const seed = latestAnchorEventAtOrBefore(anchorEvents, targetVersion);
+  const steps = loadStepsAfterVersion(seed.documentId, seed.documentVersionSeen, targetVersion);
+  const mapped = mapAnchorForward(seed.anchor, steps);
+
+  return mapped.isDeletedOrCollapsed
+    ? { status: &quot;invalid&quot;, anchor: seed.anchor }
+    : { status: &quot;resolved&quot;, anchor: mapped.anchor };
+}
+</code></pre>
+<h2>Spike plan</h2>
+<ul>
+<li>Build a standalone harness with ProseMirror and SQLite.</li>
+<li>Simulate a writing session with tens of thousands of small edits and a few large structural edits.</li>
+<li>Measure per-save latency, head-of-history document-open latency, and document-open latency at an arbitrary historical version.</li>
+<li>Destroy the projection tables and rebuild them from logs plus checkpoints; compare row-for-row against a live-maintained baseline.</li>
+<li>Exercise boundary and annotation mapping across the whole session and verify that time-travel positions land where the historical text says they should.</li>
+<li>Include deletion cases where mapped anchor ranges collapse or disappear and verify they become invalid rather than being silently healed to a misleading range.</li>
+</ul>
+<h2>Acceptance criteria</h2>
+<ul>
+<li>Typing-pace saves stay imperceptible in practice.</li>
+<li>Head-of-history open is not noticeably slower than loading a raw snapshot.</li>
+<li>Opening a historical version within normal session distance is acceptable.</li>
+<li>Rebuilt projections match live projections exactly.</li>
+<li>Boundary and annotation time travel land at positions that are obviously correct given the historical text.</li>
+<li>Deleted or collapsed anchor ranges are surfaced as invalid state consistently in both live projections and replay.</li>
+</ul>
+<h2>Notes for later pass</h2>
+<ul>
+<li>If checkpoints must land much more often than every explicit save plus roughly 200 steps to keep open fast, record that so ADR-006's cadence question can close.</li>
+<li>If projection rebuild drifts from live tables even once, treat it as a correctness bug and fix the log path before shipping.</li>
+<li>EXP-001 anchor healing and this experiment share the same mapping substrate; failures in either are signals for the other.</li>
+</ul>
+<h2>Current workbench implementation</h2>
+<ul>
+<li>The workbench now persists <code>documents</code>, <code>document_steps</code>, <code>document_checkpoints</code>, <code>events</code>, <code>anchor_probes</code>, <code>matching_rules</code>, and benchmark records in one local SQLite database.</li>
+<li>Document mutations append ProseMirror steps and update the head in the same synchronous path.</li>
+<li>Explicit checkpoint writes and periodic checkpointing at roughly every 200 steps are implemented.</li>
+<li>Replay-to-version and projection-rebuild parity checks are exposed directly in the UI.</li>
+<li>Historical anchor replay is implemented by loading the latest anchor event at or before the target version and mapping forward through the subsequent steps.</li>
+</ul>
+<h2>Still to learn</h2>
+<ul>
+<li>How the current synchronous path behaves under a much longer real writing session.</li>
+<li>Whether checkpoint cadence needs to move once the real manuscript and heavier edit sessions are exercised.</li>
+</ul>
+</div>
+</article><!-- /docs-experiments-exp-005-event-log-and-checkpoint-replay -->
+<article id="docs-experiments-exp-006-pretext-layout-viability" class="doc-source" data-source="docs/experiments/EXP-006-pretext-layout-viability.md">
+<header class="source-header">
+<p class="source-path">Former source: docs/experiments/EXP-006-pretext-layout-viability.md</p>
+<h2>EXP-006 Pretext Layout Viability</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>EXP-006: Pretext Layout Viability</h1>
+<h2>Status</h2>
+<p>In progress</p>
+<h2>Date</h2>
+<p>2026-04-17</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a></li>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="../../src/renderer/renderer-docs.html#src-renderer-editor-open-questions">src/renderer/editor/OPEN_QUESTIONS.md</a></li>
+</ul>
+<h2>Question</h2>
+<p>Does Pretext materially help Evernear solve long-document layout, visible-range mapping, or &quot;where am I in the whole document?&quot; problems before the repo commits to a final rendering design?</p>
+<h2>Why this is load-bearing</h2>
+<p>The app may need a better answer than repeated DOM measurement if long documents, virtualized reading surfaces, or document-view navigation become expensive or awkward.</p>
+<h2>Working hypothesis</h2>
+<p>Pretext may help with:</p>
+<ul>
+<li>deriving visible lines or line ranges</li>
+<li>estimating long-document height without full DOM layout</li>
+<li>mapping scroll state to line ranges for document view</li>
+<li>reducing dependence on browser reflow for long-document positioning</li>
+</ul>
+<p>Pretext is not the entity matcher and should not be treated as a semantic matching engine.</p>
+<h2>Layout sketch</h2>
+<pre><code class="language-ts">function prepareDocumentLayout(text: string, font: string) {
+  return pretext.prepareWithSegments(text, font, { whiteSpace: &quot;pre-wrap&quot; });
+}
+
+function deriveVisibleLines(prepared: PreparedTextWithSegments, viewport: Viewport, lineHeight: number) {
+  const visible: LayoutLineRange[] = [];
+  let y = 0;
+
+  pretext.walkLineRanges(prepared, viewport.width, (line) =&gt; {
+    const nextY = y + lineHeight;
+    if (nextY &gt;= viewport.top &amp;&amp; y &lt;= viewport.bottom) {
+      visible.push(line);
+    }
+    y = nextY;
+  });
+
+  return visible;
+}
+</code></pre>
+<h2>Spike plan</h2>
+<ul>
+<li>Run Pretext against a long story document with realistic paragraph shapes.</li>
+<li>Test whether it can cheaply answer:
+<ul>
+<li>total line count or height at a given width</li>
+<li>visible line ranges for a viewport</li>
+<li>coarse position mapping for document view and long-scroll navigation</li>
+</ul>
+</li>
+<li>Compare it against a simpler DOM-first approach for the same questions.</li>
+<li>Keep the scope exploratory:
+<ul>
+<li>document view</li>
+<li>virtualized reading surface</li>
+<li>long-document position awareness</li>
+</ul>
+</li>
+</ul>
+<h2>Acceptance criteria</h2>
+<ul>
+<li>It becomes clear whether Pretext removes enough DOM measurement pain to matter.</li>
+<li>It becomes clear whether Pretext can help without forcing a full custom writing-surface rewrite.</li>
+<li>The experiment ends with a crisp answer:
+<ul>
+<li>adopt for document view only</li>
+<li>keep as a future option</li>
+<li>reject for now</li>
+</ul>
+</li>
+</ul>
+<h2>Notes for later pass</h2>
+<ul>
+<li>A positive result does not automatically mean replacing the primary editor host.</li>
+<li>The key question is whether it improves layout and visible-range bookkeeping enough to change the long-document design.</li>
+</ul>
+<h2>Current workbench implementation</h2>
+<ul>
+<li>The workbench now includes a layout tab that compares the live editor surface against a Pretext <code>pre-wrap</code> measurement pass using the editor's computed font and width.</li>
+<li>The current probe records DOM height, DOM visible block count, Pretext height, Pretext visible line count, and both computation times.</li>
+<li>Each measurement ends with one explicit decision state:
+<ul>
+<li>adopt for document view only</li>
+<li>keep as a future option</li>
+<li>reject for now</li>
+</ul>
+</li>
+</ul>
+<h2>Still to learn</h2>
+<ul>
+<li>How close Pretext stays to the imported manuscript once the document gets longer and more varied.</li>
+<li>Whether the current probe is good enough to trust for document-view experiments or needs a richer line or block model first.</li>
+</ul>
+</div>
+</article><!-- /docs-experiments-exp-006-pretext-layout-viability -->
+<article id="docs-experiments-resolved-exp-003-lexical-prototype-walkthrough" class="doc-source" data-source="docs/experiments/resolved/EXP-003-lexical-prototype-walkthrough.md">
+<header class="source-header">
+<p class="source-path">Former source: docs/experiments/resolved/EXP-003-lexical-prototype-walkthrough.md</p>
+<h2>EXP-003 Lexical Prototype Walkthrough</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>EXP-003: Lexical Prototype Walkthrough</h1>
+<h2>Status</h2>
+<p>Resolved — Lexical not selected</p>
+<h2>Date</h2>
+<p>2026-04-17</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a></li>
+<li><a href="../../src/renderer/renderer-docs.html#src-renderer-editor-readme">src/renderer/editor/README.md</a></li>
+</ul>
+<h2>Goal</h2>
+<p>Pressure-test what it would actually feel like to build Evernear's anchor-heavy workflow on Lexical.</p>
+<h2>Likely implementation path</h2>
+<ol>
+<li>Create a React editor host with <code>LexicalComposer</code>, the prose nodes, and a minimal plugin set.</li>
+<li>Load the persisted document snapshot into Lexical with <code>parseEditorState</code>.</li>
+<li>Register update listeners and commands so editor changes can flow back to the renderer shell.</li>
+<li>Derive plain text from the current editor state for matching.</li>
+<li>Feed match results back into the editor as derived visual state for entity highlights.</li>
+<li>Add a separate anchor store for slice boundaries and annotations because they should not live as stored visual marks in the document itself.</li>
+<li>Repair anchors after edits by inspecting changed regions and rerunning custom resolution logic.</li>
+<li>Render annotation underlines and boundary affordances with custom plugin or node work.</li>
+<li>Bubble hover and click intents back out to modal and panel controllers.</li>
+</ol>
+<h2>Pseudo-code sketch</h2>
+<pre><code class="language-tsx">function LexicalDocumentEditor({persistedJson, anchors, matches}: Props) {
+  const initialConfig = {
+    namespace: &quot;Evernear&quot;,
+    editorState: persistedJson,
+    nodes: proseNodes,
+    theme,
+    onError(error: Error) {
+      throw error;
+    },
+  };
+
+  return (
+    &lt;LexicalComposer initialConfig={initialConfig}&gt;
+      &lt;EvernearPersistencePlugin /&gt;
+      &lt;EvernearDerivedHighlightsPlugin matches={matches} /&gt;
+      &lt;EvernearAnchorPlugin anchors={anchors} /&gt;
+      &lt;ContentEditable /&gt;
+    &lt;/LexicalComposer&gt;
+  );
+}
+
+function EvernearPersistencePlugin() {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() =&gt; {
+    return editor.registerUpdateListener(({editorState}) =&gt; {
+      const contentJson = editorState.toJSON();
+      const plainText = editorState.read(() =&gt; $getRoot().getTextContent());
+      persistSnapshot({contentFormat: &quot;lexical-json&quot;, contentJson, plainText});
+    });
+  }, [editor]);
+
+  return null;
+}
+</code></pre>
+<h2>What this implies next</h2>
+<ul>
+<li>Lexical's serializable editor state is a real advantage.</li>
+<li>The React integration is pleasant.</li>
+<li>The moment Evernear needs shared anchor healing, the implementation starts leaning on custom repair infrastructure that sits beside the editor rather than inside a first-class transaction-mapping model.</li>
+<li>Derived decorations remain possible, but the more boundary and annotation behavior piles up, the more bespoke plugin coordination is required.</li>
+</ul>
+<h2>Fit read</h2>
+<ul>
+<li>Strengths:
+<ul>
+<li>lightweight and fast</li>
+<li>strong React ergonomics</li>
+<li>serializable editor state</li>
+<li>commands, listeners, and extensions are good building blocks</li>
+</ul>
+</li>
+<li>Friction:
+<ul>
+<li>anchored-range repair feels more custom</li>
+<li>subtle persistent range visuals are less naturally modeled</li>
+<li>boundary editing wants infrastructure that is not the editor's obvious happy path</li>
+</ul>
+</li>
+</ul>
+<h2>Provisional verdict</h2>
+<p>Lexical is viable, but for Evernear it looks like more accidental platform work around anchors, range mapping, and decorations than the product really wants.</p>
+<h2>Result</h2>
+<p>Resolved against Lexical. The anchor-healing, decoration, and history needs that make Evernear Evernear all want a transaction-mapping model inside the editor rather than beside it. See <a href="#docs-experiments-resolved-exp-004-prosemirror-prototype-walkthrough">EXP-004</a> for the walkthrough on the chosen side.</p>
+<h2>Follow-up</h2>
+<ul>
+<li><a href="../adr/adr-index.html#docs-adr-adr-005-editor-foundation-locked-to-prosemirror">ADR-005</a> records ProseMirror as the locked-in editor foundation.</li>
+<li>This file stays as the memory of why Lexical was not chosen. It should not be deleted.</li>
+</ul>
+</div>
+</article><!-- /docs-experiments-resolved-exp-003-lexical-prototype-walkthrough -->
+<article id="docs-experiments-resolved-exp-004-prosemirror-prototype-walkthrough" class="doc-source" data-source="docs/experiments/resolved/EXP-004-prosemirror-prototype-walkthrough.md">
+<header class="source-header">
+<p class="source-path">Former source: docs/experiments/resolved/EXP-004-prosemirror-prototype-walkthrough.md</p>
+<h2>EXP-004 ProseMirror Prototype Walkthrough</h2>
+<p>Converted from the former Markdown source.</p>
+</header>
+<div class="md-content">
+<h1>EXP-004: ProseMirror Prototype Walkthrough</h1>
+<h2>Status</h2>
+<p>Resolved — ProseMirror selected</p>
+<h2>Date</h2>
+<p>2026-04-17</p>
+<h2>Parent reads</h2>
+<ul>
+<li><a href="../../FOR_HUMAN_CODE--DOC.html">FOR_HUMAN_CODE--DOC.md</a></li>
+<li><a href="../../FOR_HUMAN_AND_AI_ROADMAP--DOC.html">FOR_HUMAN_AND_AI_ROADMAP--DOC.md</a></li>
+<li><a href="../../src/renderer/renderer-docs.html#src-renderer-editor-readme">src/renderer/editor/README.md</a></li>
+</ul>
+<h2>Goal</h2>
+<p>Pressure-test what it would actually feel like to build Evernear's anchor-heavy workflow on ProseMirror.</p>
+<h2>Likely implementation path</h2>
+<ol>
+<li>Define a small prose-first schema.</li>
+<li>Create an <code>EditorState</code> with plugins for persistence, derived highlights, and shared anchors.</li>
+<li>Load the persisted document JSON into the state.</li>
+<li>Route every edit through <code>dispatchTransaction</code>.</li>
+<li>Persist full document snapshots plus plain-text projection from the updated state.</li>
+<li>Store slice boundaries and annotations as shared anchor payloads outside the document.</li>
+<li>Map those anchors forward with <code>tr.mapping</code> during every transaction.</li>
+<li>Render entity highlights, annotations, and boundary affordances as decorations.</li>
+<li>Use widget decorations or node views only where boundary handles or richer inline UI truly need them.</li>
+<li>Bubble hover and click intents from decorations or editor props back to modal and panel controllers.</li>
+</ol>
+<h2>Pseudo-code sketch</h2>
+<pre><code class="language-ts">const anchorPlugin = new Plugin({
+  state: {
+    init(_, state) {
+      return buildAnchorState(state.doc, initialAnchors);
+    },
+    apply(tr, anchorState, oldState, newState) {
+      return mapAnchorsForward(anchorState, tr.mapping, newState.doc);
+    },
+  },
+  props: {
+    decorations(state) {
+      return buildEvernearDecorations(state.doc, anchorPlugin.getState(state), currentMatches);
+    },
+  },
+});
+
+const view = new EditorView(host, {
+  state: EditorState.create({
+    schema,
+    doc: schema.nodeFromJSON(persistedJson),
+    plugins: [anchorPlugin, persistencePlugin, interactionPlugin],
+  }),
+  dispatchTransaction(tr) {
+    const nextState = view.state.apply(tr);
+    view.updateState(nextState);
+    persistSnapshot({
+      contentFormat: &quot;prosemirror-json&quot;,
+      contentJson: nextState.doc.toJSON(),
+      plainText: nextState.doc.textBetween(0, nextState.doc.content.size, &quot;\n\n&quot;),
+    });
+  },
+});
+</code></pre>
+<h2>What this implies next</h2>
+<ul>
+<li>ProseMirror is more explicit and more ceremonial at the start.</li>
+<li>That ceremony pays for itself quickly because Evernear already needs transactions, range mapping, plugin state, and decorations.</li>
+<li>Shared anchor healing has a native place to live.</li>
+<li>Quiet annotation underlines and derived highlights both fit the same decoration model.</li>
+<li>External app state and editor state can stay separated without fighting the library.</li>
+</ul>
+<h2>Fit read</h2>
+<ul>
+<li>Strengths:
+<ul>
+<li>explicit transactions</li>
+<li>range mapping already built into the model</li>
+<li>decorations line up with Evernear's visual needs</li>
+<li>plugin state keeps editor-local concerns composable</li>
+<li>node views exist if richer boundary UI is needed later</li>
+</ul>
+</li>
+<li>Friction:
+<ul>
+<li>more upfront schema and plugin design</li>
+<li>less turnkey React comfort than Lexical</li>
+</ul>
+</li>
+</ul>
+<h2>Provisional verdict</h2>
+<p>ProseMirror is the better fit for Evernear because the core product problems already look like ProseMirror problems: transactions, mapped ranges, decorations, and editor state that can stay honest next to external domain logic.</p>
+<h2>Result</h2>
+<p>Resolved in favor of ProseMirror. The walkthrough confirmed that transactions, <code>Mapping</code>, <code>Decoration</code>, and plugin state each match a load-bearing Evernear concern directly rather than being worked around. <code>Step</code> additionally gives the history layer in <a href="../adr/adr-index.html#docs-adr-adr-006-event-sourced-document-and-metadata-history">ADR-006</a> a clean primitive to build on.</p>
+<h2>Follow-up</h2>
+<ul>
+<li><a href="../adr/adr-index.html#docs-adr-adr-005-editor-foundation-locked-to-prosemirror">ADR-005</a> locks ProseMirror in as the editor foundation.</li>
+<li><a href="../adr/adr-index.html#docs-adr-adr-006-event-sourced-document-and-metadata-history">ADR-006</a> assumes <code>Step</code> as its document-content history primitive.</li>
+<li>Remaining open question at the seam: raw ProseMirror versus a TipTap-style wrapper. That is tracked inside ADR-005 rather than here.</li>
+</ul>
+</div>
+</article><!-- /docs-experiments-resolved-exp-004-prosemirror-prototype-walkthrough -->
+</main>
+<p class="footer">Generated from repo-authored Markdown during the HTML documentation migration. AGENT.md and CLAUDE.md remain Markdown bootstrap files by design.</p>
+</div>
+</body>
+</html>
