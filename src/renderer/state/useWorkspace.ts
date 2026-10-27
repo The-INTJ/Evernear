@@ -1,7 +1,7 @@
-// The workspace hook — owns persisted state, the mutation queue, and
-// document persistence debouncing. Every feature component reads
-// `workspace` and calls `runMutation` / `queueDocumentPersistence`. It
-// is the only thing in the renderer that talks to `window.evernear`.
+// The workspace hook — owns persisted state and the mutation queue, and
+// composes the document save queue (useDocumentPersistence). Every feature
+// component reads `workspace` and calls `runMutation` /
+// `queueDocumentPersistence`.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -14,6 +14,7 @@ import type { HarnessEditorSnapshot } from "../editor/HarnessEditor";
 import type { SerializedTransactionBundle } from "../editor/editorUtils";
 import { stringifyError } from "../utils/formatting";
 import type { RunLogEntry, RunLogTone } from "./sessionTypes";
+import { useDocumentPersistence } from "./useDocumentPersistence";
 
 export type WorkspaceHook = {
   status: WorkspaceStatus | null;
@@ -48,13 +49,11 @@ export type WorkspaceHook = {
 
 export function useWorkspace(): WorkspaceHook {
   const workspaceRef = useRef<WorkspaceState | null>(null);
-  const persistenceQueueRef = useRef<Promise<void>>(Promise.resolve());
   const documentVersionsRef = useRef(new Map<string, number>());
   const commitInFlightRef = useRef(false);
 
   const [status, setStatus] = useState<WorkspaceStatus | null>(null);
   const [workspace, setWorkspace] = useState<WorkspaceState | null>(null);
-  const [pendingWrites, setPendingWrites] = useState(0);
   const [isBusy, setIsBusy] = useState(false);
   const [runLog, setRunLog] = useState<RunLogEntry[]>([]);
 
@@ -80,26 +79,6 @@ export function useWorkspace(): WorkspaceHook {
     }
   }, [appendLog]);
 
-  const flushPersistence = useCallback(async () => {
-    await persistenceQueueRef.current.catch(() => undefined);
-  }, []);
-
-  const runMutation = useCallback(async (
-    task: () => Promise<WorkspaceState>,
-    successMessage?: string,
-  ) => {
-    setIsBusy(true);
-    try {
-      await flushPersistence();
-      const next = await task();
-      applyWorkspace(next, successMessage);
-    } catch (error) {
-      appendLog(stringifyError(error), "warn");
-    } finally {
-      setIsBusy(false);
-    }
-  }, [flushPersistence, applyWorkspace, appendLog]);
-
   const patchWorkspaceDocument = useCallback((result: ApplyDocumentTransactionResult) => {
     const current = workspaceRef.current;
     if (!current) return;
@@ -120,37 +99,31 @@ export function useWorkspace(): WorkspaceHook {
     });
   }, [applyWorkspace]);
 
-  const queueDocumentPersistence = useCallback((
-    documentId: string,
-    title: string,
-    snapshot: HarnessEditorSnapshot,
-    transaction: SerializedTransactionBundle,
-  ) => {
-    setPendingWrites((current) => current + 1);
+  const reportPersistenceFailure = useCallback((message: string) => {
+    appendLog(message, "warn");
+  }, [appendLog]);
 
-    persistenceQueueRef.current = persistenceQueueRef.current
-      .catch(() => undefined)
-      .then(async () => {
-        const baseVersion = documentVersionsRef.current.get(documentId) ?? 0;
-        const result = await window.evernear.applyDocumentTransaction({
-          documentId,
-          baseVersion,
-          title,
-          steps: transaction.steps,
-          inverseSteps: transaction.inverseSteps,
-          contentJson: snapshot.contentJson,
-          plainText: snapshot.plainText,
-        });
-        documentVersionsRef.current.set(documentId, result.snapshot.currentVersion);
-        patchWorkspaceDocument(result);
-      })
-      .catch((error) => {
-        appendLog(`Document persistence drifted: ${stringifyError(error)}`, "warn");
-      })
-      .finally(() => {
-        setPendingWrites((current) => Math.max(0, current - 1));
-      });
-  }, [patchWorkspaceDocument, appendLog]);
+  const { pendingWrites, flushPersistence, queueDocumentPersistence } = useDocumentPersistence({
+    documentVersionsRef,
+    onPersisted: patchWorkspaceDocument,
+    onFailed: reportPersistenceFailure,
+  });
+
+  const runMutation = useCallback(async (
+    task: () => Promise<WorkspaceState>,
+    successMessage?: string,
+  ) => {
+    setIsBusy(true);
+    try {
+      await flushPersistence();
+      const next = await task();
+      applyWorkspace(next, successMessage);
+    } catch (error) {
+      appendLog(stringifyError(error), "warn");
+    } finally {
+      setIsBusy(false);
+    }
+  }, [flushPersistence, applyWorkspace, appendLog]);
 
   // Kick off the initial load exactly once.
   useEffect(() => {
