@@ -68,6 +68,13 @@
   color: var(--color-accent-strong);
 }
 
+.editing {
+  border-color: var(--color-slice-bar);
+  background: var(--color-slice-bar);
+  color: #ffffff;
+  font-weight: 600;
+}
+
 .save {
   min-width: 84px;
   color: var(--color-text-faint);

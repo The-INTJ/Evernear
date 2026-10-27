@@ -62,7 +62,9 @@
   --color-annotation-underline-active: rgba(245, 185, 113, 0.72);
 
   --color-slice-fill: rgba(47, 143, 131, 0.14);
+  --color-slice-fill-focused: rgba(47, 143, 131, 0.28);
   --color-slice-bar: rgba(47, 143, 131, 0.9);
+  --color-slice-handle-hover: #1f6f66;
 
   --font-ui: "Inter", "Segoe UI Variable Display", "Aptos", sans-serif;
   --font-body: "Source Serif 4", "Palatino Linotype", "Book Antiqua", Georgia, serif;

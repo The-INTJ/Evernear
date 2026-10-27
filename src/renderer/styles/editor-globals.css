@@ -48,6 +48,32 @@
   background: var(--color-slice-fill);
 }
 
+/* Edit slices: the focused slice is darker, and every slice has a handle
+   at each end to drag. */
+.pm-slice--focused {
+  background: var(--color-slice-fill-focused);
+}
+
+.editor-prosemirror .pm-slice-block--focused::before {
+  width: 6px;
+}
+
+.pm-slice-handle {
+  display: inline-block;
+  width: 8px;
+  height: 1.25em;
+  margin: 0 2px;
+  border-radius: var(--radius-xs);
+  background: var(--color-slice-bar);
+  vertical-align: text-bottom;
+  cursor: ew-resize;
+  user-select: none;
+}
+
+.pm-slice-handle:hover {
+  background: var(--color-slice-handle-hover);
+}
+
 /* After .pm-slice: overlapping decorations share one span, and an entity
    highlight inside a slice should still read as one. */
 .pm-match-highlight {

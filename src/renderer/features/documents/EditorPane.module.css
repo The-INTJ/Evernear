@@ -11,6 +11,13 @@
   backdrop-filter: blur(var(--blur-panel));
 }
 
+.editing {
+  border-color: var(--color-slice-bar);
+  box-shadow:
+    0 0 0 3px var(--color-slice-bar),
+    var(--shadow-panel);
+}
+
 .canvas {
   flex: 1;
   min-height: 0;

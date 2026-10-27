@@ -5,6 +5,7 @@
 
 import type {
   DocumentSummary,
+  EntityRecord,
   ProjectRecord,
   SliceBoundaryRecord,
   SliceRecord,
@@ -65,4 +66,36 @@ export function entityMatchingText(
   const rule = rules.find((candidate) =>
     candidate.enabled && candidate.regex !== null && patternMatchesWholeText(candidate.regex, trimmed));
   return rule ? { id: rule.entityId, name: rule.entityName } : null;
+}
+
+export type SliceEditingSummary = {
+  focused: { sliceId: string; entityNames: string[] } | null;
+  // Slices in this document whose text can't be found, oldest first.
+  lost: Array<{ sliceId: string; text: string }>;
+};
+
+export function sliceEditingSummary(
+  workspace: WorkspaceState | null,
+  documentId: string | null,
+  focusedSliceId: string | null,
+  entitiesById: Map<string, EntityRecord>,
+): SliceEditingSummary {
+  if (!workspace || !documentId) return { focused: null, lost: [] };
+
+  const focused = focusedSliceId && workspace.slices.some((slice) => slice.id === focusedSliceId)
+    ? {
+        sliceId: focusedSliceId,
+        entityNames: workspace.entitySlices
+          .filter((link) => link.sliceId === focusedSliceId)
+          .map((link) => entitiesById.get(link.entityId)?.name ?? "Entity"),
+      }
+    : null;
+
+  const lost = workspace.sliceBoundaries
+    .filter((boundary) => boundary.documentId === documentId
+      && (boundary.resolution.status === "invalid" || boundary.resolution.status === "ambiguous"))
+    .sort((left, right) => left.createdAt.localeCompare(right.createdAt))
+    .map((boundary) => ({ sliceId: boundary.sliceId, text: boundary.anchor.exact }));
+
+  return { focused, lost };
 }

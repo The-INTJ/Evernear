@@ -78,7 +78,9 @@ function makeEditor(
     toggleBold: () => {},
     toggleItalic: () => {},
     replaceSelection: () => null,
-    revealRange: () => {},
+    scrollToPosition: () => {},
+    getScrollTop: () => 0,
+    setScrollTop: () => {},
   };
 }
 
