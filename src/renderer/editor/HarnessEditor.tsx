@@ -5,36 +5,36 @@ import {
   useRef,
 } from "react";
 
-import { baseKeymap, toggleMark } from "prosemirror-commands";
-import { history, redo, undo } from "prosemirror-history";
-import { keymap } from "prosemirror-keymap";
-import type { MarkType, Node as ProseMirrorNode, Slice } from "prosemirror-model";
+import { redo, undo } from "prosemirror-history";
 import { schema as basicSchema } from "prosemirror-schema-basic";
-import { AllSelection, EditorState, TextSelection, type Transaction } from "prosemirror-state";
+import { AllSelection, TextSelection } from "prosemirror-state";
 import { DecorationSet, EditorView } from "prosemirror-view";
 
-import {
-  type DocumentMetrics,
-  type JsonObject,
-  collectDocumentMetrics,
-} from "../../shared/domain/document";
+import type { JsonObject } from "../../shared/domain/document";
 import type {
   MatchingBenchmark,
   SliceBoundaryRecord,
 } from "../../shared/domain/workspace";
 import {
   type EditorMatchingRule,
-  type EditorSelectionAnchor,
   type EditorSelectionInfo,
   type SerializedTransactionBundle,
 } from "./editorUtils";
 import { decorationSource, recomputeDecorations } from "./editorDecorations";
+import {
+  type HarnessEditorSnapshot,
+  createEditorState,
+  getSelectionInfo,
+  runCommandFromHandle,
+  scrollPositionIntoUpperThird,
+  serializeEditorSnapshot,
+  serializeSlicePlainText,
+  serializeTransaction,
+  toggleMarkFromHandle,
+} from "./editorState";
+import { attachEntityHover, type EntityHoverPayload } from "./entityHover";
 
-export type HarnessEditorSnapshot = {
-  contentJson: JsonObject;
-  plainText: string;
-  metrics: DocumentMetrics;
-};
+export type { HarnessEditorSnapshot } from "./editorState";
 
 export type PendingSliceRange = {
   from: number;
@@ -56,12 +56,6 @@ export type HarnessEditorHandle = {
   revealRange(from: number, to: number): void;
 };
 
-type EditorCommand = (
-  state: EditorState,
-  dispatch?: (transaction: Transaction) => void,
-  view?: EditorView,
-) => boolean;
-
 type HarnessEditorProps = {
   initialDocumentJson: JsonObject;
   decorationsEnabled: boolean;
@@ -75,7 +69,7 @@ type HarnessEditorProps = {
   onDocumentSnapshotChange(nextSnapshot: HarnessEditorSnapshot, transaction: SerializedTransactionBundle | null): void;
   onSelectionChange(selection: EditorSelectionInfo): void;
   onMatchingBenchmark?(benchmark: MatchingBenchmark): void;
-  onEntityHover?(payload: { entityId: string; clientX: number; clientY: number } | null): void;
+  onEntityHover?(payload: EntityHoverPayload | null): void;
 };
 
 export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>(
@@ -87,11 +81,6 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
     const onSelectionChangeRef = useRef(props.onSelectionChange);
     const onMatchingBenchmarkRef = useRef(props.onMatchingBenchmark);
     const onEntityHoverRef = useRef(props.onEntityHover);
-    // Tracks the entity id reported by the last mousemove. We only fire
-    // onEntityHover(null) when the cursor *transitions* off an entity word —
-    // otherwise every mousemove over plain text would kick the App-level
-    // close timer, making the floating preview unreachable.
-    const lastEntityIdRef = useRef<string | null>(null);
     const currentDecorationsRef = useRef<DecorationSet>(DecorationSet.empty);
     const rulesRef = useRef(props.matchingRules ?? []);
     const boundariesRef = useRef(props.sliceBoundaries ?? []);
@@ -108,6 +97,22 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
     pendingRangeRef.current = props.pendingRange ?? null;
     decorationsEnabledRef.current = props.decorationsEnabled;
     boundariesEditableRef.current = props.boundariesEditable ?? false;
+
+    // Reads everything through refs, so the copy captured by the mount
+    // effect always sees current props.
+    const redecorate = (view: EditorView) => {
+      recomputeDecorations(
+        view,
+        surfaceRef.current,
+        currentDecorationsRef,
+        rulesRef.current,
+        boundariesRef.current,
+        pendingRangeRef.current,
+        decorationsEnabledRef.current,
+        boundariesEditableRef.current,
+        onMatchingBenchmarkRef.current,
+      );
+    };
 
     useEffect(() => {
       if (!containerRef.current || viewRef.current) {
@@ -130,17 +135,7 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
             serializeEditorSnapshot(nextState.doc),
             transaction.docChanged ? serializeTransaction(transaction) : null,
           );
-          recomputeDecorations(
-            currentView,
-            surfaceRef.current,
-            currentDecorationsRef,
-            rulesRef.current,
-            boundariesRef.current,
-            pendingRangeRef.current,
-            decorationsEnabledRef.current,
-            boundariesEditableRef.current,
-            onMatchingBenchmarkRef.current,
-          );
+          redecorate(currentView);
           onSelectionChangeRef.current(getSelectionInfo(nextState, currentView));
         },
         attributes: {
@@ -155,66 +150,24 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
         if (!currentView) {
           return;
         }
-        recomputeDecorations(
-          currentView,
-          surfaceRef.current,
-          currentDecorationsRef,
-          rulesRef.current,
-          boundariesRef.current,
-          pendingRangeRef.current,
-          decorationsEnabledRef.current,
-          boundariesEditableRef.current,
-          onMatchingBenchmarkRef.current,
-        );
+        redecorate(currentView);
         onSelectionChangeRef.current(getSelectionInfo(currentView.state, currentView));
       };
 
-      const handleMouseMove = (event: MouseEvent) => {
-        const target = event.target instanceof HTMLElement
-          ? event.target.closest("[data-entity-id]") as HTMLElement | null
-          : null;
-        const entityId = target?.dataset.entityId ?? null;
-        if (entityId) {
-          lastEntityIdRef.current = entityId;
-          onEntityHoverRef.current?.({ entityId, clientX: event.clientX, clientY: event.clientY });
-        } else if (lastEntityIdRef.current !== null) {
-          lastEntityIdRef.current = null;
-          onEntityHoverRef.current?.(null);
-        }
-      };
-
-      const handleMouseLeave = () => {
-        lastEntityIdRef.current = null;
-        onEntityHoverRef.current?.(null);
-      };
-
       viewRef.current = view;
-      recomputeDecorations(
-        view,
-        surfaceRef.current,
-        currentDecorationsRef,
-        rulesRef.current,
-        boundariesRef.current,
-        pendingRangeRef.current,
-        decorationsEnabledRef.current,
-        boundariesEditableRef.current,
-        onMatchingBenchmarkRef.current,
-      );
+      redecorate(view);
       onSelectionChangeRef.current(getSelectionInfo(view.state, view));
       onDocumentSnapshotChangeRef.current(serializeEditorSnapshot(view.state.doc), null);
 
       const currentSurface = surfaceRef.current;
-      const dom = view.dom;
       currentSurface?.addEventListener("scroll", handleScroll);
       window.addEventListener("resize", handleScroll);
-      dom.addEventListener("mousemove", handleMouseMove);
-      dom.addEventListener("mouseleave", handleMouseLeave);
+      const detachEntityHover = attachEntityHover(view.dom, (payload) => onEntityHoverRef.current?.(payload));
 
       return () => {
         currentSurface?.removeEventListener("scroll", handleScroll);
         window.removeEventListener("resize", handleScroll);
-        dom.removeEventListener("mousemove", handleMouseMove);
-        dom.removeEventListener("mouseleave", handleMouseLeave);
+        detachEntityHover();
         view.destroy();
         viewRef.current = null;
       };
@@ -226,17 +179,7 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
         return;
       }
 
-      recomputeDecorations(
-        view,
-        surfaceRef.current,
-        currentDecorationsRef,
-        rulesRef.current,
-        boundariesRef.current,
-        pendingRangeRef.current,
-        decorationsEnabledRef.current,
-        boundariesEditableRef.current,
-        onMatchingBenchmarkRef.current,
-      );
+      redecorate(view);
     }, [props.decorationsEnabled, props.matchingRules, props.sliceBoundaries, props.pendingRange, props.boundariesEditable]);
 
     useImperativeHandle(ref, () => ({
@@ -315,107 +258,3 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
     );
   },
 );
-
-function createEditorState(documentJson: JsonObject): EditorState {
-  return EditorState.create({
-    schema: basicSchema,
-    doc: basicSchema.nodeFromJSON(documentJson),
-    plugins: [
-      history(),
-      keymap({
-        "Mod-z": undo,
-        "Mod-y": redo,
-        "Mod-Shift-z": redo,
-        "Mod-b": toggleMark(basicSchema.marks.strong),
-        "Mod-i": toggleMark(basicSchema.marks.em),
-      }),
-      keymap(baseKeymap),
-    ],
-  });
-}
-
-function serializeEditorSnapshot(doc: ProseMirrorNode): HarnessEditorSnapshot {
-  const plainText = serializeNodePlainText(doc);
-  return {
-    contentJson: doc.toJSON() as JsonObject,
-    plainText,
-    metrics: collectDocumentMetrics(plainText),
-  };
-}
-
-function getSelectionInfo(state: EditorState, view?: EditorView): EditorSelectionInfo {
-  const { from, to, empty } = state.selection;
-  return {
-    from,
-    to,
-    empty,
-    text: empty ? "" : state.doc.textBetween(from, to, "\n\n"),
-    anchor: empty || !view ? null : getSelectionAnchor(view, from, to),
-  };
-}
-
-function getSelectionAnchor(view: EditorView, from: number, to: number): EditorSelectionAnchor | null {
-  try {
-    const start = view.coordsAtPos(from);
-    const end = view.coordsAtPos(to);
-    const left = Math.min(start.left, end.left);
-    const right = Math.max(start.right, end.right);
-    const top = Math.min(start.top, end.top);
-    const bottom = Math.max(start.bottom, end.bottom);
-    return {
-      left,
-      top,
-      width: Math.max(1, right - left),
-      height: Math.max(1, bottom - top),
-    };
-  } catch {
-    return null;
-  }
-}
-
-function scrollPositionIntoUpperThird(view: EditorView, surface: HTMLDivElement | null, position: number): void {
-  if (!surface) {
-    return;
-  }
-  try {
-    const coords = view.coordsAtPos(position);
-    const bounds = surface.getBoundingClientRect();
-    surface.scrollTop += coords.top - bounds.top - bounds.height / 3;
-  } catch {
-    // coordsAtPos throws for positions the view hasn't rendered; the
-    // selection is still set, so the caret is where the author expects.
-  }
-}
-
-function serializeTransaction(transaction: Transaction): SerializedTransactionBundle {
-  const docs = (transaction as Transaction & { docs: ProseMirrorNode[] }).docs;
-  return {
-    steps: transaction.steps.map((step) => step.toJSON() as JsonObject),
-    inverseSteps: transaction.steps.map((step, index) => step.invert(docs[index]!).toJSON() as JsonObject),
-  };
-}
-
-function serializeNodePlainText(doc: ProseMirrorNode): string {
-  return doc.textBetween(0, doc.content.size, "\n\n");
-}
-
-function serializeSlicePlainText(slice: Slice): string {
-  return slice.content.textBetween(0, slice.content.size, "\n\n");
-}
-
-function toggleMarkFromHandle(view: EditorView | null, markType: MarkType | undefined): void {
-  if (!view || !markType) {
-    return;
-  }
-
-  const command = toggleMark(markType);
-  runCommandFromHandle(view, command);
-}
-
-function runCommandFromHandle(view: EditorView | null, command: EditorCommand): void {
-  if (!view) {
-    return;
-  }
-  command(view.state, view.dispatch, view);
-  view.focus();
-}

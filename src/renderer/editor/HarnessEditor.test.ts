@@ -39,6 +39,11 @@ const harnessEditorSource = readFileSync(
   path.join(repoRoot, "src", "renderer", "editor", "HarnessEditor.tsx"),
   "utf8",
 );
+// The serializer itself lives with the other pure editor helpers.
+const editorStateSource = readFileSync(
+  path.join(repoRoot, "src", "renderer", "editor", "editorState.ts"),
+  "utf8",
+);
 
 describe("HarnessEditor clipboardTextSerializer wiring", () => {
   it("sets clipboardTextSerializer to the prose-only serializeSlicePlainText function", () => {
@@ -51,7 +56,7 @@ describe("HarnessEditor clipboardTextSerializer wiring", () => {
     // Lock the implementation shape: no DOMSerializer, no innerHTML, no
     // attribute reads. Anything richer would be a regression toward the
     // old "copy includes decorations" bug.
-    const fnMatch = harnessEditorSource.match(
+    const fnMatch = editorStateSource.match(
       /function serializeSlicePlainText\(slice: Slice\): string \{([\s\S]*?)\n\}/,
     );
     expect(fnMatch, "serializeSlicePlainText should exist as a top-level function").not.toBeNull();
