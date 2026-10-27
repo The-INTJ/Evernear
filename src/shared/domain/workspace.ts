@@ -72,6 +72,7 @@ export type WorkspaceLayoutState = {
   selectedEntityId: string | null;
   expandedFolderIds: string[];
   highlightsEnabled: boolean;
+  slicesVisible: boolean;
   panelOpen: boolean;
   panelMode: PanelMode;
   lastFocusedDocumentId: string | null;
@@ -272,9 +273,22 @@ export type OpenDocumentInput = {
 
 export type UpdateLayoutInput = Partial<WorkspaceLayoutState>;
 
+export type MatchingRuleInput = {
+  pattern: string;
+  enabled: boolean;
+};
+
 export type CreateEntityInput = {
   projectId: string;
   name: string;
+  rules?: MatchingRuleInput[];
+};
+
+// Replaces an entity's whole rule list. Rules whose pattern is unchanged
+// keep their ids; the rest are created or deleted.
+export type SetEntityRulesInput = {
+  entityId: string;
+  rules: MatchingRuleInput[];
 };
 
 export type UpdateEntityInput = {

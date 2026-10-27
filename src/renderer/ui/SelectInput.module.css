@@ -5,7 +5,7 @@
   padding: var(--space-5) var(--space-6);
   background: var(--color-bg-control);
   color: var(--color-text);
-  font-size: 0.95rem;
+  font-size: var(--font-size-ui);
 }
 
 .compact {

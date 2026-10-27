@@ -88,6 +88,7 @@ export type RawLayoutRow = {
   selected_entity_id: string | null;
   expanded_folder_ids_json: string;
   highlights_enabled: number;
+  slices_visible: number;
   panel_open: number;
   panel_mode: string;
   last_focused_document_id: string | null;

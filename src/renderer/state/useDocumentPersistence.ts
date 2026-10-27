@@ -18,6 +18,8 @@ type UseDocumentPersistenceInput = {
 
 export type DocumentPersistence = {
   pendingWrites: number;
+  // The last failed save's reason, cleared by the next save that lands.
+  saveError: string | null;
   flushPersistence: () => Promise<void>;
   queueDocumentPersistence: (
     documentId: string,
@@ -31,6 +33,7 @@ export function useDocumentPersistence(input: UseDocumentPersistenceInput): Docu
   const { documentVersionsRef, onPersisted, onFailed } = input;
   const persistenceQueueRef = useRef<Promise<void>>(Promise.resolve());
   const [pendingWrites, setPendingWrites] = useState(0);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const flushPersistence = useCallback(async () => {
     await persistenceQueueRef.current.catch(() => undefined);
@@ -58,15 +61,18 @@ export function useDocumentPersistence(input: UseDocumentPersistenceInput): Docu
           plainText: snapshot.plainText,
         });
         documentVersionsRef.current.set(documentId, result.snapshot.currentVersion);
+        setSaveError(null);
         onPersisted(result);
       })
       .catch((error) => {
-        onFailed(`Document persistence drifted: ${stringifyError(error)}`);
+        const message = `Not saved: ${stringifyError(error)}`;
+        setSaveError(message);
+        onFailed(message);
       })
       .finally(() => {
         setPendingWrites((current) => Math.max(0, current - 1));
       });
   }, [documentVersionsRef, onPersisted, onFailed]);
 
-  return { pendingWrites, flushPersistence, queueDocumentPersistence };
+  return { pendingWrites, saveError, flushPersistence, queueDocumentPersistence };
 }

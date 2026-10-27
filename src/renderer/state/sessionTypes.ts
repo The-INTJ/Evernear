@@ -1,51 +1,13 @@
-// Renderer-only session types. These model short-lived UI state flows
-// (Everlink creation, slice placement, hover preview, run log, matching-rule
-// form) that don't live in the persisted workspace and aren't part of the
-// IPC contract. Colocated here so hooks and feature components both
-// reference one source without tempting App.tsx to redeclare them.
+// Renderer-only session types: short-lived UI state that doesn't live in
+// the persisted workspace and isn't part of the IPC contract. Colocated
+// here so hooks and feature components share one source.
 
-import type { EditorSelectionInfo } from "../editor/editorUtils";
+export type NoticeTone = "info" | "success" | "warn";
 
-export type RunLogTone = "info" | "success" | "warn";
-
-export type RunLogEntry = {
+export type Notice = {
   id: number;
   message: string;
-  tone: RunLogTone;
-  createdAt: string;
-};
-
-export type RuleFormState = {
-  label: string;
-  pattern: string;
-  enabled: boolean;
-};
-
-export const initialRuleForm: RuleFormState = {
-  label: "",
-  pattern: "",
-  enabled: true,
-};
-
-export type EverlinkSession = {
-  sourceDocumentId: string;
-  sourceSelection: EditorSelectionInfo;
-  sourceText: string;
-  selectedEntityId: string | null;
-  entityNameDraft: string;
-  targetDocumentId: string | null;
-  newTargetDocumentTitle: string;
-  mode: "create" | "attach" | "edit";
-};
-
-export type PendingSlicePlacement = {
-  entityId: string;
-  sourceDocumentId: string;
-  sourceText: string;
-  targetDocumentId: string;
-  surface: "main" | "panel";
-  start: number | null;
-  end: number | null;
+  tone: NoticeTone;
 };
 
 export type HoverPreview = {

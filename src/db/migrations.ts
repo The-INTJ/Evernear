@@ -268,6 +268,24 @@ export const MIGRATIONS: Migration[] = [
       });
     },
   },
+  {
+    // Version 4 was used by "Change panel architecture" (c12a8d1), which
+    // was reverted (b6022c3) after local databases had already run it.
+    // Those databases sit at user_version 4, so this placeholder keeps the
+    // number taken and fresh databases step over it. Never reuse it.
+    version: 4,
+    description: "reserved: reverted workspace panes migration",
+    up() {},
+  },
+  {
+    version: 5,
+    description: "persist the slice highlighting toggle",
+    up(database) {
+      database.exec(`
+        ALTER TABLE workspace_layout_state ADD COLUMN slices_visible INTEGER NOT NULL DEFAULT 0;
+      `);
+    },
+  },
 ];
 
 export const CURRENT_SCHEMA_VERSION = MIGRATIONS[MIGRATIONS.length - 1]?.version ?? 0;

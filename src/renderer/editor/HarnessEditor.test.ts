@@ -130,10 +130,10 @@ describe("buildClipboardAudit", () => {
     expect(audit.leakedMarkers).toContain("pm-match-highlight");
   });
 
-  it("flags HTML containing pm-slice-boundary as a workbench leak", () => {
-    const html = '<p><span class="pm-slice-boundary">Hello</span> world</p>';
+  it("flags HTML containing slice decoration classes as a workbench leak", () => {
+    const html = '<p class="pm-slice-block"><span class="pm-slice">Hello</span> world</p>';
     const audit = buildClipboardAudit("Hello world", html, PERSISTED_PLAIN);
-    expect(audit.leakedMarkers).toContain("pm-slice-boundary");
+    expect(audit.leakedMarkers).toContain("pm-slice");
   });
 
   it("flags every marker present and lists no false positives", () => {

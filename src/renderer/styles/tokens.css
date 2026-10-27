@@ -61,9 +61,18 @@
   --color-annotation-underline: rgba(170, 188, 192, 0.74);
   --color-annotation-underline-active: rgba(245, 185, 113, 0.72);
 
+  --color-slice-fill: rgba(47, 143, 131, 0.14);
+  --color-slice-bar: rgba(47, 143, 131, 0.9);
+
   --font-ui: "Inter", "Segoe UI Variable Display", "Aptos", sans-serif;
   --font-body: "Source Serif 4", "Palatino Linotype", "Book Antiqua", Georgia, serif;
   --font-label: "JetBrains Mono", "Cascadia Mono", "IBM Plex Mono", ui-monospace, monospace;
+
+  /* The whole type scale. Interface text never goes below 16px. */
+  --font-size-ui: 1rem;
+  --font-size-ui-large: 1.125rem;
+  --font-size-heading: 1.25rem;
+  --font-size-editor: 1.375rem;
 
   --space-1: 2px;
   --space-2: 4px;
@@ -112,17 +121,14 @@
   --z-context-menu: 70;
 
   --window-controls-reserve: 158px;
-  --titlebar-height: 44px;
-  --nav-column-width: 248px;
-  --panel-column-width: 380px;
-  --nav-column-width-compact: 248px;
-  --panel-column-width-compact: 360px;
+  --titlebar-height: 52px;
+  --nav-column-width: 280px;
   --shell-gap: 14px;
   --app-max-content: 1180px;
   --panel-padding: 10px;
   --panel-inner-gap: 10px;
-  --control-compact-height: 30px;
-  --control-compact-font-size: 0.88rem;
+  --control-compact-height: 36px;
+  --control-compact-font-size: var(--font-size-ui);
 
   --bg: var(--color-bg-app);
   --bg-elevated: var(--color-bg-elevated);

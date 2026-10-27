@@ -10,7 +10,6 @@ import type {
   DeleteDocumentInput,
   DeleteEntityInput,
   DeleteFolderInput,
-  DeleteMatchingRuleInput,
   DeleteSliceInput,
   MoveDocumentInput,
   MoveFolderInput,
@@ -19,12 +18,12 @@ import type {
   OpenDocumentInput,
   OpenProjectInput,
   ReorderDocumentInput,
+  SetEntityRulesInput,
   UpdateDocumentMetaInput,
   UpdateEntityInput,
   UpdateFolderInput,
   UpdateLayoutInput,
   UpdateProjectInput,
-  UpsertMatchingRuleInput,
   WorkspaceDocumentReplayResult,
   WorkspaceState,
   WorkspaceStatus,
@@ -51,8 +50,7 @@ export const HARNESS_CHANNELS = {
   createEntity: "workspace:create-entity",
   updateEntity: "workspace:update-entity",
   deleteEntity: "workspace:delete-entity",
-  upsertMatchingRule: "workspace:upsert-matching-rule",
-  deleteMatchingRule: "workspace:delete-matching-rule",
+  setEntityRules: "workspace:set-entity-rules",
   createSlice: "workspace:create-slice",
   deleteSlice: "workspace:delete-slice",
   updateSliceBoundary: "workspace:update-slice-boundary",
@@ -84,8 +82,7 @@ export interface HarnessBridge {
   createEntity(input: CreateEntityInput): Promise<WorkspaceState>;
   updateEntity(input: UpdateEntityInput): Promise<WorkspaceState>;
   deleteEntity(input: DeleteEntityInput): Promise<WorkspaceState>;
-  upsertMatchingRule(input: UpsertMatchingRuleInput): Promise<WorkspaceState>;
-  deleteMatchingRule(input: DeleteMatchingRuleInput): Promise<WorkspaceState>;
+  setEntityRules(input: SetEntityRulesInput): Promise<WorkspaceState>;
   createSlice(input: CreateSliceInput): Promise<WorkspaceState>;
   deleteSlice(input: DeleteSliceInput): Promise<WorkspaceState>;
   updateSliceBoundary(input: UpdateSliceBoundaryInput): Promise<SliceBoundaryRecord>;

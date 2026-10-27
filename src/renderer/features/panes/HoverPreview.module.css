@@ -3,10 +3,10 @@
   z-index: var(--z-hover-preview);
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
-  width: min(360px, calc(100vw - 48px));
-  max-height: min(520px, calc(100vh - 48px));
-  padding: var(--space-7);
+  gap: var(--space-6);
+  width: min(440px, calc(100vw - 48px));
+  max-height: min(560px, calc(100vh - 48px));
+  padding: var(--space-8);
   border: 1px solid var(--color-border-panel);
   border-radius: var(--radius-panel);
   background: var(--color-bg-float-soft);
@@ -15,36 +15,76 @@
   pointer-events: auto;
 }
 
-.header {
-  display: flex;
-  flex-shrink: 0;
-  flex-direction: column;
-  gap: var(--space-2);
+.entityName {
+  align-self: flex-start;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--color-accent-strong);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--font-size-heading);
+  font-weight: 700;
+  text-align: left;
 }
 
-.header h3 {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  margin: 0;
-  font-size: 0.96rem;
-}
-
-.body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  min-height: 0;
-  padding-right: var(--space-2);
-  overflow-y: auto;
+.entityName:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
 }
 
 .empty {
   margin: 0;
   color: var(--color-text-muted);
+  font-size: var(--font-size-ui);
 }
 
-.excerpt {
+.slices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-height: 0;
+  margin: 0;
+  padding: 0 var(--space-2) 0 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.slice {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-7);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-subtle);
+  color: var(--color-text);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.slice:hover {
+  border-color: rgba(47, 143, 131, 0.6);
+  background: var(--color-bg-subtle-hover);
+}
+
+.document {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-ui);
+}
+
+.text {
+  font-size: var(--font-size-ui-large);
   line-height: 1.55;
   white-space: pre-wrap;
+}
+
+.lost .document {
+  color: var(--color-warn);
+}
+
+.lost .text {
+  opacity: 0.6;
 }

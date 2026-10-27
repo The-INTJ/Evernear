@@ -13,21 +13,23 @@ import type {
 import type { HarnessEditorSnapshot } from "../editor/HarnessEditor";
 import type { SerializedTransactionBundle } from "../editor/editorUtils";
 import { stringifyError } from "../utils/formatting";
-import type { RunLogEntry, RunLogTone } from "./sessionTypes";
+import type { Notice, NoticeTone } from "./sessionTypes";
 import { useDocumentPersistence } from "./useDocumentPersistence";
 
 export type WorkspaceHook = {
   status: WorkspaceStatus | null;
   workspace: WorkspaceState | null;
   pendingWrites: number;
+  saveError: string | null;
   isBusy: boolean;
-  runLog: RunLogEntry[];
-  // For UI components that want to surface a message — and for hook callers
-  // that want to complete a multi-step flow with their own log entry.
-  appendLog: (message: string, tone: RunLogTone) => void;
+  notice: Notice | null;
+  dismissNotice: () => void;
+  // Only warnings reach the screen; success and info messages are
+  // dropped so the window stays quiet.
+  notify: (message: string, tone: NoticeTone) => void;
   // Returns the latest WorkspaceState for callers that need to branch on
-  // the fresh read (e.g. the everlink flow needs the id of a newly-created
-  // document before committing a slice).
+  // the fresh read (e.g. Add slice needs the id of a newly-created entity
+  // before committing the slice).
   applyWorkspace: (next: WorkspaceState, message?: string) => void;
   runMutation: (
     task: () => Promise<WorkspaceState>,
@@ -51,18 +53,20 @@ export function useWorkspace(): WorkspaceHook {
   const workspaceRef = useRef<WorkspaceState | null>(null);
   const documentVersionsRef = useRef(new Map<string, number>());
   const commitInFlightRef = useRef(false);
+  const noticeIdRef = useRef(0);
 
   const [status, setStatus] = useState<WorkspaceStatus | null>(null);
   const [workspace, setWorkspace] = useState<WorkspaceState | null>(null);
   const [isBusy, setIsBusy] = useState(false);
-  const [runLog, setRunLog] = useState<RunLogEntry[]>([]);
+  const [notice, setNotice] = useState<Notice | null>(null);
 
-  const appendLog = useCallback((message: string, tone: RunLogTone) => {
-    setRunLog((current) => [
-      { id: current.length + 1, message, tone, createdAt: new Date().toLocaleTimeString() },
-      ...current,
-    ].slice(0, 30));
+  const notify = useCallback((message: string, tone: NoticeTone) => {
+    if (tone !== "warn") return;
+    noticeIdRef.current += 1;
+    setNotice({ id: noticeIdRef.current, message, tone });
   }, []);
+
+  const dismissNotice = useCallback(() => setNotice(null), []);
 
   const applyWorkspace = useCallback((next: WorkspaceState, message?: string) => {
     workspaceRef.current = next;
@@ -75,9 +79,9 @@ export function useWorkspace(): WorkspaceHook {
       documentVersionsRef.current.set(next.panelDocument.id, next.panelDocument.currentVersion);
     }
     if (message) {
-      appendLog(message, "success");
+      notify(message, "success");
     }
-  }, [appendLog]);
+  }, [notify]);
 
   const patchWorkspaceDocument = useCallback((result: ApplyDocumentTransactionResult) => {
     const current = workspaceRef.current;
@@ -100,10 +104,10 @@ export function useWorkspace(): WorkspaceHook {
   }, [applyWorkspace]);
 
   const reportPersistenceFailure = useCallback((message: string) => {
-    appendLog(message, "warn");
-  }, [appendLog]);
+    notify(message, "warn");
+  }, [notify]);
 
-  const { pendingWrites, flushPersistence, queueDocumentPersistence } = useDocumentPersistence({
+  const { pendingWrites, saveError, flushPersistence, queueDocumentPersistence } = useDocumentPersistence({
     documentVersionsRef,
     onPersisted: patchWorkspaceDocument,
     onFailed: reportPersistenceFailure,
@@ -119,11 +123,11 @@ export function useWorkspace(): WorkspaceHook {
       const next = await task();
       applyWorkspace(next, successMessage);
     } catch (error) {
-      appendLog(stringifyError(error), "warn");
+      notify(stringifyError(error), "warn");
     } finally {
       setIsBusy(false);
     }
-  }, [flushPersistence, applyWorkspace, appendLog]);
+  }, [flushPersistence, applyWorkspace, notify]);
 
   // Kick off the initial load exactly once.
   useEffect(() => {
@@ -137,10 +141,10 @@ export function useWorkspace(): WorkspaceHook {
         ]);
         if (cancelled) return;
         setStatus(nextStatus);
-        applyWorkspace(nextWorkspace, "Workspace opened against the persisted project store.");
+        applyWorkspace(nextWorkspace);
       } catch (error) {
         if (cancelled) return;
-        appendLog(`Failed to initialize Evernear: ${stringifyError(error)}`, "warn");
+        notify(`Failed to initialize Evernear: ${stringifyError(error)}`, "warn");
       } finally {
         if (!cancelled) setIsBusy(false);
       }
@@ -149,15 +153,17 @@ export function useWorkspace(): WorkspaceHook {
     return () => {
       cancelled = true;
     };
-  }, [appendLog, applyWorkspace]);
+  }, [notify, applyWorkspace]);
 
   return {
     status,
     workspace,
     pendingWrites,
+    saveError,
     isBusy,
-    runLog,
-    appendLog,
+    notice,
+    dismissNotice,
+    notify,
     applyWorkspace,
     runMutation,
     flushPersistence,

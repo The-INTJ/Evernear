@@ -1,0 +1,16 @@
+.notice {
+  position: fixed;
+  bottom: var(--space-12);
+  left: 50%;
+  z-index: var(--z-context-menu);
+  max-width: min(720px, calc(100vw - 48px));
+  padding: var(--space-5) var(--space-9);
+  border: 1px solid rgba(245, 150, 123, 0.4);
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-float);
+  box-shadow: var(--shadow-floating);
+  color: var(--color-danger-text);
+  cursor: pointer;
+  font-size: var(--font-size-ui);
+  transform: translateX(-50%);
+}

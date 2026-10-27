@@ -1,8 +1,9 @@
-// Dev-only in-memory mock of `window.evernear`. Only installed by
-// main.tsx when the preload bridge is absent — i.e. when the renderer
-// is being previewed via `npm run dev:renderer` in a plain browser,
-// outside the Electron shell. Seeds a small workspace so UI flows like
-// the slice hover preview have something real to render.
+// Dev-only in-memory stand-in for `window.evernear`. Only installed by
+// main.tsx when the preload bridge is absent — i.e. when the renderer is
+// previewed via `npm run dev:renderer` in a plain browser, outside the
+// Electron shell. It simulates enough of the repository (documents,
+// entities, rules, slices, anchor remapping) to exercise the real UI
+// flows; nothing persists past a reload.
 //
 // This is *not* wired into the Electron build. When contextBridge has
 // exposed `window.evernear`, main.tsx leaves it alone.
@@ -10,248 +11,224 @@
 import { schema as basicSchema } from "prosemirror-schema-basic";
 
 import type { HarnessBridge } from "../../shared/contracts/harnessApi";
-import type { JsonObject } from "../../shared/domain/document";
 import type {
   ApplyDocumentTransactionInput,
   ApplyDocumentTransactionResult,
+  MatchingRuleInput,
+  MatchingRuleRecord,
   SliceBoundaryRecord,
   WorkspaceState,
   WorkspaceStatus,
 } from "../../shared/domain/workspace";
-import { buildAnchorFromRange } from "../../shared/anchoring";
+import { createMappingFromSteps, mapBoundaryForward } from "../../shared/anchoring";
+import { buildDevSeed, buildDevSnapshot, nowIso } from "./devBrowserSeed";
 
-const PROJECT_ID = "dev-project";
-const FOLDER_ID = "dev-folder";
-const DOCUMENT_ID = "dev-doc";
-const ENTITY_ID = "dev-entity-kaevlin";
-const RULE_ID = "dev-rule-kaevlin";
-const SLICE_ID = "dev-slice-kaevlin";
-const BOUNDARY_ID = "dev-boundary-kaevlin";
-
-const PARAGRAPH_1 =
-  "Kaevlin walked toward the harbor as the lights came on one by one along the pier.";
-const PARAGRAPH_2 =
-  "She had been coming here since she was small, and tonight the smell of cold salt and kerosene reminded her that some things refused to change. The tide had already pulled the last fishing skiffs out of sight, and only the harbormaster's lamp still swung from its iron hook above the weighbridge.";
-const PARAGRAPH_3 =
-  "Kaevlin crouched beside a coil of rope, pressed two fingers to the planks, and waited. Something about the rhythm under the boards felt off — a half-beat slower than the water, and coming from the wrong direction.";
-
-const now = () => new Date().toISOString();
-
-function buildSeedWorkspace(): { workspace: WorkspaceState; status: WorkspaceStatus } {
-  const contentJson: JsonObject = {
-    type: "doc",
-    content: [
-      { type: "paragraph", content: [{ type: "text", text: PARAGRAPH_1 }] },
-      { type: "paragraph", content: [{ type: "text", text: PARAGRAPH_2 }] },
-      { type: "paragraph", content: [{ type: "text", text: PARAGRAPH_3 }] },
-    ],
-  };
-  const plainText = `${PARAGRAPH_1}\n\n${PARAGRAPH_2}\n\n${PARAGRAPH_3}`;
-
-  const doc = basicSchema.nodeFromJSON(contentJson);
-  const anchor = buildAnchorFromRange(doc, 1, doc.content.size - 1, DOCUMENT_ID, 1);
-
-  const timestamp = now();
-  const boundary: SliceBoundaryRecord = {
-    id: BOUNDARY_ID,
-    sliceId: SLICE_ID,
-    documentId: DOCUMENT_ID,
-    anchor,
-    resolution: {
-      status: "resolved",
-      reason: "seeded by dev browser bridge",
-      anchor,
-    },
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  };
-
-  const workspace: WorkspaceState = {
-    projects: [{ id: PROJECT_ID, name: "Dev Preview Project", createdAt: timestamp, updatedAt: timestamp }],
-    folders: [{
-      id: FOLDER_ID,
-      projectId: PROJECT_ID,
-      parentFolderId: null,
-      title: "Story",
-      ordering: 0,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    }],
-    documents: [{
-      id: DOCUMENT_ID,
-      projectId: PROJECT_ID,
-      folderId: FOLDER_ID,
-      title: "The Harbor",
-      ordering: 0,
-      wordCount: plainText.trim().split(/\s+/).length,
-      characterCount: plainText.length,
-      paragraphCount: 3,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    }],
-    activeDocument: {
-      id: DOCUMENT_ID,
-      title: "The Harbor",
-      contentFormat: "prosemirror-basic",
-      contentSchemaVersion: 1,
-      contentJson,
-      plainText,
-      currentVersion: 1,
-      updatedAt: timestamp,
-    },
-    panelDocument: null,
-    entities: [{ id: ENTITY_ID, projectId: PROJECT_ID, name: "Kaevlin", createdAt: timestamp, updatedAt: timestamp }],
-    matchingRules: [{
-      id: RULE_ID,
-      entityId: ENTITY_ID,
-      label: "Kaevlin",
-      pattern: "\\bKaevlin\\b",
-      enabled: true,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    }],
-    slices: [{
-      id: SLICE_ID,
-      projectId: PROJECT_ID,
-      documentId: DOCUMENT_ID,
-      boundaryId: BOUNDARY_ID,
-      title: "Arrival at the harbor",
-      excerpt: anchor.exact.slice(0, 180),
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    }],
-    sliceBoundaries: [boundary],
-    entitySlices: [{ entityId: ENTITY_ID, sliceId: SLICE_ID, ordering: 0 }],
-    layout: {
-      activeProjectId: PROJECT_ID,
-      activeDocumentId: DOCUMENT_ID,
-      panelDocumentId: null,
-      selectedEntityId: ENTITY_ID,
-      expandedFolderIds: [FOLDER_ID],
-      highlightsEnabled: true,
-      panelOpen: false,
-      panelMode: "entities",
-      lastFocusedDocumentId: DOCUMENT_ID,
-      recentTargetDocumentIds: [],
-    },
-  };
-
-  const status: WorkspaceStatus = {
-    dbPath: "(browser-mode — no DB)",
-    contentFormat: "prosemirror-basic",
-    contentSchemaVersion: 1,
-    synchronousMode: "NORMAL",
-    storageEngine: "in-memory (browser)",
-  };
-
-  return { workspace, status };
-}
+const STATUS: WorkspaceStatus = {
+  dbPath: "(browser-mode — no DB)",
+  contentFormat: "prosemirror-basic",
+  contentSchemaVersion: 1,
+  synchronousMode: "NORMAL",
+  storageEngine: "in-memory (browser)",
+};
 
 export function installDevBrowserBridge(): void {
   if (typeof window === "undefined") return;
   const existing = (window as unknown as { evernear?: HarnessBridge }).evernear;
   if (existing) return;
 
-  const state = buildSeedWorkspace();
-  let workspace = state.workspace;
-  const status = state.status;
+  const seed = buildDevSeed();
+  let workspace = seed.workspace;
+  const snapshots = seed.snapshots;
+  let nextId = 1;
+  const newId = (prefix: string) => `${prefix}-${nextId++}`;
 
-  // All mutation methods echo back the current workspace so the hook
-  // layer doesn't see "undefined" and crash. They don't attempt to
-  // truly simulate persistence — this is a view-only preview.
-  const snapshot = (): WorkspaceState => workspace;
-
-  const applyLayout = (patch: Parameters<HarnessBridge["updateLayout"]>[0]): WorkspaceState => {
-    workspace = { ...workspace, layout: { ...workspace.layout, ...patch } };
+  const commit = (next: WorkspaceState): WorkspaceState => {
+    const activeId = next.layout.activeDocumentId;
+    workspace = { ...next, activeDocument: activeId ? snapshots.get(activeId) ?? null : null };
     return workspace;
   };
 
-  const applyDocumentTransaction = (
-    input: ApplyDocumentTransactionInput,
-  ): ApplyDocumentTransactionResult => {
-    const active = workspace.activeDocument;
-    if (!active || active.id !== input.documentId) {
-      return {
-        snapshot: active ?? workspace.activeDocument!,
-        summary: workspace.documents[0],
-        sliceBoundaries: workspace.sliceBoundaries.filter((b) => b.documentId === input.documentId),
-        historySummary: { currentVersion: 1, stepCount: 0, checkpointCount: 0, eventCount: 0 },
-      };
+  const rulesFrom = (entityId: string, rules: MatchingRuleInput[], existing: MatchingRuleRecord[]) => {
+    const timestamp = nowIso();
+    const seen = new Set<string>();
+    return rules.flatMap((rule) => {
+      if (seen.has(rule.pattern)) return [];
+      seen.add(rule.pattern);
+      const kept = existing.find((candidate) => candidate.pattern === rule.pattern);
+      return [{
+        id: kept?.id ?? newId("dev-rule"),
+        entityId,
+        label: rule.pattern,
+        pattern: rule.pattern,
+        enabled: rule.enabled,
+        createdAt: kept?.createdAt ?? timestamp,
+        updatedAt: timestamp,
+      }];
+    });
+  };
+
+  const removeSlices = (sliceIds: Set<string>): Partial<WorkspaceState> => ({
+    slices: workspace.slices.filter((slice) => !sliceIds.has(slice.id)),
+    sliceBoundaries: workspace.sliceBoundaries.filter((boundary) => !sliceIds.has(boundary.sliceId)),
+    entitySlices: workspace.entitySlices.filter((link) => !sliceIds.has(link.sliceId)),
+  });
+
+  const applyDocumentTransaction = (input: ApplyDocumentTransactionInput): ApplyDocumentTransactionResult => {
+    const current = snapshots.get(input.documentId);
+    if (!current) throw new Error(`Unknown document: ${input.documentId}`);
+    if (current.currentVersion !== input.baseVersion) {
+      throw new Error(`Version mismatch. Expected ${current.currentVersion}, received ${input.baseVersion}.`);
     }
-    const nextSnapshot = {
-      ...active,
-      title: input.title || active.title,
-      contentJson: input.contentJson,
-      plainText: input.plainText,
-      currentVersion: active.currentVersion + 1,
-      updatedAt: now(),
-    };
-    workspace = { ...workspace, activeDocument: nextSnapshot };
+
+    const next = buildDevSnapshot(current.id, input.title || current.title, input.contentJson, current.currentVersion + input.steps.length);
+    snapshots.set(next.id, next);
+
+    const nextDoc = basicSchema.nodeFromJSON(next.contentJson);
+    const mapping = createMappingFromSteps(input.steps);
+    const sliceBoundaries = workspace.sliceBoundaries.map((boundary): SliceBoundaryRecord => {
+      if (boundary.documentId !== next.id) return boundary;
+      const resolution = mapBoundaryForward(boundary.anchor, boundary.resolution.status, mapping, nextDoc, next.currentVersion);
+      return { ...boundary, anchor: resolution.anchor, resolution, updatedAt: nowIso() };
+    });
     const summary = {
-      ...workspace.documents[0],
-      title: nextSnapshot.title,
-      wordCount: input.plainText.trim().split(/\s+/).filter(Boolean).length,
-      characterCount: input.plainText.length,
-      paragraphCount: input.plainText.split(/\n{2,}/).filter(Boolean).length,
-      updatedAt: nextSnapshot.updatedAt,
+      ...workspace.documents.find((document) => document.id === next.id)!,
+      title: next.title,
+      wordCount: next.plainText.trim().split(/\s+/).filter(Boolean).length,
+      characterCount: next.plainText.length,
+      paragraphCount: next.plainText.split(/\n{2,}/).filter(Boolean).length,
+      updatedAt: next.updatedAt,
     };
-    workspace = { ...workspace, documents: [summary] };
+    commit({
+      ...workspace,
+      documents: workspace.documents.map((document) => (document.id === next.id ? summary : document)),
+      sliceBoundaries,
+    });
     return {
-      snapshot: nextSnapshot,
+      snapshot: next,
       summary,
-      sliceBoundaries: workspace.sliceBoundaries.filter((b) => b.documentId === input.documentId),
-      historySummary: {
-        currentVersion: nextSnapshot.currentVersion,
-        stepCount: input.steps.length,
-        checkpointCount: 0,
-        eventCount: input.steps.length,
-      },
+      sliceBoundaries: sliceBoundaries.filter((boundary) => boundary.documentId === next.id),
+      historySummary: { currentVersion: next.currentVersion, stepCount: input.steps.length, checkpointCount: 0, eventCount: 0 },
     };
   };
 
+  const echo = async () => workspace;
+
   const bridge: HarnessBridge = {
-    async getStatus() { return status; },
-    async loadWorkspace() { return snapshot(); },
-    async createProject() { return snapshot(); },
-    async updateProject() { return snapshot(); },
-    async openProject() { return snapshot(); },
-    async createFolder() { return snapshot(); },
-    async updateFolder() { return snapshot(); },
-    async moveFolder() { return snapshot(); },
-    async deleteFolder() { return snapshot(); },
-    async createDocument() { return snapshot(); },
-    async updateDocumentMeta() { return snapshot(); },
-    async deleteDocument() { return snapshot(); },
-    async reorderDocument() { return snapshot(); },
-    async moveDocument() { return snapshot(); },
-    async openDocument() { return snapshot(); },
-    async updateLayout(input) { return applyLayout(input); },
-    async applyDocumentTransaction(input) { return applyDocumentTransaction(input); },
-    async createEntity() { return snapshot(); },
-    async updateEntity() { return snapshot(); },
-    async deleteEntity() { return snapshot(); },
-    async upsertMatchingRule() { return snapshot(); },
-    async deleteMatchingRule() { return snapshot(); },
-    async createSlice() { return snapshot(); },
-    async deleteSlice() { return snapshot(); },
+    async getStatus() { return STATUS; },
+    async loadWorkspace() { return workspace; },
+    createProject: echo,
+    updateProject: echo,
+    openProject: echo,
+    createFolder: echo,
+    updateFolder: echo,
+    moveFolder: echo,
+    deleteFolder: echo,
+    createDocument: echo,
+    updateDocumentMeta: echo,
+    deleteDocument: echo,
+    reorderDocument: echo,
+    moveDocument: echo,
+    async openDocument(input) {
+      if (input.surface !== "main" || !snapshots.has(input.documentId)) return workspace;
+      return commit({
+        ...workspace,
+        layout: { ...workspace.layout, activeDocumentId: input.documentId, lastFocusedDocumentId: input.documentId },
+      });
+    },
+    async updateLayout(input) {
+      return commit({ ...workspace, layout: { ...workspace.layout, ...input } });
+    },
+    async applyDocumentTransaction(input) {
+      return applyDocumentTransaction(input);
+    },
+    async createEntity(input) {
+      const timestamp = nowIso();
+      const id = newId("dev-entity");
+      return commit({
+        ...workspace,
+        entities: [...workspace.entities, { id, projectId: input.projectId, name: input.name.trim(), createdAt: timestamp, updatedAt: timestamp }],
+        matchingRules: [...workspace.matchingRules, ...rulesFrom(id, input.rules ?? [], [])],
+        layout: { ...workspace.layout, selectedEntityId: id },
+      });
+    },
+    async updateEntity(input) {
+      return commit({
+        ...workspace,
+        entities: workspace.entities.map((entity) => (entity.id === input.entityId ? { ...entity, name: input.name.trim() } : entity)),
+      });
+    },
+    async deleteEntity(input) {
+      const orphaned = new Set(workspace.entitySlices.filter((link) => link.entityId === input.entityId).map((link) => link.sliceId));
+      return commit({
+        ...workspace,
+        ...removeSlices(orphaned),
+        entities: workspace.entities.filter((entity) => entity.id !== input.entityId),
+        matchingRules: workspace.matchingRules.filter((rule) => rule.entityId !== input.entityId),
+      });
+    },
+    async setEntityRules(input) {
+      const existing = workspace.matchingRules.filter((rule) => rule.entityId === input.entityId);
+      return commit({
+        ...workspace,
+        matchingRules: [
+          ...workspace.matchingRules.filter((rule) => rule.entityId !== input.entityId),
+          ...rulesFrom(input.entityId, input.rules, existing),
+        ],
+      });
+    },
+    async createSlice(input) {
+      const timestamp = nowIso();
+      const sliceId = newId("dev-slice");
+      const boundary: SliceBoundaryRecord = {
+        id: `${sliceId}-boundary`,
+        sliceId,
+        documentId: input.documentId,
+        anchor: input.anchor,
+        resolution: { status: "resolved", reason: "captured from committed slice placement", anchor: input.anchor },
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      };
+      return commit({
+        ...workspace,
+        slices: [...workspace.slices, {
+          id: sliceId,
+          projectId: input.projectId,
+          documentId: input.documentId,
+          boundaryId: boundary.id,
+          title: input.title,
+          excerpt: input.anchor.exact.slice(0, 180),
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        }],
+        sliceBoundaries: [...workspace.sliceBoundaries, boundary],
+        entitySlices: [...workspace.entitySlices, { entityId: input.entityId, sliceId, ordering: workspace.entitySlices.length }],
+      });
+    },
+    async deleteSlice(input) {
+      return commit({ ...workspace, ...removeSlices(new Set([input.sliceId])) });
+    },
     async updateSliceBoundary(input) {
-      const existing = workspace.sliceBoundaries.find((b) => b.id === input.boundaryId);
-      if (!existing) {
+      const existingBoundary = workspace.sliceBoundaries.find((boundary) => boundary.id === input.boundaryId);
+      if (!existingBoundary) {
         throw new Error(`Unknown slice boundary: ${input.boundaryId}`);
       }
-      return {
-        ...existing,
+      const updated: SliceBoundaryRecord = {
+        ...existingBoundary,
         anchor: input.anchor,
         resolution: { status: "resolved", reason: "manually repositioned by author", anchor: input.anchor },
-        updatedAt: new Date().toISOString(),
+        updatedAt: nowIso(),
       };
+      commit({
+        ...workspace,
+        sliceBoundaries: workspace.sliceBoundaries.map((boundary) => (boundary.id === updated.id ? updated : boundary)),
+      });
+      return updated;
     },
     async writeCheckpoint() { /* noop */ },
     async replayDocumentToVersion(documentId) {
-      const active = workspace.activeDocument;
       return {
-        snapshot: active && active.id === documentId ? active : workspace.activeDocument!,
-        sliceBoundaries: workspace.sliceBoundaries.filter((b) => b.documentId === documentId),
+        snapshot: snapshots.get(documentId) ?? workspace.activeDocument!,
+        sliceBoundaries: workspace.sliceBoundaries.filter((boundary) => boundary.documentId === documentId),
       };
     },
     async readClipboardText() { return ""; },

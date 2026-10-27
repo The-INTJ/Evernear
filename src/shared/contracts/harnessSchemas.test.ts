@@ -4,26 +4,35 @@
 
 import { describe, expect, it } from "vitest";
 
-import { UpsertMatchingRuleInputSchema, parseInput } from "./harnessSchemas";
+import { CreateEntityInputSchema, SetEntityRulesInputSchema, parseInput } from "./harnessSchemas";
 
-const rule = {
-  entityId: "entity-1",
-  label: "The Spire",
-  pattern: "\\bThe\\s+Spire\\b",
-  enabled: true,
-};
+const rules = [{ pattern: "\\bThe\\s+Spire\\b", enabled: true }];
 
-describe("UpsertMatchingRuleInputSchema", () => {
-  it("accepts a valid regex", () => {
-    expect(UpsertMatchingRuleInputSchema.safeParse(rule).success).toBe(true);
+describe("SetEntityRulesInputSchema", () => {
+  it("accepts valid regexes", () => {
+    expect(SetEntityRulesInputSchema.safeParse({ entityId: "entity-1", rules }).success).toBe(true);
   });
 
   it("rejects a pattern that doesn't compile, naming the problem", () => {
-    expect(() => parseInput(UpsertMatchingRuleInputSchema, { ...rule, pattern: "(" }, "upsert"))
-      .toThrow(/pattern: Not a valid regex: .*unterminated group/i);
+    const input = { entityId: "entity-1", rules: [...rules, { pattern: "(", enabled: true }] };
+    expect(() => parseInput(SetEntityRulesInputSchema, input, "setEntityRules"))
+      .toThrow(/rules\.1\.pattern: Not a valid regex: .*unterminated group/i);
   });
 
   it("rejects an empty pattern", () => {
-    expect(UpsertMatchingRuleInputSchema.safeParse({ ...rule, pattern: "" }).success).toBe(false);
+    const input = { entityId: "entity-1", rules: [{ pattern: "", enabled: true }] };
+    expect(SetEntityRulesInputSchema.safeParse(input).success).toBe(false);
+  });
+});
+
+describe("CreateEntityInputSchema", () => {
+  it("accepts an entity with or without starting rules", () => {
+    expect(CreateEntityInputSchema.safeParse({ projectId: "p", name: "The Spire" }).success).toBe(true);
+    expect(CreateEntityInputSchema.safeParse({ projectId: "p", name: "The Spire", rules }).success).toBe(true);
+  });
+
+  it("validates starting rules like any other rule", () => {
+    const input = { projectId: "p", name: "The Spire", rules: [{ pattern: "[", enabled: true }] };
+    expect(CreateEntityInputSchema.safeParse(input).success).toBe(false);
   });
 });

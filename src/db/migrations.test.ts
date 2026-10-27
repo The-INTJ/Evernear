@@ -143,4 +143,26 @@ describe("runMigrations", () => {
       database.close();
     }
   });
+
+  it("adds slices_visible to a database left at version 4 by the reverted panes migration", () => {
+    const database = new BetterSqlite3(dbPath);
+    try {
+      const throughV3 = database.transaction(() => {
+        for (const migration of MIGRATIONS.filter((m) => m.version <= 3)) {
+          migration.up(database);
+        }
+        database.exec("CREATE TABLE workspace_panes (id TEXT PRIMARY KEY)");
+        database.pragma("user_version = 4");
+      });
+      throughV3();
+
+      runMigrations(database);
+
+      const columns = database.prepare("PRAGMA table_info(workspace_layout_state)").all() as Array<{ name: string }>;
+      expect(columns.map((column) => column.name)).toContain("slices_visible");
+      expect(database.pragma("user_version", { simple: true })).toBe(CURRENT_SCHEMA_VERSION);
+    } finally {
+      database.close();
+    }
+  });
 });

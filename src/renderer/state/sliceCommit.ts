@@ -1,7 +1,6 @@
-// Shared re-anchoring helpers used by both Everlink's placement commit
-// (usePendingPlacement) and Everslice's direct commit (useEverslicePlacement).
+// Re-anchoring commit for Add slice (useEverslicePlacement).
 //
-// The invariant both callers preserve: the editor snapshot's contentJson
+// The invariant it preserves: the editor snapshot's contentJson
 // and the from/to positions must come from the same source of truth. The
 // persisted document's currentVersion is what the resolver will start from
 // when later mapping the anchor through subsequent edits. Reading contentJson
@@ -17,7 +16,7 @@ import type { WorkspaceState } from "../../shared/domain/workspace";
 import type { HarnessEditorHandle } from "../editor/HarnessEditor";
 import { buildTextAnchorFromSelection } from "../editor/editorUtils";
 import { stringifyError, truncate } from "../utils/formatting";
-import type { RunLogTone } from "./sessionTypes";
+import type { NoticeTone } from "./sessionTypes";
 
 export function resolveAnchorSnapshot(
   editor: HarnessEditorHandle,
@@ -47,7 +46,7 @@ export type CommitSliceWithFreshAnchorOptions = {
   workspaceRef: MutableRefObject<WorkspaceState | null>;
   flushPersistence: () => Promise<void>;
   applyWorkspace: (next: WorkspaceState, message?: string) => void;
-  appendLog: (message: string, tone: RunLogTone) => void;
+  notify: (message: string, tone: NoticeTone) => void;
   setBusy: (busy: boolean) => void;
   commitInFlightRef: MutableRefObject<boolean>;
 };
@@ -66,7 +65,7 @@ export async function commitSliceWithFreshAnchor(
     workspaceRef,
     flushPersistence,
     applyWorkspace,
-    appendLog,
+    notify,
     setBusy,
     commitInFlightRef,
   } = options;
@@ -80,11 +79,7 @@ export async function commitSliceWithFreshAnchor(
     await flushPersistence();
 
     const ws = workspaceRef.current;
-    const targetDoc = ws?.activeDocument?.id === targetDocumentId
-      ? ws.activeDocument
-      : ws?.panelDocument?.id === targetDocumentId
-        ? ws.panelDocument
-        : null;
+    const targetDoc = ws?.activeDocument?.id === targetDocumentId ? ws.activeDocument : null;
 
     if (!targetDoc) {
       throw new Error("Could not find the target document for slice placement.");
@@ -113,7 +108,7 @@ export async function commitSliceWithFreshAnchor(
     applyWorkspace(nextWorkspace, "Committed the slice and linked it to the selected entity.");
     return true;
   } catch (error) {
-    appendLog(`Slice placement failed: ${stringifyError(error)}`, "warn");
+    notify(`Slice placement failed: ${stringifyError(error)}`, "warn");
     return false;
   } finally {
     commitInFlightRef.current = false;

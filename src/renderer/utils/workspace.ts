@@ -5,12 +5,13 @@
 
 import type {
   DocumentSummary,
-  EntityRecord,
   ProjectRecord,
   SliceBoundaryRecord,
   SliceRecord,
   WorkspaceState,
 } from "../../shared/domain/workspace";
+import { patternMatchesWholeText } from "../../shared/matchingPatterns";
+import type { EditorMatchingRule } from "../editor/editorUtils";
 
 export function getActiveProject(workspace: WorkspaceState | null): ProjectRecord | null {
   if (!workspace) return null;
@@ -22,11 +23,6 @@ export function findProject(
   projectId: string | null,
 ): ProjectRecord | null {
   return projects.find((project) => project.id === projectId) ?? null;
-}
-
-export function getSelectedEntity(workspace: WorkspaceState | null): EntityRecord | null {
-  if (!workspace) return null;
-  return workspace.entities.find((entity) => entity.id === workspace.layout.selectedEntityId) ?? null;
 }
 
 export type ResolvedSliceView = {
@@ -59,3 +55,14 @@ export function selectedSlicesForEntity(
     });
 }
 
+// The entity one of whose enabled rules matches all of `text`, if any.
+export function entityMatchingText(
+  rules: EditorMatchingRule[],
+  text: string,
+): { id: string; name: string } | null {
+  const trimmed = text.trim();
+  if (!trimmed) return null;
+  const rule = rules.find((candidate) =>
+    candidate.enabled && candidate.regex !== null && patternMatchesWholeText(candidate.regex, trimmed));
+  return rule ? { id: rule.entityId, name: rule.entityName } : null;
+}

@@ -4,12 +4,13 @@ import type {
   DeleteMatchingRuleInput,
   EntityRecord,
   MatchingRuleRecord,
+  SetEntityRulesInput,
   UpdateEntityInput,
   UpsertMatchingRuleInput,
 } from "../../shared/domain/workspace";
 import { patternFromText } from "../../shared/matchingPatterns";
 import type { SqliteHarness } from "../sqliteHarness";
-import { boolToInt, isoNow } from "../utils";
+import { boolToInt, intToBool, isoNow } from "../utils";
 import type { RawEntityRow, RawMatchingRuleRow } from "../rowTypes";
 import { mapEntityRow, mapMatchingRuleRow } from "../rowMappers";
 import type { HistoryRepository } from "./HistoryRepository";
@@ -208,6 +209,41 @@ export class EntityRepository {
         label: rule.label,
         pattern,
       });
+    }
+  }
+
+  // Make the entity's rules exactly `rules`, in one pass. A rule whose
+  // pattern is unchanged keeps its id (and only appends an event if its
+  // enabled flag changed); new patterns are created and missing ones
+  // deleted. A pattern listed twice is kept once.
+  setEntityRules(input: SetEntityRulesInput, createRuleId: () => string): void {
+    const existing = this.sqlite.getConnection().prepare(`
+      SELECT id, pattern, enabled
+      FROM matching_rules
+      WHERE entity_id = ?
+      ORDER BY created_at ASC
+    `).all(input.entityId) as Array<{ id: string; pattern: string; enabled: number }>;
+
+    const unclaimed = [...existing];
+    const seenPatterns = new Set<string>();
+    for (const rule of input.rules) {
+      if (seenPatterns.has(rule.pattern)) continue;
+      seenPatterns.add(rule.pattern);
+
+      const matchIndex = unclaimed.findIndex((candidate) => candidate.pattern === rule.pattern);
+      if (matchIndex === -1) {
+        this.upsertMatchingRule({ entityId: input.entityId, label: rule.pattern, ...rule }, createRuleId());
+        continue;
+      }
+
+      const [match] = unclaimed.splice(matchIndex, 1);
+      if (intToBool(match!.enabled) !== rule.enabled) {
+        this.upsertMatchingRule({ id: match!.id, entityId: input.entityId, label: rule.pattern, ...rule }, match!.id);
+      }
+    }
+
+    for (const leftover of unclaimed) {
+      this.deleteMatchingRule({ ruleId: leftover.id });
     }
   }
 

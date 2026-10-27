@@ -32,7 +32,6 @@ import {
   type DeleteDocumentInput,
   type DeleteEntityInput,
   type DeleteFolderInput,
-  type DeleteMatchingRuleInput,
   type DeleteSliceInput,
   type SliceBoundaryRecord,
   type UpdateSliceBoundaryInput,
@@ -42,12 +41,12 @@ import {
   type OpenDocumentInput,
   type OpenProjectInput,
   type ReorderDocumentInput,
+  type SetEntityRulesInput,
   type UpdateDocumentMetaInput,
   type UpdateEntityInput,
   type UpdateFolderInput,
   type UpdateLayoutInput,
   type UpdateProjectInput,
-  type UpsertMatchingRuleInput,
   type WorkspaceDocumentReplayResult,
   type WorkspaceState,
 } from "../../shared/domain/workspace";
@@ -183,6 +182,7 @@ export class WorkspaceRepository {
         selectedEntityId: null,
         expandedFolderIds: [folderId],
         highlightsEnabled: true,
+        slicesVisible: false,
         panelOpen: true,
         panelMode: "entities",
         lastFocusedDocumentId: documentId,
@@ -379,6 +379,9 @@ export class WorkspaceRepository {
     return this.sqlite.runInTransaction(() => {
       const entityId = randomUUID();
       this.entities.createEntity(input, entityId);
+      if (input.rules) {
+        this.entities.setEntityRules({ entityId, rules: input.rules }, () => randomUUID());
+      }
       const layout = this.loadLayoutWithDeps(input.projectId);
       this.layout.saveLayoutState(input.projectId, {
         ...layout,
@@ -422,17 +425,9 @@ export class WorkspaceRepository {
     });
   }
 
-  upsertMatchingRule(input: UpsertMatchingRuleInput): WorkspaceState {
+  setEntityRules(input: SetEntityRulesInput): WorkspaceState {
     return this.sqlite.runInTransaction(() => {
-      const ruleId = input.id ?? randomUUID();
-      this.entities.upsertMatchingRule(input, ruleId);
-      return this.loadWorkspace();
-    });
-  }
-
-  deleteMatchingRule(input: DeleteMatchingRuleInput): WorkspaceState {
-    return this.sqlite.runInTransaction(() => {
-      this.entities.deleteMatchingRule(input);
+      this.entities.setEntityRules(input, () => randomUUID());
       return this.loadWorkspace();
     });
   }

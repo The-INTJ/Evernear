@@ -63,7 +63,7 @@ export function NavPanel(props: Props) {
 
   return (
     <aside className={styles.navPanel}>
-      <PanelSection project kicker="Project">
+      <PanelSection project>
         <TextInput
           variant="project"
           value={projectNameDraft}
@@ -90,7 +90,7 @@ export function NavPanel(props: Props) {
         </div>
       </PanelSection>
 
-      <PanelSection grow kicker="Explorer" className={styles.navTreeSection}>
+      <PanelSection grow className={styles.navTreeSection}>
         <NavTree
           workspace={workspace}
           activeDocument={activeDocument}
