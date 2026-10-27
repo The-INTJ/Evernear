@@ -308,10 +308,7 @@ describe("transaction boundaries", () => {
     repository.upsertMatchingRule({
       entityId,
       label: "Alias",
-      kind: "literal",
-      pattern: "She",
-      wholeWord: true,
-      allowPossessive: true,
+      pattern: "\\bShe\\b",
       enabled: true,
     });
 
@@ -378,6 +375,40 @@ describe("slice boundary mutations", () => {
     expect(projection.anchor.exact).toBe("Universe greets");
     const slice = repository.loadWorkspace().slices.find((s) => s.id === boundary.sliceId)!;
     expect(slice.excerpt).toBe("Universe greets");
+  });
+
+  it("deleteSlice removes the slice and appends one sliceDeleted event", () => {
+    const state = repository.ensureWorkspaceState();
+    const projectId = state.layout.activeProjectId!;
+    const documentId = state.activeDocument!.id;
+    const entityId = repository.createEntity({ projectId, name: "Protagonist" }).layout.selectedEntityId!;
+    const created = repository.createSlice({
+      projectId,
+      entityId,
+      documentId,
+      title: "Greeting",
+      anchor: {
+        documentId,
+        from: 1,
+        to: 12,
+        exact: "Hello world",
+        prefix: "",
+        suffix: "",
+        blockPath: [0],
+        versionSeen: 0,
+      },
+    });
+    const sliceId = created.slices[0]!.id;
+    const eventsBefore = countEvents(harness, "slice", "sliceDeleted");
+
+    const after = repository.deleteSlice({ sliceId });
+    expect(after.slices.some((s) => s.id === sliceId)).toBe(false);
+    expect(after.sliceBoundaries.some((b) => b.sliceId === sliceId)).toBe(false);
+    expect(after.entitySlices.some((link) => link.sliceId === sliceId)).toBe(false);
+    expect(countEvents(harness, "slice", "sliceDeleted")).toBe(eventsBefore + 1);
+
+    repository.deleteSlice({ sliceId });
+    expect(countEvents(harness, "slice", "sliceDeleted")).toBe(eventsBefore + 1);
   });
 });
 

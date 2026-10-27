@@ -1,3 +1,4 @@
+import type { Node as ProseMirrorNode } from "prosemirror-model";
 import { schema as basicSchema } from "prosemirror-schema-basic";
 
 import type { JsonObject, StoredDocumentSnapshot } from "../../shared/domain/document";
@@ -7,7 +8,7 @@ import type {
   MatchingRuleRecord,
   TextAnchor,
 } from "../../shared/domain/workspace";
-import { buildPlainTextIndex, resolveBlockPath } from "../../shared/anchoring";
+import { buildAnchorFromRange, buildPlainTextIndex } from "../../shared/anchoring";
 
 export type EditorSelectionInfo = {
   from: number;
@@ -32,11 +33,13 @@ export type SerializedTransactionBundle = {
 export type VisibleBlockRange = {
   from: number;
   to: number;
-  text: string;
 };
 
+// `regex` is null when the rule's pattern doesn't compile; such a rule is
+// skipped rather than allowed to throw inside the decoration pass.
 export type EditorMatchingRule = MatchingRuleRecord & {
   entityName: string;
+  regex: RegExp | null;
 };
 
 export function buildTextAnchorFromSelection(
@@ -48,20 +51,7 @@ export function buildTextAnchorFromSelection(
   }
 
   const doc = basicSchema.nodeFromJSON(snapshot.contentJson);
-  const index = buildPlainTextIndex(doc);
-  const exact = doc.textBetween(selection.from, selection.to, "\n\n");
-
-  return {
-    documentId: snapshot.id,
-    from: selection.from,
-    to: selection.to,
-    exact,
-    prefix: doc.textBetween(Math.max(1, selection.from - 24), selection.from, "\n\n"),
-    suffix: doc.textBetween(selection.to, Math.min(doc.content.size, selection.to + 24), "\n\n"),
-    blockPath: resolveBlockPath(doc, selection.from),
-    approxPlainTextOffset: index.text.indexOf(exact),
-    versionSeen: snapshot.currentVersion,
-  };
+  return buildAnchorFromRange(doc, selection.from, selection.to, snapshot.id, snapshot.currentVersion);
 }
 
 export function buildClipboardAudit(
@@ -87,84 +77,50 @@ export function buildClipboardAudit(
   };
 }
 
+// Rules run against each block's raw text through a character-to-position
+// index, so whitespace runs, hard breaks and nested blocks can't shift a
+// highlight off the letters that matched.
 export function collectMatchesForVisibleBlocks(
+  doc: ProseMirrorNode,
   rules: EditorMatchingRule[],
   blocks: VisibleBlockRange[],
 ): EntityMatchHit[] {
   const hits: EntityMatchHit[] = [];
 
   for (const block of blocks) {
-    const normalizedText = normalizeForMatch(block.text);
+    const index = buildPlainTextIndex(doc, block.from, block.to, "\n");
 
     for (const rule of rules) {
-      if (!rule.enabled) {
+      if (!rule.enabled || !rule.regex) {
         continue;
       }
 
-      if (rule.kind === "regex") {
-        const regex = new RegExp(rule.pattern, "giu");
-        for (const match of block.text.matchAll(regex)) {
-          const matchedText = match[0] ?? "";
-          const matchIndex = match.index ?? -1;
-          if (matchIndex < 0 || matchedText.length === 0) {
-            continue;
-          }
-
-          hits.push({
-            entityId: rule.entityId,
-            entityName: rule.entityName,
-            ruleId: rule.id,
-            label: rule.label,
-            from: block.from + matchIndex,
-            to: block.from + matchIndex + matchedText.length,
-            matchedText,
-            normalizedText: normalizeForMatch(matchedText),
-          });
-        }
-        continue;
-      }
-
-      const normalizedRule = normalizeForMatch(rule.pattern);
-      let searchIndex = 0;
-      while (searchIndex < normalizedText.length) {
-        const foundAt = normalizedText.indexOf(normalizedRule, searchIndex);
-        if (foundAt === -1) {
-          break;
+      for (const match of index.text.matchAll(rule.regex)) {
+        const matchedText = match[0];
+        if (matchedText.length === 0) {
+          continue;
         }
 
-        const before = normalizedText[foundAt - 1] ?? " ";
-        const after = normalizedText[foundAt + normalizedRule.length] ?? " ";
-        const suffix = normalizedText.slice(foundAt + normalizedRule.length, foundAt + normalizedRule.length + 2);
-        const wholeWordOkay = !rule.wholeWord || (!isWordCharacter(before) && !isWordCharacter(after));
-        const possessiveOkay = !rule.allowPossessive || suffix === "'s" || suffix === "" || !isWordCharacter(after);
-
-        if (wholeWordOkay && possessiveOkay) {
-          hits.push({
-            entityId: rule.entityId,
-            entityName: rule.entityName,
-            ruleId: rule.id,
-            label: rule.label,
-            from: block.from + foundAt,
-            to: block.from + foundAt + rule.pattern.length,
-            matchedText: block.text.slice(foundAt, foundAt + rule.pattern.length),
-            normalizedText: normalizedRule,
-          });
+        const from = index.charStarts[match.index];
+        const to = index.charEnds[match.index + matchedText.length - 1];
+        if (from === undefined || to === undefined || from >= to) {
+          continue;
         }
 
-        searchIndex = foundAt + Math.max(1, normalizedRule.length);
+        hits.push({
+          entityId: rule.entityId,
+          entityName: rule.entityName,
+          ruleId: rule.id,
+          label: rule.label,
+          from,
+          to,
+          matchedText,
+        });
       }
     }
   }
 
   return dedupeMatchHits(hits);
-}
-
-export function normalizeForMatch(input: string): string {
-  return input
-    .normalize("NFKC")
-    .replace(/[\u2019']/g, "'")
-    .replace(/\s+/g, " ")
-    .toLocaleLowerCase();
 }
 
 function dedupeMatchHits(hits: EntityMatchHit[]): EntityMatchHit[] {
@@ -181,8 +137,4 @@ function dedupeMatchHits(hits: EntityMatchHit[]): EntityMatchHit[] {
   }
 
   return unique;
-}
-
-function isWordCharacter(character: string): boolean {
-  return /[\p{L}\p{N}_]/u.test(character);
 }

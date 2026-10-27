@@ -97,9 +97,9 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <nav class="context-index" aria-label="Agent Context Index">
 <header><h2>Agent Context Index</h2><p>Line ranges point into this HTML file.</p></header>
 <div class="index-grid">
-<a class="index-row" href="#src-shared-orientation"><div><strong>Shared Folder Orientation</strong></div><div class="index-range">L106-L152</div><div>Use this section for ownership, parent reads, and navigation context.</div></a>
-<a class="index-row" href="#src-shared-domain"><div><strong>Shared Domain</strong></div><div class="index-range">L153-L319</div><div>Use this section for shared vocabulary and cross-runtime contracts.</div></a>
-<a class="index-row" href="#src-shared-contracts"><div><strong>Shared Contracts</strong></div><div class="index-range">L320-L378</div><div>Use this section for shared vocabulary and cross-runtime contracts.</div></a>
+<a class="index-row" href="#src-shared-orientation"><div><strong>Shared Folder Orientation</strong></div><div class="index-range">L106-L153</div><div>Use this section for ownership, parent reads, and navigation context.</div></a>
+<a class="index-row" href="#src-shared-domain"><div><strong>Shared Domain</strong></div><div class="index-range">L154-L320</div><div>Use this section for shared vocabulary and cross-runtime contracts.</div></a>
+<a class="index-row" href="#src-shared-contracts"><div><strong>Shared Contracts</strong></div><div class="index-range">L321-L379</div><div>Use this section for shared vocabulary and cross-runtime contracts.</div></a>
 </div>
 </nav>
 <main>
@@ -135,6 +135,7 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <ul>
 <li><code>domain</code> defines what the product concepts mean.</li>
 <li><code>contracts</code> defines how runtimes talk about those concepts.</li>
+<li><a href="anchoring.ts">anchoring.ts</a> is the pure <code>TextAnchor</code> math; <a href="matchingPatterns.ts">matchingPatterns.ts</a> compiles <code>MatchingRule</code> patterns (ADR-008). Both are used by the database layer, the IPC schemas and the renderer.</li>
 </ul>
 <h2>Decided</h2>
 <ul>
@@ -215,7 +216,7 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <tr>
 <td><code>MatchingRule</code></td>
 <td>describes one thing an entity should match in text</td>
-<td>can be literal, alias-based, or pattern-based</td>
+<td>a regular expression compiled by <a href="matchingPatterns.ts">matchingPatterns.ts</a> (ADR-008)</td>
 </tr>
 <tr>
 <td><code>TextAnchor</code></td>

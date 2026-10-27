@@ -1,10 +1,10 @@
-import type { MatchingRuleKind, MatchingRuleRecord } from "../../../shared/domain/workspace";
+import type { MatchingRuleRecord } from "../../../shared/domain/workspace";
+import { compileMatchingPattern } from "../../../shared/matchingPatterns";
 import type { RuleFormState } from "../../state/sessionTypes";
 import {
   Button,
   Card,
   PanelSection,
-  SelectInput,
   TextInput,
   cardStyles,
   classNames,
@@ -28,7 +28,9 @@ export function MatchingRuleEditor({
   onToggleRule,
   onDeleteRule,
 }: Props) {
-  const canAddRule = ruleForm.label.trim().length > 0 && ruleForm.pattern.trim().length > 0;
+  const compiled = ruleForm.pattern.trim().length > 0 ? compileMatchingPattern(ruleForm.pattern) : null;
+  const patternError = compiled && !compiled.ok ? compiled.error : null;
+  const canAddRule = compiled?.ok === true;
 
   return (
     <PanelSection>
@@ -39,52 +41,17 @@ export function MatchingRuleEditor({
           onChange={(event) =>
             onRuleFormChange((current) => ({ ...current, label: event.target.value }))
           }
-          placeholder="Rule label"
+          placeholder="Rule label (optional)"
         />
         <TextInput
           value={ruleForm.pattern}
           onChange={(event) =>
             onRuleFormChange((current) => ({ ...current, pattern: event.target.value }))
           }
-          placeholder="Pattern"
+          placeholder="Regex, e.g. \bThe\s+Spire\b"
         />
+        {patternError ? <p className={styles.empty}>Not a valid regex: {patternError}</p> : null}
         <div className={styles.actions}>
-          <SelectInput
-            value={ruleForm.kind}
-            onChange={(event) =>
-              onRuleFormChange((current) => ({
-                ...current,
-                kind: event.target.value as MatchingRuleKind,
-              }))
-            }
-          >
-            <option value="literal">Literal</option>
-            <option value="alias">Alias</option>
-            <option value="regex">Regex</option>
-          </SelectInput>
-          <label className={styles.checkboxRow}>
-            <input
-              checked={ruleForm.wholeWord}
-              onChange={(event) =>
-                onRuleFormChange((current) => ({ ...current, wholeWord: event.target.checked }))
-              }
-              type="checkbox"
-            />
-            Whole word
-          </label>
-          <label className={styles.checkboxRow}>
-            <input
-              checked={ruleForm.allowPossessive}
-              onChange={(event) =>
-                onRuleFormChange((current) => ({
-                  ...current,
-                  allowPossessive: event.target.checked,
-                }))
-              }
-              type="checkbox"
-            />
-            Allow possessive
-          </label>
           <Button size="compact" disabled={!canAddRule} onClick={onAddRule}>
             Add Rule
           </Button>
@@ -98,7 +65,7 @@ export function MatchingRuleEditor({
             <Card key={rule.id}>
               <div className={cardStyles.meta}>
                 <strong>{rule.label}</strong>
-                <span>{rule.kind}</span>
+                <span>{compileMatchingPattern(rule.pattern).ok ? (rule.enabled ? "on" : "off") : "invalid"}</span>
               </div>
               <p className={cardStyles.copy}>{rule.pattern}</p>
               <div className={styles.actions}>

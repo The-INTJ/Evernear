@@ -1,6 +1,5 @@
 import type {
   DocumentSummary,
-  MatchingRuleKind,
   WorkspaceState,
 } from "../../../shared/domain/workspace";
 import type { EverlinkSession } from "../../state/sessionTypes";
@@ -78,26 +77,6 @@ export function EverlinkPanel(props: Props) {
         </label>
       ) : null}
       <div className={styles.formGrid}>
-        <label className={styles.fieldStack}>
-          <span className={styles.fieldLabel}>Initial rule kind</span>
-          <SelectInput
-            value={session.ruleKind}
-            onChange={(event) =>
-              onSessionChange((current) =>
-                current
-                  ? {
-                      ...current,
-                      ruleKind: event.target.value as MatchingRuleKind,
-                    }
-                  : current,
-              )
-            }
-          >
-            <option value="literal">Literal</option>
-            <option value="alias">Alias</option>
-            <option value="regex">Regex</option>
-          </SelectInput>
-        </label>
         <label className={styles.fieldStack}>
           <span className={styles.fieldLabel}>Target document</span>
           <SelectInput

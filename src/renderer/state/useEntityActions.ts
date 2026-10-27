@@ -54,23 +54,21 @@ export function useEntityActions(input: UseEntityActionsInput): EntityActions {
 
   const createEntityRule = useCallback(() => {
     if (!selectedEntity) return;
-    if (ruleForm.pattern.trim().length === 0 || ruleForm.label.trim().length === 0) {
-      appendLog("Matching rules need both a label and a pattern.", "warn");
+    if (ruleForm.pattern.trim().length === 0) {
+      appendLog("Matching rules need a pattern.", "warn");
       return;
     }
     const form = ruleForm;
+    const label = form.label.trim() || form.pattern.trim();
     setRuleForm(initialRuleForm);
     void runMutation(
       () => window.evernear.upsertMatchingRule({
         entityId: selectedEntity.id,
-        label: form.label.trim(),
-        kind: form.kind,
-        pattern: form.pattern,
-        wholeWord: form.wholeWord,
-        allowPossessive: form.allowPossessive,
+        label,
+        pattern: form.pattern.trim(),
         enabled: form.enabled,
       }),
-      `Added rule "${form.label.trim()}".`,
+      `Added rule "${label}".`,
     );
   }, [runMutation, selectedEntity, ruleForm, setRuleForm, appendLog]);
 
@@ -89,10 +87,7 @@ export function useEntityActions(input: UseEntityActionsInput): EntityActions {
       id: rule.id,
       entityId: rule.entityId,
       label: rule.label,
-      kind: rule.kind,
       pattern: rule.pattern,
-      wholeWord: rule.wholeWord,
-      allowPossessive: rule.allowPossessive,
       enabled: !rule.enabled,
     }));
   }, [runMutation]);

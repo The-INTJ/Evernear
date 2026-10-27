@@ -47,10 +47,7 @@ export type RawMatchingRuleRow = {
   id: string;
   entity_id: string | null;
   label: string;
-  kind: string;
   pattern: string;
-  whole_word: number;
-  allow_possessive: number;
   enabled: number;
   created_at: string | null;
   updated_at: string;

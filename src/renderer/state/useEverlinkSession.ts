@@ -12,7 +12,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 
-import { normalizeForMatch } from "../editor/editorUtils";
+import { patternFromText, patternMatchesWholeText } from "../../shared/matchingPatterns";
 import { truncate } from "../utils/formatting";
 import type { EverlinkSession } from "./sessionTypes";
 import type { WorkspaceHook } from "./useWorkspace";
@@ -54,13 +54,13 @@ export function useEverlinkSession(input: UseEverlinkSessionInput): EverlinkSess
 
   const exactSelectionEntityIds = useMemo(() => {
     if (!workspace || mainSelection.empty) return [];
-    const normalizedSelection = normalizeForMatch(mainSelection.text.trim());
-    if (!normalizedSelection) return [];
-    const ids = workspace.matchingRules
-      .filter((rule) => rule.kind !== "regex" && normalizeForMatch(rule.pattern) === normalizedSelection)
+    const selectionText = mainSelection.text.trim();
+    if (!selectionText) return [];
+    const ids = lookups.editorRules
+      .filter((rule) => rule.enabled && rule.regex !== null && patternMatchesWholeText(rule.regex, selectionText))
       .map((rule) => rule.entityId);
     return Array.from(new Set(ids));
-  }, [workspace, mainSelection]);
+  }, [workspace, mainSelection, lookups.editorRules]);
 
   const openChooser = useCallback(async () => {
     const activeDocument = workspace?.activeDocument ?? null;
@@ -83,7 +83,6 @@ export function useEverlinkSession(input: UseEverlinkSessionInput): EverlinkSess
       entityNameDraft: preselectedEntity?.name ?? mainSelection.text.trim(),
       targetDocumentId: activeDocument.id,
       newTargetDocumentTitle: `${truncate(mainSelection.text.trim(), 24)} Notes`,
-      ruleKind: "literal",
       mode: exactSelectionEntityIds.length > 0 ? "edit" : preselectedEntity ? "attach" : "create",
     };
 
@@ -152,13 +151,12 @@ export function useEverlinkSession(input: UseEverlinkSessionInput): EverlinkSess
       return null;
     }
 
-    const ruleExists = workspace.matchingRules.some((rule) =>
-      rule.entityId === entityId && normalizeForMatch(rule.pattern) === normalizeForMatch(sourceText),
+    const ruleExists = lookups.editorRules.some((rule) =>
+      rule.entityId === entityId && rule.regex !== null && patternMatchesWholeText(rule.regex, sourceText),
     );
     if (!ruleExists) {
       const upserted = await window.evernear.upsertMatchingRule({
-        entityId, label: truncate(sourceText, 32), pattern: sourceText,
-        kind: next.ruleKind, wholeWord: true, allowPossessive: true, enabled: true,
+        entityId, label: truncate(sourceText, 32), pattern: patternFromText(sourceText), enabled: true,
       });
       applyWorkspace(upserted, "Attached the selected text as an entity rule.");
     }
@@ -183,7 +181,7 @@ export function useEverlinkSession(input: UseEverlinkSessionInput): EverlinkSess
 
     const surface: SelectionSurface = targetDocumentId === activeDocument?.id ? "main" : "panel";
     return { entityId, targetDocumentId, surface, sourceText };
-  }, [workspace, lookups.documentsById, appendLog, applyWorkspace]);
+  }, [workspace, lookups.documentsById, lookups.editorRules, appendLog, applyWorkspace]);
 
   const resetSession = useCallback(() => {
     setSession(null);

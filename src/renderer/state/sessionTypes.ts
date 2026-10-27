@@ -4,7 +4,6 @@
 // IPC contract. Colocated here so hooks and feature components both
 // reference one source without tempting App.tsx to redeclare them.
 
-import type { MatchingRuleKind } from "../../shared/domain/workspace";
 import type { EditorSelectionInfo } from "../editor/editorUtils";
 
 export type RunLogTone = "info" | "success" | "warn";
@@ -19,18 +18,12 @@ export type RunLogEntry = {
 export type RuleFormState = {
   label: string;
   pattern: string;
-  kind: MatchingRuleKind;
-  wholeWord: boolean;
-  allowPossessive: boolean;
   enabled: boolean;
 };
 
 export const initialRuleForm: RuleFormState = {
   label: "",
   pattern: "",
-  kind: "literal",
-  wholeWord: true,
-  allowPossessive: true,
   enabled: true,
 };
 
@@ -42,7 +35,6 @@ export type EverlinkSession = {
   entityNameDraft: string;
   targetDocumentId: string | null;
   newTargetDocumentTitle: string;
-  ruleKind: MatchingRuleKind;
   mode: "create" | "attach" | "edit";
 };
 

@@ -24,7 +24,13 @@ import {
   resolveAnchorWithFallback,
   serializeNodePlainText,
 } from "../../shared/anchoring";
-import { buildTextAnchorFromSelection } from "./editorUtils";
+import { compileMatchingPattern } from "../../shared/matchingPatterns";
+import {
+  buildTextAnchorFromSelection,
+  collectMatchesForVisibleBlocks,
+  type EditorMatchingRule,
+  type VisibleBlockRange,
+} from "./editorUtils";
 
 function docOf(paragraphs: string[]): ProseMirrorNode {
   return basicSchema.nodeFromJSON({
@@ -228,5 +234,76 @@ describe("buildTextAnchorFromSelection", () => {
     expect(["resolved", "repaired"]).toContain(resolved.status);
     expect(resolved.anchor.from).toBe(from);
     expect(resolved.anchor.to).toBe(to);
+  });
+});
+
+describe("collectMatchesForVisibleBlocks", () => {
+  function ruleFor(pattern: string, overrides: Partial<EditorMatchingRule> = {}): EditorMatchingRule {
+    const compiled = compileMatchingPattern(pattern);
+    return {
+      id: "rule-1",
+      entityId: "entity-1",
+      entityName: "The Spire",
+      label: pattern,
+      pattern,
+      enabled: true,
+      createdAt: "2026-10-27T00:00:00.000Z",
+      updatedAt: "2026-10-27T00:00:00.000Z",
+      regex: compiled.ok ? compiled.regex : null,
+      ...overrides,
+    };
+  }
+
+  function topLevelBlocks(doc: ProseMirrorNode): VisibleBlockRange[] {
+    const blocks: VisibleBlockRange[] = [];
+    doc.forEach((block, offset) => blocks.push({ from: offset + 1, to: offset + block.nodeSize - 1 }));
+    return blocks;
+  }
+
+  function highlighted(doc: ProseMirrorNode, rules: EditorMatchingRule[]): string[] {
+    return collectMatchesForVisibleBlocks(doc, rules, topLevelBlocks(doc))
+      .map((hit) => doc.textBetween(hit.from, hit.to, "|", "<br>"));
+  }
+
+  const spire = ruleFor("\\bThe\\s+Spire\\b");
+
+  it("highlights exactly the matched letters after a double space", () => {
+    expect(highlighted(docOf(["It ended.  Then The Spire rose."]), [spire])).toEqual(["The Spire"]);
+  });
+
+  it("treats a pasted line break as a word gap", () => {
+    const doc = basicSchema.nodeFromJSON({
+      type: "doc",
+      content: [{
+        type: "paragraph",
+        content: [
+          { type: "text", text: "Line one" },
+          { type: "hard_break" },
+          { type: "text", text: "The Spire rose." },
+        ],
+      }],
+    });
+    expect(highlighted(doc, [spire])).toEqual(["The Spire"]);
+  });
+
+  it("highlights the right letters inside a block quote", () => {
+    const doc = basicSchema.nodeFromJSON({
+      type: "doc",
+      content: [{
+        type: "blockquote",
+        content: [{ type: "paragraph", content: [{ type: "text", text: "The Spire rose." }] }],
+      }],
+    });
+    expect(highlighted(doc, [spire])).toEqual(["The Spire"]);
+  });
+
+  it("skips a rule whose pattern doesn't compile instead of throwing", () => {
+    const broken = ruleFor("(", { id: "rule-broken" });
+    expect(broken.regex).toBeNull();
+    expect(highlighted(docOf(["The Spire."]), [broken, spire])).toEqual(["The Spire"]);
+  });
+
+  it("skips disabled rules", () => {
+    expect(highlighted(docOf(["The Spire."]), [{ ...spire, enabled: false }])).toEqual([]);
   });
 });

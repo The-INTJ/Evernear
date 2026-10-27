@@ -144,6 +144,12 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
 
           const nextState = currentView.state.apply(transaction);
           currentView.updateState(nextState);
+          // Persist before decorating: prose must reach the save queue even
+          // if a highlight pass fails.
+          onDocumentSnapshotChangeRef.current(
+            serializeEditorSnapshot(nextState.doc),
+            transaction.docChanged ? serializeTransaction(transaction) : null,
+          );
           recomputeDecorations(
             currentView,
             surfaceRef.current,
@@ -155,15 +161,7 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
             boundariesEditableRef.current,
             onMatchingBenchmarkRef.current,
           );
-
-          const snapshot = serializeEditorSnapshot(nextState.doc);
-          const selection = getSelectionInfo(nextState, currentView);
-          onSelectionChangeRef.current(selection);
-
-          onDocumentSnapshotChangeRef.current(
-            snapshot,
-            transaction.docChanged ? serializeTransaction(transaction) : null,
-          );
+          onSelectionChangeRef.current(getSelectionInfo(nextState, currentView));
         },
         attributes: {
           class: "editor-prosemirror",

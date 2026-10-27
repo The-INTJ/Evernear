@@ -114,7 +114,7 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <div class="entity-node"><strong>DocumentFolder</strong><span>Lightweight organization only; not semantic truth.</span></div>
 <div class="entity-node"><strong>Document</strong><span>Prose surface with contentJson, plainText, currentVersion. No metadata rides inside.</span></div>
 <div class="entity-node"><strong>Entity</strong><span>Canonical semantic object: person, place, concept, lore target.</span></div>
-<div class="entity-node"><strong>MatchingRule</strong><span>Literal, alias, or regex rule evaluated live over visible text.</span></div>
+<div class="entity-node"><strong>MatchingRule</strong><span>Regex evaluated live over visible text; bare patterns ignore case (ADR-008).</span></div>
 <div class="entity-node"><strong>EntityMatchHit</strong><span>Derived highlight result; never stored as truth.</span></div>
 <div class="entity-node"><strong>Slice</strong><span>Reference to a bounded piece of content in a document.</span></div>
 <div class="entity-node"><strong>SliceBoundary</strong><span>Persisted TextAnchor plus resolution state for a slice range.</span></div>

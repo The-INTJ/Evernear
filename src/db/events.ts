@@ -12,7 +12,7 @@
 //
 // Do not inline new string literals in repositories.
 
-import type { AnchorResolutionStatus, MatchingRuleKind } from "../shared/domain/workspace";
+import type { AnchorResolutionStatus } from "../shared/domain/workspace";
 
 export const EVENT_AGGREGATE_TYPES = {
   project: "project",
@@ -50,6 +50,7 @@ export const EVENT_TYPES = {
   matchingRuleDeleted: "matchingRuleDeleted",
 
   sliceCreated: "sliceCreated",
+  sliceDeleted: "sliceDeleted",
   sliceBoundaryAutoResolved: "sliceBoundaryAutoResolved",
   sliceBoundaryManuallyMoved: "sliceBoundaryManuallyMoved",
 } as const;
@@ -90,16 +91,16 @@ export type EventPayloadMap = {
   entityUpdated: { name: string };
   entityDeleted: { name: string };
 
+  // Events appended before ADR-008 also carry `kind` (literal, alias or
+  // regex); every pattern since then is a regex.
   matchingRuleCreated: {
     entityId: string;
     label: string;
-    kind: MatchingRuleKind;
     pattern: string;
   };
   matchingRuleUpdated: {
     entityId: string;
     label: string;
-    kind: MatchingRuleKind;
     pattern: string;
   };
   matchingRuleDeleted: {
@@ -111,6 +112,10 @@ export type EventPayloadMap = {
     entityId: string;
     title: string;
     documentId: string;
+  };
+  sliceDeleted: {
+    documentId: string;
+    title: string;
   };
   sliceBoundaryAutoResolved: {
     sliceId: string;

@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Back to the Basics | Evernear</title>
+  <style>:root {
+  color-scheme: light;
+  --bg: #f7f7f4;
+  --paper: #ffffff;
+  --ink: #1f2328;
+  --muted: #59636e;
+  --line: #d8ddd8;
+  --soft: #eef1ed;
+  --accent: #0f766e;
+  --accent-soft: color-mix(in srgb, var(--accent) 10%, white);
+  --accent-line: color-mix(in srgb, var(--accent) 34%, #d8ddd8);
+  --warn: #b42318;
+  --warn-soft: #fdf0ee;
+  --entity: rgba(245, 185, 113, 0.45);
+  --slice: rgba(15, 118, 110, 0.12);
+  --slice-bar: #0f766e;
+  --editor-paper: #f4eddf;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 19px;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--ink); line-height: 1.6; }
+a { color: var(--accent); text-underline-offset: 0.18em; }
+code { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 0.88em; background: var(--soft); border: 1px solid var(--line); border-radius: 5px; padding: 0.05rem 0.3rem; overflow-wrap: anywhere; }
+.doc-shell { width: min(920px, calc(100% - 32px)); margin: 0 auto; padding: 32px 0 72px; }
+.doc-hero { border: 1px solid var(--accent-line); background: linear-gradient(135deg, var(--paper), var(--accent-soft)); border-radius: 10px; padding: 28px; }
+.eyebrow { margin: 0 0 8px; color: var(--accent); font-weight: 800; text-transform: uppercase; font-size: 0.78rem; }
+h1 { margin: 0; font-size: clamp(2.2rem, 6vw, 3.4rem); line-height: 1.02; }
+.subtitle { margin: 14px 0 0; color: var(--muted); font-size: 1.1rem; }
+.meta-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 20px; }
+.meta-card { border: 1px solid var(--line); background: rgba(255, 255, 255, 0.75); border-radius: 8px; padding: 10px 12px; }
+.meta-card strong { display: block; font-size: 0.74rem; color: var(--muted); text-transform: uppercase; }
+.meta-card span { display: block; font-weight: 700; font-size: 0.95rem; }
+.context-index { margin: 14px 0 0; border: 1px solid var(--line); background: var(--paper); border-radius: 8px; font-size: 0.86rem; }
+.context-index summary { cursor: pointer; padding: 10px 14px; color: var(--muted); font-weight: 700; }
+.context-index ul { margin: 0; padding: 0 14px 12px 34px; }
+.context-index code { background: transparent; border: 0; color: var(--accent); }
+section { margin-top: 22px; border: 1px solid var(--line); background: var(--paper); border-radius: 10px; padding: 24px 26px; }
+section > h2 { margin: 0 0 6px; font-size: 1.5rem; line-height: 1.2; }
+section > h2 .num { color: var(--accent); margin-right: 8px; }
+.lede { margin: 0 0 16px; color: var(--muted); }
+table { width: 100%; border-collapse: collapse; margin: 10px 0 4px; font-size: 0.92rem; }
+th, td { border: 1px solid var(--line); padding: 9px 11px; text-align: left; vertical-align: top; }
+th { background: var(--soft); font-size: 0.82rem; text-transform: uppercase; color: var(--muted); }
+td:first-child { font-weight: 700; }
+.note { margin: 16px 0 0; border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 12px 16px; border-radius: 0 8px 8px 0; }
+.note p { margin: 0; }
+.note p + p { margin-top: 10px; }
+.cracks { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.cracks li { border: 1px solid var(--line); border-left: 5px solid var(--warn); border-radius: 0 8px 8px 0; padding: 12px 16px; }
+.cracks li.minor { border-left-color: var(--muted); }
+.cracks strong { display: block; font-size: 1.06rem; }
+.cracks p { margin: 4px 0 0; }
+.fix { color: var(--accent); font-weight: 600; }
+.how { font-size: 0.78rem; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-left: 6px; }
+.flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 6px 0 16px; padding: 0; list-style: none; counter-reset: step; }
+.flow li { border: 1px solid var(--accent-line); background: var(--accent-soft); border-radius: 8px; padding: 12px 14px; font-size: 0.92rem; counter-increment: step; }
+.flow li strong { display: block; font-size: 1.04rem; margin-bottom: 4px; }
+.flow li strong::before { content: counter(step) ". "; color: var(--accent); }
+.mocks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 18px 0 8px; }
+.mock { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #0e1820; }
+.mock-label { margin: 0 0 6px; font-size: 0.8rem; font-weight: 700; color: var(--muted); text-transform: uppercase; }
+.mock-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 10px; color: #eff4ed; font-size: 0.78rem; }
+.mock-title { flex: 1 1 auto; font-weight: 700; }
+.pill { border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 999px; padding: 1px 9px; color: #9fb1b5; }
+.pill.on { background: rgba(255, 255, 255, 0.14); color: #fff; }
+.pill.edit { background: rgba(255, 255, 255, 0.24); border-color: rgba(255, 255, 255, 0.8); color: #fff; font-weight: 700; }
+.mock-done { border: 0; border-radius: 6px; padding: 2px 10px; background: #fff; color: var(--accent); font: inherit; font-weight: 700; }
+.mock-paper { margin: 0 10px 10px; border-radius: 6px; padding: 14px 16px; background: var(--editor-paper); color: #2b2620; font-family: "Source Serif 4", Georgia, serif; font-size: 0.95rem; line-height: 1.6; }
+.mock.editing { box-shadow: inset 0 0 0 3px var(--accent); }
+.mock.editing .mock-bar { background: var(--accent); }
+.mock-paper p { margin: 0; }
+.mock-paper p + p { margin-top: 8px; }
+.ent { background: var(--entity); border-radius: 3px; padding: 0 1px; color: inherit; }
+.slice { background: var(--slice); box-shadow: -10px 0 0 -6px var(--slice-bar); border-radius: 2px; }
+.handle { display: inline-block; width: 6px; height: 1.1em; margin: 0 2px; border-radius: 2px; background: #d97706; vertical-align: text-bottom; }
+.small { font-size: 0.9rem; color: var(--muted); }
+.plain { margin: 0; padding-left: 22px; }
+.plain li + li { margin-top: 6px; }
+.prs { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.prs li { border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; }
+.prs li strong { color: var(--accent); }
+.calls { margin: 0; padding-left: 26px; }
+.calls li + li { margin-top: 12px; }
+.calls .default { display: block; color: var(--muted); font-size: 0.92rem; }
+@media (max-width: 760px) {
+  :root { font-size: 17px; }
+  .doc-shell { width: calc(100% - 20px); padding-top: 12px; }
+  .doc-hero, section { padding: 18px; }
+  .meta-grid, .flow, .mocks { grid-template-columns: 1fr; }
+  table, thead, tbody, tr, th, td { display: block; }
+  thead { display: none; }
+  tr { border: 1px solid var(--line); border-radius: 8px; margin-bottom: 10px; }
+  td { border: 0; border-top: 1px solid var(--line); }
+  td:first-child { border-top: 0; }
+}</style>
+</head>
+<body>
+<div class="doc-shell">
+
+<header class="doc-hero">
+<p class="eyebrow">Evernear change plan &middot; approved 2026-10-27</p>
+<h1>Back to the basics</h1>
+<p class="subtitle">What changes first, and why. Drew approved this plan on 2026-10-27 with the decisions in section 6; it ships as three stacked pull requests.</p>
+<div class="meta-grid">
+<div class="meta-card"><strong>Audience</strong><span>Drew, and agents picking this up</span></div>
+<div class="meta-card"><strong>Status</strong><span>Approved, plan of record</span></div>
+<div class="meta-card"><strong>Scope</strong><span>3 stacked pull requests</span></div>
+</div>
+<details class="context-index">
+<summary>Agent Context Index</summary>
+<ul>
+<li><a href="#model">1. The idea, mapped to the code</a> <code>L130-L148</code></li>
+<li><a href="#cracks">2. Cracks under the basics</a> <code>L150-L180</code></li>
+<li><a href="#flow">3. The new flow and the three toggles</a> <code>L182-L219</code></li>
+<li><a href="#removed">4. What goes away</a> <code>L221-L239</code></li>
+<li><a href="#order">5. Order of work</a> <code>L241-L250</code></li>
+<li><a href="#calls">6. Decisions</a> <code>L252-L261</code></li>
+</ul>
+</details>
+</header>
+
+<section id="model">
+<h2><span class="num">1</span>The idea, mapped to the code</h2>
+<p class="lede">Your description already matches the data model closely. The work is making each piece behave, not inventing new ones.</p>
+<table>
+<thead><tr><th>You said</th><th>Code today</th><th>Plan</th></tr></thead>
+<tbody>
+<tr><td>Entity: 1+ regex for what to highlight</td><td><code>Entity</code> + <code>MatchingRule</code>, in three kinds (literal, alias, regex) with Whole word and Allow possessive flags. Literal and alias behave identically.</td><td>One kind: regex. Existing rules convert automatically.</td></tr>
+<tr><td>Delimiters that mark off the text</td><td><code>SliceBoundary</code> holding a <code>TextAnchor</code>: one document, start and end positions, the exact text, and 24 characters of context on each side.</td><td>Keep. Positions follow every edit; text plus context re-find the slice after a re-paste.</td></tr>
+<tr><td>Slice</td><td><code>Slice</code>, linked to entities through <code>EntitySlice</code>. One slice could serve several entities; the UI never uses that.</td><td>Keep as is.</td></tr>
+<tr><td>Hover lists the slices</td><td><code>HoverPreview</code></td><td>Keep, stripped down to the text.</td></tr>
+<tr><td>Click opens the slice editor</td><td>A document editor inside the side panel. Its handles are drawn but can't be dragged; <code>updateSliceBoundary</code> exists end to end with no caller.</td><td>The main viewport, with working handles.</td></tr>
+</tbody>
+</table>
+<div class="note">
+<p><strong>Document-paired? Already, and worth keeping.</strong> Every anchor belongs to one document, and repair only searches that document, so ordinary opening words in other documents can never capture a slice.</p>
+<p><strong>Regex or math delimiters.</strong> The repo's glossary says "Regex belongs to matching rules, not slice repair." For this pass slices stay on the anchor above. Rule-defined boundaries, such as "from this heading to the next," are a model change for later, with an ADR.</p>
+</div>
+<!-- Agent: vocabulary mapping for this plan. User "entity highlighting" = Highlight (MatchingRule hits, EntityMatchHit). User "slice highlighting" = AllSlicesToggle in docs/docs-index.html#docs-glossary. User "slice editing" = BoundaryEditing in the same glossary. Reuse those names in code; use the user's plain words ("Entities", "Slices", "Edit slices") as UI labels. -->
+</section>
+
+<section id="cracks">
+<h2><span class="num">2</span>Cracks under the basics</h2>
+<p class="lede">I reproduced the first three by running the repo's own matcher and anchor code against small documents. The rest come from reading the code.</p>
+<ul class="cracks">
+<li><strong>One bad regex blanks the app.</strong>
+<p>A rule like <code>(</code> throws inside the editor's highlight pass. There's no error boundary, so React drops the whole window. The rule and the highlights setting are both saved, so it happens again on every launch.</p>
+<p class="fix">Fix: validate rules on save, compile each one once and skip a broken one with a warning, and add an error boundary.</p></li>
+<li><strong>A lost slice heals onto the wrong text.</strong>
+<p>Delete a slice's text and it's marked invalid, which is correct. The next unrelated keystroke maps its stale positions and marks it resolved. In my test it then pointed at " walked t".</p>
+<p class="fix">Fix: once a slice is invalid or ambiguous, stop mapping its positions and only re-find it by exact text plus context.</p></li>
+<li><strong>Highlights land on the wrong letters.</strong>
+<p>After a double space the highlight covers " The Spir". Inside a pasted block quote it covers "The Spir". After a pasted line break nothing highlights. The matcher counts characters in cleaned-up text that no longer lines up with the document.</p>
+<p class="fix">Fix: match the raw text through a character-to-position map, the approach <code>anchoring.ts</code> already uses.</p></li>
+<li><strong>Save failures are invisible.<span class="how">From code</span></strong>
+<p>A failed save still flips the label back to "Saved". The warning goes to a run log that only renders with <code>VITE_DEBUG_PANELS=1</code>.</p>
+<p class="fix">Fix: show "Not saved" with a one-line reason.</p></li>
+<li><strong>One document, two editors.<span class="how">From code</span></strong>
+<p>If a slice lives in the document you're writing, opening it in the panel starts a second editor on the same text. Whichever saves last overwrites the other's edits.</p>
+<p class="fix">Fix: goes away with the side panel.</p></li>
+<li class="minor"><strong>Smaller ones</strong>
+<p>A repeated phrase records the first occurrence's offset (0 instead of 27), which weakens repair. Deleting a slice writes no history event. The title bar shows Ctrl+H, Ctrl+\ and ?, but nothing listens for them. Clicking a highlighted word opens the panel, so you can't click into the word to edit it.</p></li>
+</ul>
+<!-- Agent: code paths behind each crack.
+  Bad regex: src/renderer/editor/editorUtils.ts collectMatchesForVisibleBlocks does `new RegExp(rule.pattern, "giu")` per block with no try/catch; called from editorDecorations.ts recomputeDecorations, which HarnessEditor.tsx runs in dispatchTransaction (before onDocumentSnapshotChange, so the save callback is skipped) and in two useEffects. No validation in harnessSchemas.ts (pattern: z.string()) or useEntityActions.ts. main.tsx has no ErrorBoundary.
+  Lost slice heals: src/shared/anchoring.ts mapBoundaryForward maps anchor.from/to with no check of the stored resolution status or anchor.versionSeen; resolveAnchorWithFallback returns the old anchor for invalid/ambiguous, and SliceRepository.rewriteBoundariesAfterSteps persists it, so the next transaction maps stale positions and returns "resolved".
+  Wrong letters: collectMatchesForVisibleBlocks takes indexOf positions from normalizeForMatch(block.text), which collapses whitespace runs and NFKC-normalizes, then adds them to block.from; `to` uses rule.pattern.length. editorDecorations.ts collectVisibleBlocks uses offset + 1 for every top-level block, which is wrong for nested blocks (blockquote > paragraph), and block.textBetween drops leaf nodes such as hard_break.
+  Save failures: src/renderer/state/useWorkspace.ts queueDocumentPersistence decrements pendingWrites in finally; EditorPane.tsx renders "Saved" when pendingWrites is 0; appendLog output is shown only by RunLog under DEBUG_PANELS in SidePanel.tsx.
+  Two editors: nothing in WorkspaceRepository.openDocument stops panelDocumentId === activeDocumentId; each HarnessEditor keeps its own EditorState and both persist full contentJson against the shared documentVersionsRef.
+  Smaller: buildAnchorFromRange and buildTextAnchorFromSelection set approxPlainTextOffset with index.text.indexOf(exact). WorkspaceRepository.deleteSlice and SliceRepository.deleteSlice append no event (AGENT.md R2). TitleBar.tsx kbd labels have no listener anywhere in src/. HarnessEditor handleClick calls onEntityClick, which App wires to openEntityContext.
+  Reproduction used a scratch tsx script against src/shared/anchoring.ts and src/renderer/editor/editorUtils.ts; turn each crack into a failing Vitest case first (anchoring.test.ts, editorUtils.test.ts). -->
+</section>
+
+<section id="flow">
+<h2><span class="num">3</span>The new flow</h2>
+<p class="lede">Two authoring actions, one way to read, one way to edit.</p>
+<ol class="flow">
+<li><strong>Make an entity</strong>Select "The Spire" and choose New entity. It's saved as the regex <code>\bThe\s+Spire\b</code>, ignoring case, with word edges that also handle accented names like &Eacute;owyn.</li>
+<li><strong>Add a slice</strong>In any document, select the paragraph, choose Add slice, and pick The Spire (or type a new name).</li>
+<li><strong>Read</strong>With Entities on, hover "The Spire" anywhere. The card lists each slice's text in large type.</li>
+<li><strong>Edit</strong>Click a slice in the card. The main viewport switches to that slice's document in Edit slices mode. Drag the handles. Done, or Esc, takes you back to where you were writing.</li>
+</ol>
+<p class="small">Until the full-page entity editor exists, click the entity's name in the hover card for a small dialog: its name, one regex per line, and Delete.</p>
+
+<div class="mocks" aria-hidden="true">
+<div>
+<p class="mock-label">Writing</p>
+<div class="mock">
+<div class="mock-bar"><span class="mock-title">Story Draft</span><span class="pill on">Entities</span><span class="pill">Slices</span><span class="pill">Edit slices</span></div>
+<div class="mock-paper"><p>By dusk the caravan had climbed within sight of <mark class="ent">the Spire</mark>, its upper windows already lit.</p></div>
+</div>
+</div>
+<div>
+<p class="mock-label">Editing slices</p>
+<div class="mock editing">
+<div class="mock-bar"><span class="mock-title">Places</span><span class="pill on">Entities</span><span class="pill on">Slices</span><span class="pill edit">Edit slices</span><button class="mock-done" type="button" tabindex="-1">Done</button></div>
+<div class="mock-paper"><p><span class="slice"><span class="handle"></span><mark class="ent">The Spire</mark> is the last tower of the old kingdom, older than the city around it.<span class="handle"></span></span></p><p>The harbor district sits below it.</p></div>
+</div>
+</div>
+</div>
+
+<table id="toggles">
+<thead><tr><th>Toggle</th><th>What it shows</th><th>Remembered</th><th>Key</th></tr></thead>
+<tbody>
+<tr><td>Entities</td><td>Regex highlights and the hover card, in every document, including while you edit slices.</td><td>Yes, as today</td><td>Ctrl+H</td></tr>
+<tr><td>Slices</td><td>Every slice in this document, as a soft tint with a bar in the margin.</td><td>Yes</td><td>Ctrl+J</td></tr>
+<tr><td>Edit slices</td><td>A colored frame and draggable start and end handles. Turns Slices on while active. You can still type.</td><td>No</td><td>Ctrl+E; Esc leaves</td></tr>
+</tbody>
+</table>
+<!-- Agent: Edit slices is session state, not persisted layout. Entering it from the hover card = flush persistence, remember the previous activeDocumentId and scrollTop, openDocument(surface "main") for the slice's document, scroll the slice into view. Done/Esc restores the previous document and scroll; one level of Back, not a stack. Drag: handle widgets already exist (editorDecorations.ts buildBoundaryHandle, class pm-slice-handle); add pointer tracking with view.posAtCoords, snap to word edges, and on release build the anchor from the editor's own snapshot (as everlinkShared.ts does) and call window.evernear.updateSliceBoundary, then patch the returned SliceBoundaryRecord into WorkspaceState. Slice rendering should move off per-text-node bordered spans (pm-slice-boundary pads and borders every text fragment) to a background tint plus a node decoration margin bar per covered block. -->
+</section>
+
+<section id="removed">
+<h2><span class="num">4</span>What goes away</h2>
+<ul class="plain">
+<li>The right side panel: entity chips, name field, rule form, slice cards, and the embedded document editor.</li>
+<li>Everlink's four-step flow (chooser, target document, pending rails, commit). New entity plus Add slice cover it.</li>
+<li>Title bar extras: brand, folder crumb, Panel, Full Screen, Shortcuts, and the key hints. The document title, the three toggles, and a save dot remain.</li>
+<li>The Words / Paras / Chars row above the editor.</li>
+<li>The right-click menu, and Bold, Italic and Copy in the selection bubble. Ctrl+B, Ctrl+I and Ctrl+C still work.</li>
+<li>The Shortcuts page, which describes buttons that no longer exist.</li>
+<li>Slice titles and "boundary mapped forward" lines in the hover card. A status appears only when a slice is lost.</li>
+<li>Rule kinds, and the Whole word and Allow possessive checkboxes.</li>
+<li>Thirteen interface font sizes, from 10.6px to 24px, become four. The editor goes from 17.4px to 22px; the interface runs 16px to 20px.</li>
+</ul>
+<div class="note">
+<p>That's about 1,700 lines across 18 files. Nothing in the database is deleted: rules convert in a migration that writes history events, and existing slices keep working.</p>
+<p><strong>Stays:</strong> the editor, the document tree (larger text, fewer labels), saving and history, anchors (fixed), the hover card, and the entity chooser, which becomes Add slice.</p>
+</div>
+<!-- Agent: files expected to go or fold, per wc -l on 2026-10-27: features/panes/{SidePanel.tsx,SidePanel.module.css,SliceViewer.tsx,PanelDocumentView.tsx,SlicePlacementPanel.tsx,PaneContent.module.css}, features/entities/{EntityList.tsx,EntityDetail.tsx,MatchingRuleEditor.tsx,EverlinkPanel.tsx,EntityPanels.module.css}, features/history/{RunLog.tsx,RunLog.module.css}, features/help/{HowToUsePage.tsx,HowToUsePage.module.css}, state/{useEverlinkPlacement.ts,useEverlinkSession.ts,usePendingPlacement.ts}. EversliceChooser.tsx survives as the Add slice chooser; its "+ New entity" row must also create the default regex rule. Layout columns panel_open, panel_mode, panel_document_id and recent_target_document_ids become unused; leave them in the schema for now. Update renderer-docs.html (R9), docs-index.html FB-001 status, and the Everlink swimlane in docs/data-flow-entity-slice-map.html in the same PR. -->
+</section>
+
+<section id="order">
+<h2><span class="num">5</span>Order of work</h2>
+<ul class="prs">
+<li><strong>PR 1, Core.</strong> Regex-only rules and the migration, the matcher fix, rule validation and the error boundary, anchors that fail closed, the offset fix, and a history event for deleted slices. Each starts as a failing test. Almost nothing visible changes.</li>
+<li><strong>PR 2, Quiet UI.</strong> Everything in "What goes away," the type scale, the Entities and Slices toggles, the slimmer hover card, New entity and Add slice, the entity dialog, and "Not saved." It also brings the Product Guide in line, since it still promises draggable side panels.</li>
+<li><strong>PR 3, Slice editor.</strong> Edit slices in the main viewport, working drag handles saved through the existing <code>updateSliceBoundary</code> call, Done and Back, and re-placing a lost slice by selecting text and pressing Place.</li>
+</ul>
+<p class="small">For each one, <code>npm run check</code> passes and I exercise the change in the running app. Branch and PR only; nothing merges without your OK.</p>
+<p class="small"><strong>Deferred:</strong> the full-page entity editor, rule-defined slice boundaries, and the multi-panel layout described in the Product Guide.</p>
+</section>
+
+<section id="calls">
+<h2><span class="num">6</span>Decisions</h2>
+<p class="lede">Drew's answers, 2026-10-27.</p>
+<ol class="calls">
+<li>Regex-only rules?<span class="default">Yes. A bare line ignores case, as before. Wrap it in slashes to set flags yourself: <code>/\bWill\b/</code> matches "Will" but not "will". Recorded as <a href="adr/adr-index.html#docs-adr-adr-008-matching-rules-are-regular-expressions">ADR-008</a>.</span></li>
+<li>Delete Everlink rather than hide it?<span class="default">Delete the code, but preserve the concept in Markdown: "If I ever released this, the concept of 'Everlink it!' is fun." See <a href="everlink-it-concept.md">everlink-it-concept.md</a>.</span></li>
+<li>The small entity dialog as the stopgap until the full page?<span class="default">Yes.</span></li>
+<li>By "delimiters," did you mean the anchor (document, positions, text), or rule-defined boundaries?<span class="default">"Just what was there already." A rules system might be more robust in the future, but there's no need to add complications when a competent user would likely avoid the problem to begin with. Recorded as <a href="adr/adr-index.html#docs-adr-adr-009-slice-boundaries-stay-on-the-text-anchor">ADR-009</a>.</span></li>
+</ol>
+</section>
+
+</div>
+</body>
+</html>

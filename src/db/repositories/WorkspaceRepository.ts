@@ -515,10 +515,11 @@ export class WorkspaceRepository {
   // synthetic *Materialized events here instead. See src/db/db-docs.html#src-db-orientation
   // ("Bootstrap precondition vs. event-derived state") for the policy.
   //
-  // The one operation here that CAN run on a non-empty database is
+  // The operations here that CAN run on a non-empty database are
   // `adoptOrphanedMatchingRules` — it materializes entities from pre-Phase-1
-  // matching rules and so MUST append events. That happens inside the
-  // EntityRepository call below.
+  // matching rules — and `convertLegacyMatchingRules`, which rewrites
+  // pre-ADR-008 literal and alias rules as regexes. Both MUST append
+  // events, and do so inside the EntityRepository calls below.
   private ensureSeedState(): void {
     if (this.projects.countProjects() === 0) {
       this.projects.insertSeedProject(DEFAULT_PROJECT_ID, DEFAULT_PROJECT_NAME);
@@ -559,6 +560,7 @@ export class WorkspaceRepository {
     }
 
     this.entities.adoptOrphanedMatchingRules(activeProjectId, () => randomUUID());
+    this.entities.convertLegacyMatchingRules();
 
     // Materialize a default layout row once documents + entities exist.
     this.layout.loadLayoutState(
