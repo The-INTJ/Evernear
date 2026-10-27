@@ -97,7 +97,7 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <nav class="context-index" aria-label="Agent Context Index">
 <header><h2>Agent Context Index</h2><p>Line ranges point into this HTML file.</p></header>
 <div class="index-grid">
-<a class="index-row" href="#for-human-code-doc"><div><strong>FOR_HUMAN_CODE--DOC</strong></div><div class="index-range">L104-L643</div><div>Use this section for FOR_HUMAN_CODE--DOC context.</div></a>
+<a class="index-row" href="#for-human-code-doc"><div><strong>FOR_HUMAN_CODE--DOC</strong></div><div class="index-range">L104-L644</div><div>Use this section for FOR_HUMAN_CODE--DOC context.</div></a>
 </div>
 </nav>
 <main>
@@ -108,7 +108,8 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <div class="section-content">
 <h1>FOR_HUMAN_CODE--DOC</h1>
 <h2>Last change</h2>
-<p>2026-04-18: Phase 1.5 foundation hardening — DB layer split into per-aggregate repositories, renderer split into hooks + feature components, anchor math unified in <code>src/shared/anchoring.ts</code> (fixing an off-by-one bug in <code>walkNodeText</code>), typed event catalog, schema migration framework, Zod validation at IPC boundary, Vitest suite, ESLint with runtime-boundary enforcement. Added the &quot;Current implementation map&quot; section below.
+<p>2026-10-27: back to the basics, part 1. <code>MatchingRule</code> is regex-only (<a href="docs/adr/adr-index.html#docs-adr-adr-008-matching-rules-are-regular-expressions">ADR-008</a>); slice boundaries stay on <code>TextAnchor</code> and fail closed once invalid or ambiguous (<a href="docs/adr/adr-index.html#docs-adr-adr-009-slice-boundaries-stay-on-the-text-anchor">ADR-009</a>); <code>buildPlainTextIndex</code> now mirrors <code>textBetween</code> exactly, including nested blocks. Plan: <a href="docs/back-to-basics-plan.html">docs/back-to-basics-plan.html</a>.
+2026-04-18: Phase 1.5 foundation hardening — DB layer split into per-aggregate repositories, renderer split into hooks + feature components, anchor math unified in <code>src/shared/anchoring.ts</code> (fixing an off-by-one bug in <code>walkNodeText</code>), typed event catalog, schema migration framework, Zod validation at IPC boundary, Vitest suite, ESLint with runtime-boundary enforcement. Added the &quot;Current implementation map&quot; section below.
 2026-04-17: defined selection-driven Everlink authoring, hybrid slice anchors, and fail-closed anchor-resolution states for future implementation passes.
 2026-04-17: added folders, generic documents, anchored outline nodes, and a future text-transfer provenance seam to the shared model and roadmap.
 2026-04-17: cleaned the merged planning pass, removed stale editor-choice language, and completed the MVP history architecture around event logs, step logs, checkpoints, and inline projections.
@@ -207,8 +208,8 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 </tr>
 <tr>
 <td><code>MatchingRule</code></td>
-<td>literal, alias, or pattern rule used by an entity to match text</td>
-<td>id, entityId, ruleType, pattern, normalization</td>
+<td>regular expression an entity uses to match text: bare (ignores case) or <code>/slash/</code> with the author's flags (ADR-008)</td>
+<td>id, entityId, label, pattern, enabled</td>
 </tr>
 <tr>
 <td><code>TextAnchor</code></td>

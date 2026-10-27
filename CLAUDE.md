@@ -34,6 +34,8 @@ Read in this order when you land cold:
 3. [FOR_HUMAN_CODE--DOC.html](FOR_HUMAN_CODE--DOC.html) — architecture, domain vocabulary, runtime boundaries. This is the canonical source for domain terms (`Entity`, `Slice`, `TextAnchor`, `DocumentStep`, etc.) — reuse them verbatim.
 4. [FOR_HUMAN_AND_AI_ROADMAP--DOC.html](FOR_HUMAN_AND_AI_ROADMAP--DOC.html) — phased execution plan and load-bearing spikes.
 
+The current direction, "back to the basics" (approved 2026-10-27: regex-only rules, one main editing viewport, slice editing in place), is the plan of record in [docs/back-to-basics-plan.html](docs/back-to-basics-plan.html).
+
 Durable decisions live in [docs/adr/adr-index.html](docs/adr/adr-index.html). Workflow-level decisions more specific than the north-star docs but not durable enough to be ADRs live in [docs/docs-index.html](docs/docs-index.html) (for example, FB-001 and FB-002). Proof work lives in [docs/experiments/experiments-index.html](docs/experiments/experiments-index.html).
 
 Coding conventions and the rules that keep the code maintainable as it scales live in [refineCode.html](refineCode.html) (the full convention layer) and [AGENT.md](AGENT.md) (a shorter hard-rules checklist an agent must pass before finishing a task). **If you are an AI agent working on code in this repo, read [AGENT.md](AGENT.md) now — it is short and the rules are enforceable.**
