@@ -302,15 +302,12 @@ describe("transaction boundaries", () => {
     const state = repository.ensureWorkspaceState();
     const projectId = state.layout.activeProjectId!;
 
-    const created = repository.createEntity({ projectId, name: "Protagonist" });
-    const entityId = created.layout.selectedEntityId!;
-
-    repository.upsertMatchingRule({
-      entityId,
-      label: "Alias",
-      pattern: "\\bShe\\b",
-      enabled: true,
+    const created = repository.createEntity({
+      projectId,
+      name: "Protagonist",
+      rules: [{ pattern: "\\bShe\\b", enabled: true }],
     });
+    const entityId = created.layout.selectedEntityId!;
 
     const before = repository.loadWorkspace();
     expect(before.matchingRules.length).toBeGreaterThan(0);
@@ -409,6 +406,16 @@ describe("slice boundary mutations", () => {
 
     repository.deleteSlice({ sliceId });
     expect(countEvents(harness, "slice", "sliceDeleted")).toBe(eventsBefore + 1);
+  });
+});
+
+describe("layout", () => {
+  it("persists the slice highlighting toggle, off by default", () => {
+    const state = repository.ensureWorkspaceState();
+    expect(state.layout.slicesVisible).toBe(false);
+
+    repository.updateLayout({ slicesVisible: true });
+    expect(repository.loadWorkspace().layout.slicesVisible).toBe(true);
   });
 });
 

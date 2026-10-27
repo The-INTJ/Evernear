@@ -1,5 +1,5 @@
-// The FB-002 modal for binding a selection to an entity without leaving
-// the current document. Renders a filterable list of entities (searching
+// The Add slice chooser (FB-002) for binding a selection to an entity
+// without leaving the current document. Renders a filterable list of entities (searching
 // names + alias patterns + slice titles) plus an always-present
 // "+ New entity" row at the bottom. Keyboard-driven: Arrow keys navigate,
 // Enter commits, Escape closes. There is no backdrop-click dismiss — the
@@ -157,8 +157,7 @@ export function EversliceChooser(props: Props) {
   return (
     <ModalShell>
       <header className={modalShellStyles.header}>
-        <span className={styles.kicker}>Everslice it!</span>
-        <h2>Bind selection to an entity</h2>
+        <h2>Add slice to an entity</h2>
       </header>
       <Card variant="selection">
         <strong>Selected text</strong>
@@ -169,7 +168,7 @@ export function EversliceChooser(props: Props) {
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Search entities by name, alias, or slice title..."
+        placeholder="Search entities by name, rule, or slice..."
       />
       <ul className={styles.list} role="listbox">
         {entityRows.length === 0 && query.trim().length > 0 ? (
@@ -220,7 +219,7 @@ export function EversliceChooser(props: Props) {
       </ul>
       <div className={styles.actions}>
         <span className={styles.hints}>
-          <kbd>Up/Down</kbd> navigate <kbd>Enter</kbd> bind <kbd>Esc</kbd> close
+          <kbd>Up/Down</kbd> choose <kbd>Enter</kbd> add <kbd>Esc</kbd> close
         </span>
         <Button variant="secondary" size="compact" onClick={onClose}>
           Cancel

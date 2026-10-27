@@ -61,7 +61,7 @@ export function buildClipboardAudit(
 ): ClipboardAuditResult {
   const leakedMarkers = [
     "pm-match-highlight",
-    "pm-slice-boundary",
+    "pm-slice",
     "pm-pending-slice",
     "pm-entity-preview",
     "pm-workbench",

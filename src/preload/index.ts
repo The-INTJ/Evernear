@@ -66,11 +66,8 @@ const bridge: HarnessBridge = {
   async deleteEntity(input) {
     return ipcRenderer.invoke(HARNESS_CHANNELS.deleteEntity, input);
   },
-  async upsertMatchingRule(input) {
-    return ipcRenderer.invoke(HARNESS_CHANNELS.upsertMatchingRule, input);
-  },
-  async deleteMatchingRule(input) {
-    return ipcRenderer.invoke(HARNESS_CHANNELS.deleteMatchingRule, input);
+  async setEntityRules(input) {
+    return ipcRenderer.invoke(HARNESS_CHANNELS.setEntityRules, input);
   },
   async createSlice(input) {
     return ipcRenderer.invoke(HARNESS_CHANNELS.createSlice, input);

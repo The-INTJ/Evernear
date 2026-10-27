@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import type { StoredDocumentSnapshot } from "../../shared/domain/document";
 import type { EntityRecord, WorkspaceState } from "../../shared/domain/workspace";
 import type { HoverPreview as HoverPreviewState } from "./sessionTypes";
-import type { WorkspaceActions } from "./useWorkspaceActions";
 import type { WorkspaceLookups } from "./useWorkspaceLookups";
 import { selectedSlicesForEntity, type ResolvedSliceView } from "../utils/workspace";
 
@@ -11,8 +9,6 @@ const HOVER_PREVIEW_HANDOFF_DELAY_MS = 800;
 const HOVER_PREVIEW_EXIT_DELAY_MS = 180;
 
 type UseHoverPreviewInput = {
-  actions: WorkspaceActions;
-  activeDocument: StoredDocumentSnapshot | null;
   lookups: WorkspaceLookups;
   workspace: WorkspaceState | null;
 };
@@ -26,7 +22,6 @@ type EditorHoverPayload = {
 type HoverPreviewHook = {
   clearHoverState: () => void;
   handleEditorHover: (payload: EditorHoverPayload | null) => void;
-  handlePinHoverPreview: () => void;
   handlePreviewEnter: () => void;
   handlePreviewLeave: () => void;
   hoverEntity: EntityRecord | null;
@@ -34,12 +29,7 @@ type HoverPreviewHook = {
   hoverSlices: ResolvedSliceView[];
 };
 
-export function useHoverPreview({
-  actions,
-  activeDocument,
-  lookups,
-  workspace,
-}: UseHoverPreviewInput): HoverPreviewHook {
+export function useHoverPreview({ lookups, workspace }: UseHoverPreviewInput): HoverPreviewHook {
   const [hoverPreview, setHoverPreview] = useState<HoverPreviewState | null>(null);
   const hoverCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hoverPreviewPointerInsideRef = useRef(false);
@@ -118,21 +108,6 @@ export function useHoverPreview({
     scheduleHoverPreviewClose(HOVER_PREVIEW_EXIT_DELAY_MS);
   }, [scheduleHoverPreviewClose]);
 
-  const handlePinHoverPreview = useCallback(() => {
-    if (!hoverPreview || !hoverEntity) return;
-    const firstSlice = hoverSlices[0];
-    const targetDocumentId =
-      firstSlice?.boundary?.documentId ?? firstSlice?.document?.id ?? activeDocument?.id ?? null;
-    if (targetDocumentId) {
-      actions.openSliceInPanel(targetDocumentId, hoverEntity.id);
-    } else {
-      actions.selectEntity(hoverEntity.id);
-    }
-    hoverPreviewPointerInsideRef.current = false;
-    clearHoverCloseTimeout();
-    setHoverPreview(null);
-  }, [actions, activeDocument, clearHoverCloseTimeout, hoverEntity, hoverPreview, hoverSlices]);
-
   const clearHoverState = useCallback(() => {
     hoverPreviewPointerInsideRef.current = false;
     clearHoverCloseTimeout();
@@ -142,7 +117,6 @@ export function useHoverPreview({
   return {
     clearHoverState,
     handleEditorHover,
-    handlePinHoverPreview,
     handlePreviewEnter,
     handlePreviewLeave,
     hoverEntity,

@@ -19,7 +19,7 @@
   background: transparent;
   color: var(--color-text);
   cursor: pointer;
-  font-size: 0.82rem;
+  font-size: var(--font-size-ui);
   text-align: left;
 }
 

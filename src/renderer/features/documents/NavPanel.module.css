@@ -78,7 +78,7 @@
 .treeFolderRow {
   grid-template-columns: 14px 16px minmax(0, 1fr) auto;
   gap: var(--space-3);
-  font-size: 0.9rem;
+  font-size: var(--font-size-ui);
   font-weight: 500;
 }
 
@@ -160,7 +160,7 @@
   grid-template-columns: 16px minmax(0, 1fr);
   gap: var(--space-3);
   color: var(--color-text-muted);
-  font-size: 0.86rem;
+  font-size: var(--font-size-ui);
 }
 
 .treeDocumentIcon::before {
@@ -186,7 +186,7 @@
 .treeCount {
   color: var(--color-text-faint);
   font-family: var(--font-label);
-  font-size: 0.72rem;
+  font-size: var(--font-size-ui);
 }
 
 .treeFolderRenameInput {

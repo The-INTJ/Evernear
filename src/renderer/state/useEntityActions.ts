@@ -1,111 +1,56 @@
-// Entity + matching-rule IPC wrappers. These callbacks own the entity
-// detail pane's mutations: select an entity, rename it, attach rules,
-// toggle/delete rules, create a blank entity, delete an entity.
+// Entity IPC wrappers: create an entity from selected text, save the entity
+// dialog (name plus rule list), delete an entity.
 
 import { useCallback } from "react";
 
-import type {
-  MatchingRuleRecord,
-  ProjectRecord,
-  WorkspaceState,
-} from "../../shared/domain/workspace";
-import type { RuleFormState } from "./sessionTypes";
-import { initialRuleForm } from "./sessionTypes";
+import type { MatchingRuleInput, ProjectRecord } from "../../shared/domain/workspace";
+import { patternFromText } from "../../shared/matchingPatterns";
 import type { WorkspaceHook } from "./useWorkspace";
 
 type UseEntityActionsInput = {
   workspaceHook: WorkspaceHook;
   activeProject: ProjectRecord | null;
-  selectedEntity: { id: string; name: string } | null;
-  entityNameDraft: string;
-  ruleForm: RuleFormState;
-  setRuleForm: React.Dispatch<React.SetStateAction<RuleFormState>>;
 };
 
 export type EntityActions = {
-  selectEntity: (entityId: string) => void;
-  saveEntityName: () => void;
-  createEntityRule: () => void;
-  createManualEntity: () => void;
-  toggleRule: (rule: MatchingRuleRecord) => void;
-  deleteRule: (ruleId: string) => void;
-  deleteEntity: () => void;
+  createEntityFromText: (text: string) => void;
+  saveEntity: (entityId: string, name: string, rules: MatchingRuleInput[]) => Promise<boolean>;
+  deleteEntity: (entityId: string) => void;
 };
 
 export function useEntityActions(input: UseEntityActionsInput): EntityActions {
-  const { workspaceHook: { runMutation, appendLog, workspaceRef }, activeProject, selectedEntity, entityNameDraft, ruleForm, setRuleForm } = input;
-  const currentWorkspace = (): WorkspaceState | null => workspaceRef.current;
+  const { workspaceHook: { runMutation, workspaceRef }, activeProject } = input;
 
-  const selectEntity = useCallback((entityId: string) => {
-    void runMutation(() => window.evernear.updateLayout({
-      selectedEntityId: entityId,
-      panelOpen: true,
-      panelMode: "entities",
+  const createEntityFromText = useCallback((text: string) => {
+    const name = text.trim().replace(/\s+/g, " ");
+    if (!activeProject || !name) return;
+    void runMutation(() => window.evernear.createEntity({
+      projectId: activeProject.id,
+      name,
+      rules: [{ pattern: patternFromText(name), enabled: true }],
     }));
+  }, [runMutation, activeProject]);
+
+  const saveEntity = useCallback(async (entityId: string, name: string, rules: MatchingRuleInput[]) => {
+    const current = workspaceRef.current?.entities.find((entity) => entity.id === entityId);
+    if (!current) return false;
+    const trimmedName = name.trim();
+
+    let saved = false;
+    await runMutation(async () => {
+      if (trimmedName && trimmedName !== current.name) {
+        await window.evernear.updateEntity({ entityId, name: trimmedName });
+      }
+      const next = await window.evernear.setEntityRules({ entityId, rules });
+      saved = true;
+      return next;
+    });
+    return saved;
+  }, [runMutation, workspaceRef]);
+
+  const deleteEntity = useCallback((entityId: string) => {
+    void runMutation(() => window.evernear.deleteEntity({ entityId }));
   }, [runMutation]);
 
-  const saveEntityName = useCallback(() => {
-    if (!selectedEntity || entityNameDraft.trim() === selectedEntity.name) return;
-    void runMutation(
-      () => window.evernear.updateEntity({ entityId: selectedEntity.id, name: entityNameDraft }),
-      "Updated the entity name.",
-    );
-  }, [runMutation, selectedEntity, entityNameDraft]);
-
-  const createEntityRule = useCallback(() => {
-    if (!selectedEntity) return;
-    if (ruleForm.pattern.trim().length === 0) {
-      appendLog("Matching rules need a pattern.", "warn");
-      return;
-    }
-    const form = ruleForm;
-    const label = form.label.trim() || form.pattern.trim();
-    setRuleForm(initialRuleForm);
-    void runMutation(
-      () => window.evernear.upsertMatchingRule({
-        entityId: selectedEntity.id,
-        label,
-        pattern: form.pattern.trim(),
-        enabled: form.enabled,
-      }),
-      `Added rule "${label}".`,
-    );
-  }, [runMutation, selectedEntity, ruleForm, setRuleForm, appendLog]);
-
-  const createManualEntity = useCallback(() => {
-    if (!activeProject) return;
-    const ws = currentWorkspace();
-    const nextIndex = (ws?.entities.length ?? 0) + 1;
-    void runMutation(
-      () => window.evernear.createEntity({ projectId: activeProject.id, name: `Entity ${nextIndex}` }),
-      "Created a new empty entity.",
-    );
-  }, [runMutation, activeProject, workspaceRef]);
-
-  const toggleRule = useCallback((rule: MatchingRuleRecord) => {
-    void runMutation(() => window.evernear.upsertMatchingRule({
-      id: rule.id,
-      entityId: rule.entityId,
-      label: rule.label,
-      pattern: rule.pattern,
-      enabled: !rule.enabled,
-    }));
-  }, [runMutation]);
-
-  const deleteRule = useCallback((ruleId: string) => {
-    void runMutation(() => window.evernear.deleteMatchingRule({ ruleId }), "Deleted the matching rule.");
-  }, [runMutation]);
-
-  const deleteEntity = useCallback(() => {
-    if (!selectedEntity) return;
-    void runMutation(
-      () => window.evernear.deleteEntity({ entityId: selectedEntity.id }),
-      `Deleted "${selectedEntity.name}" and cleaned up orphaned slice records.`,
-    );
-  }, [runMutation, selectedEntity]);
-
-  return {
-    selectEntity, saveEntityName, createEntityRule, createManualEntity,
-    toggleRule, deleteRule, deleteEntity,
-  };
+  return { createEntityFromText, saveEntity, deleteEntity };
 }

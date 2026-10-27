@@ -20,7 +20,6 @@ import {
   DeleteDocumentInputSchema,
   DeleteEntityInputSchema,
   DeleteFolderInputSchema,
-  DeleteMatchingRuleInputSchema,
   DeleteSliceInputSchema,
   MoveDocumentInputSchema,
   MoveFolderInputSchema,
@@ -28,13 +27,13 @@ import {
   OpenDocumentInputSchema,
   OpenProjectInputSchema,
   ReorderDocumentInputSchema,
+  SetEntityRulesInputSchema,
   ReplayDocumentArgsSchema,
   UpdateDocumentMetaInputSchema,
   UpdateEntityInputSchema,
   UpdateFolderInputSchema,
   UpdateLayoutInputSchema,
   UpdateProjectInputSchema,
-  UpsertMatchingRuleInputSchema,
   WriteCheckpointArgsSchema,
   parseInput,
 } from "../shared/contracts/harnessSchemas";
@@ -91,10 +90,8 @@ export function setupIpcHandlers(
   ipcMain.handle(C.deleteEntity, (_event, input) =>
     repository.deleteEntity(parseInput(DeleteEntityInputSchema, input, C.deleteEntity)));
 
-  ipcMain.handle(C.upsertMatchingRule, (_event, input) =>
-    repository.upsertMatchingRule(parseInput(UpsertMatchingRuleInputSchema, input, C.upsertMatchingRule)));
-  ipcMain.handle(C.deleteMatchingRule, (_event, input) =>
-    repository.deleteMatchingRule(parseInput(DeleteMatchingRuleInputSchema, input, C.deleteMatchingRule)));
+  ipcMain.handle(C.setEntityRules, (_event, input) =>
+    repository.setEntityRules(parseInput(SetEntityRulesInputSchema, input, C.setEntityRules)));
 
   ipcMain.handle(C.createSlice, (_event, input) =>
     repository.createSlice(parseInput(CreateSliceInputSchema, input, C.createSlice)));

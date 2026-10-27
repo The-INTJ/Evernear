@@ -138,6 +138,7 @@ export const UpdateLayoutInputSchema = z.object({
   selectedEntityId: z.string().nullable().optional(),
   expandedFolderIds: z.array(z.string()).optional(),
   highlightsEnabled: z.boolean().optional(),
+  slicesVisible: z.boolean().optional(),
   panelOpen: z.boolean().optional(),
   panelMode: PanelModeSchema.optional(),
   lastFocusedDocumentId: z.string().nullable().optional(),
@@ -159,9 +160,24 @@ export const ApplyDocumentTransactionInputSchema = z.object({
 
 // ──────────────── entity ────────────────
 
+// A pattern that doesn't compile would be skipped by every editor, so it
+// never reaches the database.
+const MatchingPatternSchema = z.string().superRefine((pattern, ctx) => {
+  const compiled = compileMatchingPattern(pattern);
+  if (!compiled.ok) {
+    ctx.addIssue({ code: "custom", message: `Not a valid regex: ${compiled.error}` });
+  }
+});
+
+const MatchingRuleInputSchema = z.object({
+  pattern: MatchingPatternSchema,
+  enabled: z.boolean(),
+});
+
 export const CreateEntityInputSchema = z.object({
   projectId: NonEmptyString,
   name: z.string(),
+  rules: z.array(MatchingRuleInputSchema).max(200).optional(),
 });
 
 export const UpdateEntityInputSchema = z.object({
@@ -173,25 +189,9 @@ export const DeleteEntityInputSchema = z.object({
   entityId: NonEmptyString,
 });
 
-// A pattern that doesn't compile would be skipped by every editor, so it
-// never reaches the database.
-const MatchingPatternSchema = z.string().superRefine((pattern, ctx) => {
-  const compiled = compileMatchingPattern(pattern);
-  if (!compiled.ok) {
-    ctx.addIssue({ code: "custom", message: `Not a valid regex: ${compiled.error}` });
-  }
-});
-
-export const UpsertMatchingRuleInputSchema = z.object({
-  id: z.string().optional(),
+export const SetEntityRulesInputSchema = z.object({
   entityId: NonEmptyString,
-  label: z.string(),
-  pattern: MatchingPatternSchema,
-  enabled: z.boolean(),
-});
-
-export const DeleteMatchingRuleInputSchema = z.object({
-  ruleId: NonEmptyString,
+  rules: z.array(MatchingRuleInputSchema).max(200),
 });
 
 // ──────────────── slice ────────────────

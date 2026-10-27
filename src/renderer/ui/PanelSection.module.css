@@ -22,7 +22,7 @@
   margin: 0;
   color: var(--color-text-faint);
   font-family: var(--font-label);
-  font-size: 0.66rem;
+  font-size: var(--font-size-ui);
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }

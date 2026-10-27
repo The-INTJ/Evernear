@@ -1,8 +1,8 @@
 .titleBar {
   display: grid;
-  grid-template-columns: 220px minmax(260px, 1fr) auto;
+  grid-template-columns: minmax(200px, 1fr) auto auto;
   align-items: center;
-  gap: var(--space-9);
+  gap: var(--space-12);
   min-height: var(--titlebar-height);
   padding: 0 var(--window-controls-reserve) 0 var(--space-12);
   border-bottom: 1px solid var(--color-border-panel);
@@ -12,160 +12,87 @@
   user-select: none;
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: var(--space-5);
-  min-width: 0;
-  color: var(--color-accent-strong);
-  font-size: 0.78rem;
-  font-weight: 650;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
-
-.brandMark {
-  width: 7px;
-  height: 7px;
-  flex: 0 0 auto;
-  border-radius: var(--radius-xs);
-  background: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(245, 185, 113, 0.18);
-}
-
-.documentTrail {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: var(--space-6);
-  color: var(--color-text);
-  font-size: 0.9rem;
-  font-weight: 500;
-  -webkit-app-region: no-drag;
-}
-
-.crumb,
-.separator {
-  flex: 0 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  color: var(--color-text-faint);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.separator {
-  flex-basis: auto;
-  opacity: 0.5;
-}
-
-.input {
-  width: min(340px, 34vw);
-  min-width: 160px;
+.title {
+  width: min(520px, 100%);
   height: var(--control-compact-height);
   border: 0;
   border-radius: var(--radius-control);
-  padding: 0 var(--space-3);
+  padding: 0 var(--space-4);
   background: transparent;
   color: var(--color-text);
   font: inherit;
+  font-size: var(--font-size-ui-large);
   font-weight: 600;
   outline: none;
-}
-
-.input:hover,
-.input:focus {
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.input:disabled {
-  opacity: 0.48;
-}
-
-.commands {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  min-width: 0;
   -webkit-app-region: no-drag;
 }
 
-.command {
-  display: inline-flex;
-  min-height: 24px;
-  align-items: center;
-  gap: var(--space-3);
-  border: 0;
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 0 var(--space-6);
+.title:hover,
+.title:focus {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.title:disabled {
+  opacity: 0.48;
+}
+
+.toggles {
+  display: flex;
+  gap: var(--space-4);
+  -webkit-app-region: no-drag;
+}
+
+.toggle {
+  min-height: var(--control-compact-height);
+  border: 1px solid var(--color-border-control);
+  border-radius: var(--radius-pill);
+  padding: 0 var(--space-8);
   background: transparent;
   color: var(--color-text-muted);
   cursor: pointer;
   font: inherit;
-  font-size: 0.86rem;
-  line-height: 1;
+  font-size: var(--font-size-ui);
   transition:
-    color 140ms ease,
-    opacity 140ms ease;
+    background 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
 }
 
-.command:first-child {
-  border-left: 0;
-}
-
-.command:hover:not(:disabled) {
+.toggle:hover {
   color: var(--color-text);
 }
 
-.command:disabled {
-  cursor: not-allowed;
-  opacity: 0.42;
-}
-
 .on {
-  color: var(--color-success);
+  border-color: rgba(245, 185, 113, 0.45);
+  background: rgba(245, 185, 113, 0.16);
+  color: var(--color-accent-strong);
 }
 
-.kbd {
+.save {
+  min-width: 84px;
   color: var(--color-text-faint);
-  font-family: var(--font-label);
-  font-size: 0.72rem;
+  font-size: var(--font-size-ui);
+  text-align: right;
 }
 
-@media (max-width: 1380px) {
-  .titleBar {
-    grid-template-columns: 150px minmax(220px, 1fr);
-    grid-template-rows: auto auto;
-    gap: 0 var(--space-8);
-    height: auto;
-    min-height: var(--titlebar-height);
-    padding: var(--space-3) var(--space-8);
-  }
-
-  .commands {
-    grid-column: 1 / -1;
-    justify-content: center;
-  }
+.failed {
+  color: var(--color-warn);
+  font-weight: 600;
+  cursor: help;
 }
 
 @media (max-width: 900px) {
   .titleBar {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--space-3);
+    padding: var(--space-3) var(--space-8);
   }
 
-  .brand,
-  .documentTrail,
-  .commands {
-    justify-content: center;
-  }
-
-  .documentTrail,
-  .commands {
+  .toggles {
     flex-wrap: wrap;
   }
 
-  .input {
-    width: min(360px, 100%);
+  .save {
+    text-align: left;
   }
 }

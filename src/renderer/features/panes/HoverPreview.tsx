@@ -3,8 +3,7 @@ import { useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import type { EntityRecord } from "../../../shared/domain/workspace";
 import type { HoverPreview as HoverPreviewState } from "../../state/sessionTypes";
 import type { ResolvedSliceView } from "../../utils/workspace";
-import { formatBoundaryReason } from "../../utils/formatting";
-import { Card, Swatch, cardStyles, classNames } from "../../ui";
+import { classNames } from "../../ui";
 import styles from "./HoverPreview.module.css";
 
 const POINTER_GAP_PX = 12;
@@ -14,12 +13,21 @@ type Props = {
   hover: HoverPreviewState;
   entity: EntityRecord | null;
   slices: ResolvedSliceView[];
-  onMouseEnter?: () => void;
-  onMouseLeave?: () => void;
-  onPin?: () => void;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
+  onOpenSlice: (sliceId: string) => void;
+  onOpenEntity: (entityId: string) => void;
 };
 
-export function HoverPreview({ hover, entity, slices, onMouseEnter, onMouseLeave, onPin }: Props) {
+export function HoverPreview({
+  hover,
+  entity,
+  slices,
+  onMouseEnter,
+  onMouseLeave,
+  onOpenSlice,
+  onOpenEntity,
+}: Props) {
   const previewRef = useRef<HTMLDivElement | null>(null);
   const [position, setPosition] = useState(() => initialPreviewPosition(hover));
 
@@ -70,42 +78,40 @@ export function HoverPreview({ hover, entity, slices, onMouseEnter, onMouseLeave
       style={style}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
-      onClick={onPin}
-      role={onPin ? "button" : undefined}
-      title={onPin ? "Click to dock as a panel" : undefined}
     >
-      <div className={styles.header}>
-        <h3>
-          <Swatch seed={entity.name} />
-          {entity.name}
-        </h3>
-      </div>
-      <div className={styles.body}>
-        {slices.length === 0 ? (
-          <p className={styles.empty}>No linked slices yet.</p>
-        ) : (
-          slices.map(({ slice, boundary, document }) => {
-            // Prefer the boundary anchor's full captured text — `slice.excerpt`
-            // is truncated to 180 chars at DB write, which often clips the
-            // passage to a single line.
-            const body = boundary?.resolution.anchor.exact ?? slice.excerpt;
+      <button
+        className={styles.entityName}
+        type="button"
+        title="Edit this entity"
+        onClick={() => onOpenEntity(entity.id)}
+      >
+        {entity.name}
+      </button>
+      {slices.length === 0 ? (
+        <p className={styles.empty}>No slices yet. Select a passage and choose Add slice.</p>
+      ) : (
+        <ul className={styles.slices}>
+          {slices.map(({ slice, boundary, document }) => {
+            const status = boundary?.resolution.status;
+            const lost = !boundary || status === "invalid" || status === "ambiguous";
             return (
-              <Card key={slice.id}>
-                <div className={cardStyles.meta}>
-                  <strong>{slice.title}</strong>
-                  <span>{document?.title ?? "Document"}</span>
-                </div>
-                <p className={classNames(cardStyles.copy, styles.excerpt)}>{body}</p>
-                {boundary ? (
-                  <p className={cardStyles.reason}>
-                    {formatBoundaryReason(boundary.resolution.reason)}
-                  </p>
-                ) : null}
-              </Card>
+              <li key={slice.id}>
+                <button
+                  className={classNames(styles.slice, lost && styles.lost)}
+                  type="button"
+                  onClick={() => onOpenSlice(slice.id)}
+                >
+                  <span className={styles.document}>
+                    {document?.title ?? "Document"}
+                    {lost ? " · text not found" : ""}
+                  </span>
+                  <span className={styles.text}>{boundary?.resolution.anchor.exact ?? slice.excerpt}</span>
+                </button>
+              </li>
             );
-          })
-        )}
-      </div>
+          })}
+        </ul>
+      )}
     </div>
   );
 }

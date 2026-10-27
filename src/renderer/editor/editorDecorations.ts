@@ -43,22 +43,27 @@ export function recomputeDecorations(
     );
   }
 
+  const docSize = view.state.doc.content.size;
   for (const boundary of sliceBoundaries) {
     // Unresolved boundaries keep positions from an older version of the
     // document; painting them would point at the wrong text.
     const { status } = boundary.resolution;
     if (status === "invalid" || status === "ambiguous") continue;
     const { from, to } = boundary.resolution.anchor;
-    if (from >= to) continue;
+    if (from >= to || to > docSize) continue;
 
-    const inlineClass = boundariesEditable
-      ? `pm-slice-boundary pm-slice-boundary--${boundary.resolution.status} pm-slice-boundary--editing`
-      : `pm-slice-boundary pm-slice-boundary--${boundary.resolution.status}`;
-
+    // A tint over the text plus one bar in the margin per paragraph the
+    // slice touches. Inline borders would repeat at every text fragment
+    // (each mark change, each paragraph) and nudge the prose sideways.
     decorations.push(Decoration.inline(from, to, {
-      class: inlineClass,
+      class: boundariesEditable ? "pm-slice pm-slice--editing" : "pm-slice",
       "data-slice-id": boundary.sliceId,
     }, { inclusiveEnd: true }));
+    view.state.doc.nodesBetween(from, to, (node, pos) => {
+      if (!node.isTextblock) return true;
+      decorations.push(Decoration.node(pos, pos + node.nodeSize, { class: "pm-slice-block" }));
+      return false;
+    });
 
     if (boundariesEditable) {
       decorations.push(Decoration.widget(from, buildBoundaryHandle(boundary.sliceId, "start"), { side: -1 }));

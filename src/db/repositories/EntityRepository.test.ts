@@ -27,43 +27,72 @@ afterEach(() => {
   rmSync(tempDir, { recursive: true, force: true });
 });
 
-describe("EntityRepository.deleteMatchingRule", () => {
-  it("deletes the rule row and appends one matchingRuleDeleted event", () => {
-    const state = repository.ensureWorkspaceState();
-    const projectId = state.layout.activeProjectId!;
+describe("EntityRepository.setEntityRules", () => {
+  function createAragorn(): string {
+    const projectId = repository.ensureWorkspaceState().layout.activeProjectId!;
+    return repository.createEntity({
+      projectId,
+      name: "Aragorn",
+      rules: [
+        { pattern: "\\bAragorn\\b", enabled: true },
+        { pattern: "\\bStrider\\b", enabled: true },
+      ],
+    }).layout.selectedEntityId!;
+  }
 
-    const afterEntity = repository.createEntity({ projectId, name: "Aragorn" });
-    const entityId = afterEntity.layout.selectedEntityId!;
+  function rulesOf(entityId: string) {
+    return repository.loadWorkspace().matchingRules.filter((rule) => rule.entityId === entityId);
+  }
 
-    const afterRule = repository.upsertMatchingRule({
+  it("creates starting rules with the entity, one matchingRuleCreated event each", () => {
+    const createdBefore = countEvents(harness, "matchingRule", "matchingRuleCreated");
+    const entityId = createAragorn();
+    expect(rulesOf(entityId).map((rule) => rule.pattern).sort()).toEqual(["\\bAragorn\\b", "\\bStrider\\b"]);
+    expect(countEvents(harness, "matchingRule", "matchingRuleCreated")).toBe(createdBefore + 2);
+  });
+
+  it("keeps ids for unchanged patterns, deletes missing ones, and creates new ones", () => {
+    const entityId = createAragorn();
+    const aragornId = rulesOf(entityId).find((rule) => rule.pattern === "\\bAragorn\\b")!.id;
+    const deletedBefore = countEvents(harness, "matchingRule", "matchingRuleDeleted");
+    const updatedBefore = countEvents(harness, "matchingRule", "matchingRuleUpdated");
+
+    repository.setEntityRules({
       entityId,
-      label: "Strider",
-      pattern: "\\bStrider\\b",
-      enabled: true,
+      rules: [
+        { pattern: "\\bAragorn\\b", enabled: true },
+        { pattern: "\\bElessar\\b", enabled: true },
+      ],
     });
-    const rule = afterRule.matchingRules.find((r) => r.entityId === entityId && r.label === "Strider");
-    expect(rule).toBeDefined();
 
-    const deletedEventsBefore = countEvents(harness, "matchingRule", "matchingRuleDeleted");
-
-    repository.deleteMatchingRule({ ruleId: rule!.id });
-
-    const after = repository.loadWorkspace().matchingRules;
-    expect(after.find((r) => r.id === rule!.id)).toBeUndefined();
-
-    const deletedEventsAfter = countEvents(harness, "matchingRule", "matchingRuleDeleted");
-    expect(deletedEventsAfter).toBe(deletedEventsBefore + 1);
+    const after = rulesOf(entityId);
+    expect(after.map((rule) => rule.pattern).sort()).toEqual(["\\bAragorn\\b", "\\bElessar\\b"]);
+    expect(after.find((rule) => rule.pattern === "\\bAragorn\\b")!.id).toBe(aragornId);
+    expect(countEvents(harness, "matchingRule", "matchingRuleDeleted")).toBe(deletedBefore + 1);
+    expect(countEvents(harness, "matchingRule", "matchingRuleUpdated")).toBe(updatedBefore);
 
     const payload = latestEventPayload(harness, "matchingRule", "matchingRuleDeleted");
     expect(payload.entityId).toBe(entityId);
-    expect(payload.label).toBe("Strider");
+    expect(payload.label).toBe("\\bStrider\\b");
   });
 
-  it("is a no-op (no event) when the rule id does not exist", () => {
-    const deletedEventsBefore = countEvents(harness, "matchingRule", "matchingRuleDeleted");
-    repository.deleteMatchingRule({ ruleId: "not-a-real-rule-id" });
-    const deletedEventsAfter = countEvents(harness, "matchingRule", "matchingRuleDeleted");
-    expect(deletedEventsAfter).toBe(deletedEventsBefore);
+  it("only appends an update when a kept rule's enabled flag changes", () => {
+    const entityId = createAragorn();
+    const updatedBefore = countEvents(harness, "matchingRule", "matchingRuleUpdated");
+
+    repository.setEntityRules({
+      entityId,
+      rules: [
+        { pattern: "\\bAragorn\\b", enabled: true },
+        { pattern: "\\bStrider\\b", enabled: false },
+        { pattern: "\\bStrider\\b", enabled: true },
+      ],
+    });
+
+    const strider = rulesOf(entityId).filter((rule) => rule.pattern === "\\bStrider\\b");
+    expect(strider).toHaveLength(1);
+    expect(strider[0]!.enabled).toBe(false);
+    expect(countEvents(harness, "matchingRule", "matchingRuleUpdated")).toBe(updatedBefore + 1);
   });
 });
 

@@ -97,7 +97,7 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <nav class="context-index" aria-label="Agent Context Index">
 <header><h2>Agent Context Index</h2><p>Line ranges point into this HTML file.</p></header>
 <div class="index-grid">
-<a class="index-row" href="#for-human-code-doc"><div><strong>FOR_HUMAN_CODE--DOC</strong></div><div class="index-range">L104-L644</div><div>Use this section for FOR_HUMAN_CODE--DOC context.</div></a>
+<a class="index-row" href="#for-human-code-doc"><div><strong>FOR_HUMAN_CODE--DOC</strong></div><div class="index-range">L104-L649</div><div>Use this section for FOR_HUMAN_CODE--DOC context.</div></a>
 </div>
 </nav>
 <main>
@@ -108,7 +108,8 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <div class="section-content">
 <h1>FOR_HUMAN_CODE--DOC</h1>
 <h2>Last change</h2>
-<p>2026-10-27: back to the basics, part 1. <code>MatchingRule</code> is regex-only (<a href="docs/adr/adr-index.html#docs-adr-adr-008-matching-rules-are-regular-expressions">ADR-008</a>); slice boundaries stay on <code>TextAnchor</code> and fail closed once invalid or ambiguous (<a href="docs/adr/adr-index.html#docs-adr-adr-009-slice-boundaries-stay-on-the-text-anchor">ADR-009</a>); <code>buildPlainTextIndex</code> now mirrors <code>textBetween</code> exactly, including nested blocks. Plan: <a href="docs/back-to-basics-plan.html">docs/back-to-basics-plan.html</a>.
+<p>2026-10-27: back to the basics, part 2. One editing surface: the side panel, Everlink, the run log and the help page are gone (Everlink's concept is kept in <a href="docs/everlink-it-concept.md">docs/everlink-it-concept.md</a>). Authoring is New entity plus Add slice; a small entity dialog edits rules as one regex per line. <code>Panel</code> and <code>PendingEverlinkSession</code> are retired terms.
+2026-10-27: back to the basics, part 1. <code>MatchingRule</code> is regex-only (<a href="docs/adr/adr-index.html#docs-adr-adr-008-matching-rules-are-regular-expressions">ADR-008</a>); slice boundaries stay on <code>TextAnchor</code> and fail closed once invalid or ambiguous (<a href="docs/adr/adr-index.html#docs-adr-adr-009-slice-boundaries-stay-on-the-text-anchor">ADR-009</a>); <code>buildPlainTextIndex</code> now mirrors <code>textBetween</code> exactly, including nested blocks. Plan: <a href="docs/back-to-basics-plan.html">docs/back-to-basics-plan.html</a>.
 2026-04-18: Phase 1.5 foundation hardening — DB layer split into per-aggregate repositories, renderer split into hooks + feature components, anchor math unified in <code>src/shared/anchoring.ts</code> (fixing an off-by-one bug in <code>walkNodeText</code>), typed event catalog, schema migration framework, Zod validation at IPC boundary, Vitest suite, ESLint with runtime-boundary enforcement. Added the &quot;Current implementation map&quot; section below.
 2026-04-17: defined selection-driven Everlink authoring, hybrid slice anchors, and fail-closed anchor-resolution states for future implementation passes.
 2026-04-17: added folders, generic documents, anchored outline nodes, and a future text-transfer provenance seam to the shared model and roadmap.
@@ -243,7 +244,7 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 </tr>
 <tr>
 <td><code>PendingEverlinkSession</code></td>
-<td>renderer-side state for one selection-driven Everlink authoring flow</td>
+<td>retired 2026-10-27 with Everlink; was the renderer-side state for one selection-driven Everlink flow (see docs/everlink-it-concept.md)</td>
 <td>sourceDocumentId, sourceSelection, selectedEntityId?, targetDocumentId?, pendingAnchor?, colorToken</td>
 </tr>
 <tr>
@@ -268,8 +269,8 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 </tr>
 <tr>
 <td><code>Panel</code></td>
-<td>persistent expanded surface opened from a highlight</td>
-<td>can host the slice viewer and a deeper document view</td>
+<td>paused 2026-10-27: was a persistent side surface opened from a highlight</td>
+<td>slices now open in the main editor; see docs/back-to-basics-plan.html</td>
 </tr>
 <tr>
 <td><code>DocumentView</code></td>
@@ -437,16 +438,20 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <td><a href="src/renderer/state/useProjectActions.ts">src/renderer/state/useProjectActions.ts</a>, <a href="src/renderer/state/useDocumentActions.ts">src/renderer/state/useDocumentActions.ts</a>, <a href="src/renderer/state/useEntityActions.ts">src/renderer/state/useEntityActions.ts</a>, <a href="src/renderer/state/useSliceAndLayoutActions.ts">src/renderer/state/useSliceAndLayoutActions.ts</a></td>
 </tr>
 <tr>
-<td>Everlink session orchestration (entity / target document choice)</td>
-<td><a href="src/renderer/state/useEverlinkSession.ts">src/renderer/state/useEverlinkSession.ts</a></td>
+<td>Document save queue (failures surface as Not saved)</td>
+<td><a href="src/renderer/state/useDocumentPersistence.ts">src/renderer/state/useDocumentPersistence.ts</a></td>
 </tr>
 <tr>
-<td>Everlink pending-placement (in-editor range + commit)</td>
-<td><a href="src/renderer/state/usePendingPlacement.ts">src/renderer/state/usePendingPlacement.ts</a></td>
+<td>Add slice flow (FB-002) and its re-anchoring commit</td>
+<td><a href="src/renderer/state/useEverslicePlacement.ts">src/renderer/state/useEverslicePlacement.ts</a>, <a href="src/renderer/state/sliceCommit.ts">src/renderer/state/sliceCommit.ts</a></td>
 </tr>
 <tr>
-<td>Everlink composition facade (threads session ↔ placement)</td>
-<td><a href="src/renderer/state/useEverlinkPlacement.ts">src/renderer/state/useEverlinkPlacement.ts</a></td>
+<td>Open a slice where it lives</td>
+<td><a href="src/renderer/state/useSliceNavigation.ts">src/renderer/state/useSliceNavigation.ts</a></td>
+</tr>
+<tr>
+<td>Highlight toggle shortcuts</td>
+<td><a href="src/renderer/state/useGlobalShortcuts.ts">src/renderer/state/useGlobalShortcuts.ts</a></td>
 </tr>
 <tr>
 <td>Memoized id-indexed workspace lookups</td>
@@ -457,7 +462,7 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <td><a href="src/renderer/state/useEditorSelections.ts">src/renderer/state/useEditorSelections.ts</a></td>
 </tr>
 <tr>
-<td>Short-lived UI session types (EverlinkSession, RuleFormState, HoverPreview, etc.)</td>
+<td>Short-lived UI session types (Notice, HoverPreview)</td>
 <td><a href="src/renderer/state/sessionTypes.ts">src/renderer/state/sessionTypes.ts</a></td>
 </tr>
 <tr>
@@ -473,24 +478,24 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <td><a href="src/renderer/features/documents/EditorPane.tsx">src/renderer/features/documents/EditorPane.tsx</a></td>
 </tr>
 <tr>
-<td>Feature: entity library / detail / rules</td>
-<td><a href="src/renderer/features/entities/EntityList.tsx">src/renderer/features/entities/EntityList.tsx</a>, <a href="src/renderer/features/entities/EntityDetail.tsx">src/renderer/features/entities/EntityDetail.tsx</a>, <a href="src/renderer/features/entities/MatchingRuleEditor.tsx">src/renderer/features/entities/MatchingRuleEditor.tsx</a></td>
+<td>Feature: entity dialog (name, one regex per line, delete)</td>
+<td><a href="src/renderer/features/entities/EntityDialog.tsx">src/renderer/features/entities/EntityDialog.tsx</a>, <a href="src/renderer/features/entities/ruleLines.ts">src/renderer/features/entities/ruleLines.ts</a></td>
 </tr>
 <tr>
-<td>Feature: Everlink chooser UI</td>
-<td><a href="src/renderer/features/entities/EverlinkPanel.tsx">src/renderer/features/entities/EverlinkPanel.tsx</a></td>
+<td>Feature: Add slice chooser</td>
+<td><a href="src/renderer/features/entities/EversliceChooser.tsx">src/renderer/features/entities/EversliceChooser.tsx</a></td>
 </tr>
 <tr>
-<td>Feature: pending slice placement panel</td>
-<td><a href="src/renderer/features/panes/SlicePlacementPanel.tsx">src/renderer/features/panes/SlicePlacementPanel.tsx</a></td>
+<td>Feature: selection bubble (New entity, Add slice)</td>
+<td><a href="src/renderer/features/documents/SelectionBubble.tsx">src/renderer/features/documents/SelectionBubble.tsx</a></td>
 </tr>
 <tr>
-<td>Feature: slice viewer, panel-document view, hover preview</td>
-<td><a href="src/renderer/features/panes/SliceViewer.tsx">src/renderer/features/panes/SliceViewer.tsx</a>, <a href="src/renderer/features/panes/PanelDocumentView.tsx">src/renderer/features/panes/PanelDocumentView.tsx</a>, <a href="src/renderer/features/panes/HoverPreview.tsx">src/renderer/features/panes/HoverPreview.tsx</a></td>
+<td>Feature: hover preview</td>
+<td><a href="src/renderer/features/panes/HoverPreview.tsx">src/renderer/features/panes/HoverPreview.tsx</a></td>
 </tr>
 <tr>
-<td>Feature: run log</td>
-<td><a href="src/renderer/features/history/RunLog.tsx">src/renderer/features/history/RunLog.tsx</a></td>
+<td>Feature: title bar, notices, error boundary</td>
+<td><a href="src/renderer/features/chrome/TitleBar.tsx">src/renderer/features/chrome/TitleBar.tsx</a>, <a href="src/renderer/features/chrome/NoticeBar.tsx">src/renderer/features/chrome/NoticeBar.tsx</a>, <a href="src/renderer/features/chrome/ErrorBoundary.tsx">src/renderer/features/chrome/ErrorBoundary.tsx</a></td>
 </tr>
 <tr>
 <td>App shell (composition only)</td>

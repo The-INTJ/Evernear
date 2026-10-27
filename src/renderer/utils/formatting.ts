@@ -7,14 +7,6 @@ export function truncate(value: string, maxLength: number): string {
   return `${value.slice(0, Math.max(0, maxLength - 3))}...`;
 }
 
-export function formatCount(value: number): string {
-  return new Intl.NumberFormat("en-US").format(value);
-}
-
-export function formatBoundaryReason(reason: string): string {
-  return reason.length > 0 ? reason : "Boundary resolution not yet captured";
-}
-
 export function countForLabel(currentCount: number): number {
   return currentCount + 1;
 }

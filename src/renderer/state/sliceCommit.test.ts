@@ -1,5 +1,4 @@
-// Covers the re-anchoring commit helpers shared by useEverlink
-// and useEverslice. The invariant under test: the anchor's
+// Covers the re-anchoring commit helper behind Add slice. The invariant under test: the anchor's
 // versionSeen must match the persisted targetDoc.currentVersion
 // (not any fresher in-flight state) and flushPersistence must be
 // awaited before the editor snapshot is read. Getting either of
@@ -21,7 +20,7 @@ import type {
 import {
   commitSliceWithFreshAnchor,
   resolveAnchorSnapshot,
-} from "./everlinkShared";
+} from "./sliceCommit";
 
 function makeEditorSnapshot(overrides: Partial<HarnessEditorSnapshot> = {}): HarnessEditorSnapshot {
   return {
@@ -79,6 +78,7 @@ function makeEditor(
     toggleBold: () => {},
     toggleItalic: () => {},
     replaceSelection: () => null,
+    revealRange: () => {},
   };
 }
 
@@ -144,7 +144,7 @@ describe("commitSliceWithFreshAnchor", () => {
       workspaceRef,
       flushPersistence: vi.fn().mockResolvedValue(undefined),
       applyWorkspace: vi.fn(),
-      appendLog: vi.fn(),
+      notify: vi.fn(),
       setBusy: vi.fn(),
       commitInFlightRef: { current: false },
       ...overrides,
@@ -191,12 +191,12 @@ describe("commitSliceWithFreshAnchor", () => {
     );
   });
 
-  it("routes errors through appendLog and returns false without applying", async () => {
+  it("routes errors through notify and returns false without applying", async () => {
     createSliceSpy.mockRejectedValueOnce(new Error("DB ate it"));
     const opts = makeOptions();
     const result = await commitSliceWithFreshAnchor(opts);
     expect(result).toBe(false);
-    expect(opts.appendLog).toHaveBeenCalledWith(
+    expect(opts.notify).toHaveBeenCalledWith(
       expect.stringContaining("DB ate it"),
       "warn",
     );
@@ -229,7 +229,7 @@ describe("commitSliceWithFreshAnchor", () => {
     opts.workspaceRef.current = null;
     const result = await commitSliceWithFreshAnchor(opts);
     expect(result).toBe(false);
-    expect(opts.appendLog).toHaveBeenCalledWith(
+    expect(opts.notify).toHaveBeenCalledWith(
       expect.stringContaining("Could not find the target document"),
       "warn",
     );
@@ -237,19 +237,4 @@ describe("commitSliceWithFreshAnchor", () => {
     expect(opts.commitInFlightRef.current).toBe(false);
   });
 
-  it("finds the target doc on the panel surface too", async () => {
-    const panelDoc = makeTargetDoc({ id: "doc-panel", currentVersion: 7 });
-    const opts = makeOptions({
-      targetDocumentId: "doc-panel",
-      workspaceRef: {
-        current: { activeDocument: null, panelDocument: panelDoc } as unknown as WorkspaceState,
-      },
-    });
-
-    const result = await commitSliceWithFreshAnchor(opts);
-    expect(result).toBe(true);
-    const payload = createSliceSpy.mock.calls[0][0];
-    expect(payload.documentId).toBe("doc-panel");
-    expect(payload.anchor.versionSeen).toBe(7);
-  });
 });

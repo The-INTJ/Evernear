@@ -10,7 +10,7 @@ import { history, redo, undo } from "prosemirror-history";
 import { keymap } from "prosemirror-keymap";
 import type { MarkType, Node as ProseMirrorNode, Slice } from "prosemirror-model";
 import { schema as basicSchema } from "prosemirror-schema-basic";
-import { AllSelection, EditorState, type Transaction } from "prosemirror-state";
+import { AllSelection, EditorState, TextSelection, type Transaction } from "prosemirror-state";
 import { DecorationSet, EditorView } from "prosemirror-view";
 
 import {
@@ -52,13 +52,8 @@ export type HarnessEditorHandle = {
   toggleBold(): void;
   toggleItalic(): void;
   replaceSelection(text: string): { from: number; to: number } | null;
-};
-
-export type EditorContextMenuPayload = {
-  clientX: number;
-  clientY: number;
-  entityId: string | null;
-  selection: EditorSelectionInfo;
+  // Selects [from, to] and scrolls it to the upper third of the surface.
+  revealRange(from: number, to: number): void;
 };
 
 type EditorCommand = (
@@ -77,19 +72,10 @@ type HarnessEditorProps = {
   // gesture itself is not implemented yet.
   boundariesEditable?: boolean;
   pendingRange?: PendingSliceRange | null;
-  showLegend?: boolean;
-  legendLabels?: {
-    match?: string;
-    boundary?: string;
-    pending?: string;
-  };
   onDocumentSnapshotChange(nextSnapshot: HarnessEditorSnapshot, transaction: SerializedTransactionBundle | null): void;
   onSelectionChange(selection: EditorSelectionInfo): void;
   onMatchingBenchmark?(benchmark: MatchingBenchmark): void;
   onEntityHover?(payload: { entityId: string; clientX: number; clientY: number } | null): void;
-  onEntityClick?(entityId: string): void;
-  onContextMenu?(payload: EditorContextMenuPayload): void;
-  onBlur?(): void;
 };
 
 export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>(
@@ -101,9 +87,6 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
     const onSelectionChangeRef = useRef(props.onSelectionChange);
     const onMatchingBenchmarkRef = useRef(props.onMatchingBenchmark);
     const onEntityHoverRef = useRef(props.onEntityHover);
-    const onEntityClickRef = useRef(props.onEntityClick);
-    const onContextMenuRef = useRef(props.onContextMenu);
-    const onBlurRef = useRef(props.onBlur);
     // Tracks the entity id reported by the last mousemove. We only fire
     // onEntityHover(null) when the cursor *transitions* off an entity word —
     // otherwise every mousemove over plain text would kick the App-level
@@ -120,9 +103,6 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
     onSelectionChangeRef.current = props.onSelectionChange;
     onMatchingBenchmarkRef.current = props.onMatchingBenchmark;
     onEntityHoverRef.current = props.onEntityHover;
-    onEntityClickRef.current = props.onEntityClick;
-    onContextMenuRef.current = props.onContextMenu;
-    onBlurRef.current = props.onBlur;
     rulesRef.current = props.matchingRules ?? [];
     boundariesRef.current = props.sliceBoundaries ?? [];
     pendingRangeRef.current = props.pendingRange ?? null;
@@ -208,39 +188,6 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
         onEntityHoverRef.current?.(null);
       };
 
-      const handleClick = (event: MouseEvent) => {
-        const target = event.target instanceof HTMLElement
-          ? event.target.closest("[data-entity-id]") as HTMLElement | null
-          : null;
-        const entityId = target?.dataset.entityId;
-        if (entityId) {
-          onEntityClickRef.current?.(entityId);
-        }
-      };
-
-      const handleContextMenu = (event: MouseEvent) => {
-        const currentView = viewRef.current;
-        if (!currentView) return;
-        const target = event.target instanceof HTMLElement
-          ? event.target.closest("[data-entity-id]") as HTMLElement | null
-          : null;
-        const entityId = target?.dataset.entityId ?? null;
-        const selection = getSelectionInfo(currentView.state, currentView);
-        if (!entityId && selection.empty) return;
-
-        event.preventDefault();
-        onContextMenuRef.current?.({
-          clientX: event.clientX,
-          clientY: event.clientY,
-          entityId,
-          selection,
-        });
-      };
-
-      const handleBlur = () => {
-        onBlurRef.current?.();
-      };
-
       viewRef.current = view;
       recomputeDecorations(
         view,
@@ -262,18 +209,12 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
       window.addEventListener("resize", handleScroll);
       dom.addEventListener("mousemove", handleMouseMove);
       dom.addEventListener("mouseleave", handleMouseLeave);
-      dom.addEventListener("click", handleClick);
-      dom.addEventListener("contextmenu", handleContextMenu);
-      dom.addEventListener("focusout", handleBlur);
 
       return () => {
         currentSurface?.removeEventListener("scroll", handleScroll);
         window.removeEventListener("resize", handleScroll);
         dom.removeEventListener("mousemove", handleMouseMove);
         dom.removeEventListener("mouseleave", handleMouseLeave);
-        dom.removeEventListener("click", handleClick);
-        dom.removeEventListener("contextmenu", handleContextMenu);
-        dom.removeEventListener("focusout", handleBlur);
         view.destroy();
         viewRef.current = null;
       };
@@ -350,17 +291,23 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
           to: from + text.length,
         };
       },
+      revealRange(from: number, to: number) {
+        const view = viewRef.current;
+        if (!view) {
+          return;
+        }
+
+        const size = view.state.doc.content.size;
+        const start = Math.max(0, Math.min(from, size));
+        const end = Math.max(start, Math.min(to, size));
+        view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, start, end)));
+        view.focus();
+        scrollPositionIntoUpperThird(view, surfaceRef.current, start);
+      },
     }));
 
     return (
       <div className="editor-frame">
-        {props.showLegend !== false ? (
-          <div className="editor-legend">
-            <span className="legend-chip legend-chip--highlight">{props.legendLabels?.match ?? "Entity match"}</span>
-            <span className="legend-chip legend-chip--boundary">{props.legendLabels?.boundary ?? "Slice boundary"}</span>
-            <span className="legend-chip legend-chip--pending">{props.legendLabels?.pending ?? "Pending slice"}</span>
-          </div>
-        ) : null}
         <div className="editor-surface" ref={surfaceRef}>
           <div ref={containerRef} />
         </div>
@@ -423,6 +370,20 @@ function getSelectionAnchor(view: EditorView, from: number, to: number): EditorS
     };
   } catch {
     return null;
+  }
+}
+
+function scrollPositionIntoUpperThird(view: EditorView, surface: HTMLDivElement | null, position: number): void {
+  if (!surface) {
+    return;
+  }
+  try {
+    const coords = view.coordsAtPos(position);
+    const bounds = surface.getBoundingClientRect();
+    surface.scrollTop += coords.top - bounds.top - bounds.height / 3;
+  } catch {
+    // coordsAtPos throws for positions the view hasn't rendered; the
+    // selection is still set, so the caret is where the author expects.
   }
 }
 
