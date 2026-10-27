@@ -403,7 +403,7 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <div class="section-content">
 <h1>Feature Brief: Selection-Driven Everlink</h1>
 <h2>Status</h2>
-<p>Implemented — lives in <a href="../src/renderer/state/useEverlinkSession.ts">useEverlinkSession</a>, <a href="../src/renderer/state/usePendingPlacement.ts">usePendingPlacement</a>, <a href="../src/renderer/state/useEverlinkPlacement.ts">useEverlinkPlacement</a>, and <a href="../src/renderer/features/entities/EverlinkPanel.tsx">EverlinkPanel</a> + <a href="../src/renderer/features/panes/SlicePlacementPanel.tsx">SlicePlacementPanel</a>. Still pending real-manuscript adversarial pass.</p>
+<p>Retired 2026-10-27. The code was deleted in back to the basics; the concept is preserved, with Drew's reasoning, in <a href="everlink-it-concept.md">everlink-it-concept.md</a>. New entity plus Add slice (FB-002) cover the flow. The brief below is kept as history.</p>
 <h2>Date</h2>
 <p>2026-04-17, last reviewed 2026-04-19</p>
 <h2>Problem</h2>
@@ -460,7 +460,7 @@ If authors have to leave the writing flow to create an entity, choose a lore doc
 <div class="section-content">
 <h1>Feature Brief: Everslice it — selection → add to entity</h1>
 <h2>Status</h2>
-<p>Draft</p>
+<p>Implemented as <strong>Add slice</strong> (<a href="../src/renderer/state/useEverslicePlacement.ts">useEverslicePlacement</a>, <a href="../src/renderer/features/entities/EversliceChooser.tsx">EversliceChooser</a>). Since 2026-10-27 a new entity named in the chooser also gets the regex for its name. The notes below about keeping it apart from Everlink are history; Everlink is retired.</p>
 <h2>Date</h2>
 <p>2026-04-18</p>
 <h2>Problem</h2>

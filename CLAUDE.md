@@ -42,7 +42,7 @@ Coding conventions and the rules that keep the code maintainable as it scales li
 
 ## HTML-first documentation rule
 
-Except for [AGENT.md](AGENT.md) and this file, durable repo docs are HTML by default. This is intentional: HTML lets humans read dense material visually while agents use explicit line ranges to avoid unnecessary context ingest.
+Except for [AGENT.md](AGENT.md), this file, and [docs/everlink-it-concept.md](docs/everlink-it-concept.md) (kept in Markdown at Drew's request), durable repo docs are HTML by default. This is intentional: HTML lets humans read dense material visually while agents use explicit line ranges to avoid unnecessary context ingest.
 
 - Prefer high-density forms when they are clearer than prose: tables, grids, timelines, swimlanes, SVG/HTML diagrams, compact cards, and collapsible sections.
 - Every substantial HTML doc should be mobile responsive, directly browser-openable, and have a header with purpose, audience, stable section anchors, and an **Agent Context Index** with line ranges.
@@ -87,7 +87,7 @@ These are how we keep god files from re-forming. Full rationale and file-by-file
 
 - **Soft limits:** React component 300 lines, custom hook 150, repository module 400, IPC/preload 150. Data-only shared type modules may exceed.
 - **Hard limits (split before merge):** React component 500, custom hook 250, repository module 700, IPC/preload 250.
-- **No new features in a file at or above its soft limit without first extracting.** If your change grows [src/renderer/App.tsx](src/renderer/App.tsx), [src/renderer/state/useEverlinkPlacement.ts](src/renderer/state/useEverlinkPlacement.ts), or any aggregate repository under [src/db/repositories/](src/db/repositories/) past its soft limit, extract first then modify the extracted home. Populate the folder the feature belongs in — [src/renderer/features/*](src/renderer/features/) or [src/db/repositories/](src/db/repositories/) — rather than appending to an existing large file.
+- **No new features in a file at or above its soft limit without first extracting.** If your change grows [src/renderer/App.tsx](src/renderer/App.tsx), [src/renderer/editor/HarnessEditor.tsx](src/renderer/editor/HarnessEditor.tsx), or any aggregate repository under [src/db/repositories/](src/db/repositories/) past its soft limit, extract first then modify the extracted home. Populate the folder the feature belongs in — [src/renderer/features/*](src/renderer/features/) or [src/db/repositories/](src/db/repositories/) — rather than appending to an existing large file.
 - **Extraction is a no-behavior-change move.** One PR per section, verified by `npm run check`. Don't refactor and add a feature in the same commit.
 - **ESLint enforces the runtime boundaries automatically** via `no-restricted-imports` in [eslint.config.mjs](eslint.config.mjs). If the linter blocks an import you wanted, the right fix is to move the code, not to silence the rule.
 

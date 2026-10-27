@@ -98,8 +98,8 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <header><h2>Agent Context Index</h2><p>Line ranges point into this HTML file.</p></header>
 <div class="index-grid">
 <a class="index-row" href="#model-map"><div><strong>Entity/data model</strong></div><div class="index-range">L108-L133</div><div>Use this section for Entity/data model context.</div></a>
-<a class="index-row" href="#everlink-flow"><div><strong>Everlink swimlane</strong></div><div class="index-range">L134-L152</div><div>Use this section for workflow intent, data touchpoints, and proof criteria.</div></a>
-<a class="index-row" href="#everslice-flow"><div><strong>Everslice swimlane</strong></div><div class="index-range">L153-L166</div><div>Use this section for workflow intent, data touchpoints, and proof criteria.</div></a>
+<a class="index-row" href="#new-entity-flow"><div><strong>New entity swimlane</strong></div><div class="index-range">L134-L152</div><div>Use this section for workflow intent, data touchpoints, and proof criteria.</div></a>
+<a class="index-row" href="#add-slice-flow"><div><strong>Add slice swimlane</strong></div><div class="index-range">L153-L166</div><div>Use this section for workflow intent, data touchpoints, and proof criteria.</div></a>
 <a class="index-row" href="#edit-repair-flow"><div><strong>Edit and repair loop</strong></div><div class="index-range">L167-L185</div><div>Use this section for Edit and repair loop context.</div></a>
 <a class="index-row" href="#truth-table"><div><strong>Truth distinction</strong></div><div class="index-range">L186-L197</div><div>Use this section for Truth distinction context.</div></a>
 </div>
@@ -131,39 +131,39 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 </tbody></table>
 </div>
 </section><!-- /model-map -->
-<section id="everlink-flow" class="map-section">
-<header class="section-header"><p>Story to lore</p><h2>Everlink Swimlane</h2><p>Selection-driven entity creation or extension, target selection, pending placement, and anchored slice commit.</p></header>
+<section id="new-entity-flow" class="map-section">
+<header class="section-header"><p>Phrase to entity</p><h2>New Entity Swimlane</h2><p>A selected phrase becomes an entity whose first rule is the regex for that phrase. (Everlink, the earlier one-motion story-to-lore flow, was retired on 2026-10-27; see docs/everlink-it-concept.md.)</p></header>
 <div class="section-content">
-<!-- Agent note: This swimlane compresses useEverlinkSession, usePendingPlacement, everlinkShared, createSlice IPC, and SliceRepository.createSlice. Preserve the create/update event ordering if editing. -->
+<!-- Agent note: New entity is one createEntity call carrying its starting rules, so the entity and its rules land in one transaction (entityCreated, then one matchingRuleCreated per rule). The bubble shows the matching entity's name instead of New entity when an enabled rule already matches the whole selection, which is what keeps duplicates from being one click away. -->
 <div class="flow-grid">
-<div class="flow-step"><strong>1. Select story text</strong><span>Editor selection captures text, from/to, and screen anchor for the affordance.</span></div>
-<div class="flow-step"><strong>2. Resolve session</strong><span>Chooser creates or selects Entity, then upserts an explicit MatchingRule for the source text.</span></div>
-<div class="flow-step"><strong>3. Choose target</strong><span>Existing or newly created Document opens in panel or main surface.</span></div>
-<div class="flow-step"><strong>4. Place pending slice</strong><span>Cursor or range becomes pending rails; empty cursor can auto-fill source text on commit.</span></div>
-<div class="flow-step"><strong>5. Commit fresh anchor</strong><span>Flush persistence, read editor snapshot, build TextAnchor, call createSlice, repaint boundaries.</span></div>
+<div class="flow-step"><strong>1. Select a phrase</strong><span>In any document. The bubble offers New entity, or the entity whose rule already matches the whole selection.</span></div>
+<div class="flow-step"><strong>2. Name it</strong><span>The selection, whitespace collapsed, becomes the entity name.</span></div>
+<div class="flow-step"><strong>3. Derive the rule</strong><span>patternFromText escapes the phrase, allows any whitespace between words and either apostrophe, and adds word edges.</span></div>
+<div class="flow-step"><strong>4. Create atomically</strong><span>createEntity writes the entity and its rules in one transaction; invalid patterns never pass the IPC schema.</span></div>
+<div class="flow-step"><strong>5. Highlight live</strong><span>The editor compiles the rule once and highlights every visible match. No match is stored.</span></div>
 </div>
 <table class="dense-table"><thead><tr><th>Layer</th><th>Responsibility</th><th>Key files</th></tr></thead><tbody>
-<tr><td>Renderer session</td><td>Entity choice, rule attachment, target document choice.</td><td>useEverlinkSession.ts</td></tr>
-<tr><td>Renderer placement</td><td>Pending range, auto-fill, commit trigger.</td><td>usePendingPlacement.ts</td></tr>
-<tr><td>Shared commit helper</td><td>Flushes, re-anchors against editor snapshot, calls IPC.</td><td>everlinkShared.ts</td></tr>
-<tr><td>Database transaction</td><td>Creates Slice, SliceBoundary, EntitySlice; appends sliceCreated.</td><td>WorkspaceRepository.ts, SliceRepository.ts</td></tr>
+<tr><td>Renderer action</td><td>Selection to name plus starting rule.</td><td>useEntityActions.ts</td></tr>
+<tr><td>Pattern rules</td><td>Escape, word edges, compile, validate.</td><td>shared/matchingPatterns.ts</td></tr>
+<tr><td>Trust boundary</td><td>Refuses patterns that don't compile.</td><td>shared/contracts/harnessSchemas.ts</td></tr>
+<tr><td>Database transaction</td><td>Entity plus rules, one event each.</td><td>WorkspaceRepository.ts, EntityRepository.ts</td></tr>
 </tbody></table>
 </div>
-</section><!-- /everlink-flow -->
-<section id="everslice-flow" class="map-section">
-<header class="section-header"><p>Lore or prose to entity</p><h2>Everslice Swimlane</h2><p>Same-document selection-to-entity binding without target-document routing.</p></header>
+</section><!-- /new-entity-flow -->
+<section id="add-slice-flow" class="map-section">
+<header class="section-header"><p>Passage to entity</p><h2>Add Slice Swimlane</h2><p>Bind a selected passage in the current document to an entity (FB-002, once called Everslice).</p></header>
 <div class="section-content">
-<!-- Agent note: Everslice deliberately reuses commitSliceWithFreshAnchor but skips Everlink target selection, pending empty cursor placement, and matching-rule authoring. Keep it separate from useEverlinkPlacement. -->
+<!-- Agent note: Add slice reuses commitSliceWithFreshAnchor (state/sliceCommit.ts): flush saves, then build the anchor from the editor's own snapshot so positions and text come from one source. A new entity named in the chooser is created first, with the regex for its name, so the slice link is never orphaned and the entity highlights at once. -->
 <div class="flow-grid">
-<div class="flow-step"><strong>1. Select passage</strong><span>Non-empty main editor selection is frozen when the modal opens.</span></div>
-<div class="flow-step"><strong>2. Pick entity</strong><span>Chooser filters loaded Entity and MatchingRule data; author selects existing or names new.</span></div>
-<div class="flow-step"><strong>3. Optional create</strong><span>New Entity is created first so the slice link is never orphaned.</span></div>
-<div class="flow-step"><strong>4. Same-doc anchor</strong><span>Frozen selection positions bind against the active document editor snapshot.</span></div>
-<div class="flow-step"><strong>5. Create slice</strong><span>The same createSlice path writes Slice, SliceBoundary, and EntitySlice.</span></div>
+<div class="flow-step"><strong>1. Select passage</strong><span>The non-empty main editor selection is frozen when the chooser opens.</span></div>
+<div class="flow-step"><strong>2. Pick entity</strong><span>The chooser filters entities by name, rule and slice text; the author picks one or names a new one.</span></div>
+<div class="flow-step"><strong>3. Optional create</strong><span>A new entity is created first, with the regex for its name.</span></div>
+<div class="flow-step"><strong>4. Same-doc anchor</strong><span>Frozen selection positions bind against the active document's editor snapshot.</span></div>
+<div class="flow-step"><strong>5. Create slice</strong><span>createSlice writes Slice, SliceBoundary and EntitySlice and appends sliceCreated.</span></div>
 </div>
-<div class="note"><strong>Structural difference:</strong> Everslice sets targetDocumentId equal to sourceDocumentId and never opens the placement panel.</div>
+<div class="note"><strong>Reading it back:</strong> hover any highlight to see the entity's slices; clicking one opens its document and selects it.</div>
 </div>
-</section><!-- /everslice-flow -->
+</section><!-- /add-slice-flow -->
 <section id="edit-repair-flow" class="map-section">
 <header class="section-header"><p>Edit survival</p><h2>Document Edit And Boundary Repair Flow</h2><p>Every prose edit can move anchors forward without letting stale ranges silently point at wrong lore.</p></header>
 <div class="section-content">
@@ -190,7 +190,7 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <tr><td>Document prose</td><td>Document contentJson/plainText projection.</td><td>Yes, as document projection plus step history.</td><td>Copies as clean prose.</td></tr>
 <tr><td>Entity highlight</td><td>MatchingRule evaluated live over visible text.</td><td>No stored match rows.</td><td>Decoration must not enter clipboard.</td></tr>
 <tr><td>Slice boundary</td><td>SliceBoundary TextAnchor resolved against current document.</td><td>Yes, as anchor plus resolution state.</td><td>Boundary chrome must not enter clipboard.</td></tr>
-<tr><td>Pending slice rails</td><td>Renderer session state during Everlink/Everslice.</td><td>No, until commit.</td><td>Temporary UI only.</td></tr>
+<tr><td>Pending slice tint</td><td>Renderer session state while the Add slice chooser is open.</td><td>No, until commit.</td><td>Temporary UI only.</td></tr>
 </tbody></table>
 <div class="badge-row"><span class="badge">Documents are prose-only</span><span class="badge">Entities are truth</span><span class="badge">Matches are derived</span><span class="badge">Boundaries are anchored</span><span class="badge">History is append-then-project</span></div>
 </div>

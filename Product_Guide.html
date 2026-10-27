@@ -111,7 +111,7 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <h2>For authors and anyone curious</h2>
 <p>Evernear is a desktop writing environment built for the moment you open a fantasy project you haven't touched in months and realize you don't quite remember your own world anymore. You can keep writing wherever you already write — Google Docs, Scrivener, whatever — and Evernear is the place you come back to when you want your characters, places, lore, and the structure of your manuscript to greet you again.</p>
 <p>Here's the trick: <strong>you never hand-link anything.</strong> You tell Evernear once, the first time you 'link' a word or phrase, that &quot;Harry Potter&quot; should reference this spot in your character doc. From then on, every time you paste or type that word(s) or phrase, the app instantly knows. No right-clicking, no wiki-style <code>[[brackets]]</code>, no tagging — you just write, and the people and places you've defined light up on their own. Hover one, and a little window snaps straight to the doc you linked.</p>
-<p>More than one doc? No problem, you can link as many as you want, and scroll in the pop-up, or click into it to get a whole panel -- with live editing!</p>
+<p>More than one doc? No problem, you can link as many as you want and scroll through them in the pop-up. Click one and the editor takes you to it, where you can edit it in place.</p>
 <h2>For writers who also program</h2>
 <p>Evernear is a local-first Electron + ProseMirror desktop app whose central loop is <em>frictionless rehydration</em>. An author who edited their manuscript elsewhere — Google Docs, Scrivener, a round of copy edits from a year ago — can paste the entire exported document into Evernear and have it light up immediately.</p>
 <p>The architecture that makes a full destructive re-paste safe is a strict separation between <strong>truth</strong> and <strong>projection surface</strong>:</p>
@@ -126,16 +126,16 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <li>They don't remember their world as well as they used to. The people, places, and rules have drifted out of working memory.</li>
 <li>They export the document from the external tool and paste the whole thing into Evernear.</li>
 <li>Evernear's entity regex-highlighting and regex-based document-structure matching hydrate the manuscript on the spot: entity matches become live highlights, chapter / part / book structure is re-derived, existing entity-to-slice links continue to resolve against the new prose, and the edits from the external tool are now simply present. The manuscript is a fresh projection surface; the entity truth underneath it never moved.</li>
-<li>From that frictionless paste, the panel workflow — hover to preview, click to pin, persistent slice viewer — is equally frictionless. Re-entry is achieved without bookkeeping.</li>
+<li>From that frictionless paste, the reading workflow — hover to preview, click to open the slice where it lives — is equally frictionless. Re-entry is achieved without bookkeeping.</li>
 </ol>
 <p>The mirror case matters equally: an author can paste <em>out</em> of Evernear into Scrivener, Google Docs, edit on the go, and paste back. Round-tripping — including into and out of sliced regions — must stay clean.</p>
 <h2>Unapologetic desktop UI</h2>
 <p>Evernear is a desktop application built precisely for a multi-monitor writing workflow.</p>
 <ul>
-<li><strong>Panels are draggable and stackable.</strong> Context is summoned as first-class panels that can be moved, docked, and piled. When a panel stacks over another, a back arrow takes the author <em>back</em> rather than leaving them lost three lore-hops deep.</li>
+<li><strong>One editing surface, for now.</strong> Since 2026-10-27 the main editor is the only editing surface: slices open there, and toggles decide what it shows (entity highlights, slices, slice editing). Draggable, stackable panels are paused until the basic loop is solid; see <a href="docs/back-to-basics-plan.html">the back-to-basics plan</a>.</li>
 <li><strong>Slices are delineated, not boxed in.</strong> Inside a document, slice regions are marked with subtle horizontal and vertical colored bars — quiet edge indicators that respect the prose. No heavy cards, no framed boxes, no chrome crowding the text.</li>
 <li><strong>Annotations stay quieter still.</strong> Default styling is something like a dotted gray underline; the author's eye goes to the words, not to our affordances.</li>
-<li><strong>Built for our workflow first.</strong> The layout assumes multiple monitors, persistent side panels, and serious long sessions. We take advantage of the space instead of hiding from it.</li>
+<li><strong>Built for our workflow first.</strong> The layout assumes large text, multiple monitors, and serious long sessions. We take advantage of the space instead of hiding from it.</li>
 </ul>
 <h2>What we are not</h2>
 <p>Evernear is not a cloud SaaS, not a collaboration tool, not a generic notes app, and not a manual-linking wiki. Links are derived from entity rules, not hand-placed. Structure is derived from regex, not laboriously tagged. The author's prose is never held hostage by our decorations, and the UI is not negotiated down to a lowest common denominator.</p>

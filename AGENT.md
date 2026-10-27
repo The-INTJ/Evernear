@@ -43,7 +43,7 @@ If you just arrived and don't remember the codebase:
 
 ## HTML-first documentation rule
 
-Except for this file and [CLAUDE.md](CLAUDE.md), durable repo docs are HTML by default. Do not add new Markdown docs.
+Except for this file, [CLAUDE.md](CLAUDE.md), and [docs/everlink-it-concept.md](docs/everlink-it-concept.md) (kept in Markdown at Drew's request), durable repo docs are HTML by default. Do not add new Markdown docs.
 
 - Prefer high-density forms when they make the material easier to scan: tables, grids, timelines, swimlanes, SVG/HTML diagrams, compact cards, and collapsible sections.
 - Every substantial HTML doc should be mobile responsive, directly browser-openable, and have a header with purpose, audience, stable section anchors, and an **Agent Context Index** with line ranges.
@@ -131,7 +131,7 @@ The historical god files were split in April 2026. The same discipline that prev
 
 - A new UI feature belongs in a new file under [src/renderer/features/<feature>/](src/renderer/features/). Don't grow App.tsx.
 - A new DB aggregate belongs in a new repository under [src/db/repositories/](src/db/repositories/). Don't grow WorkspaceRepository — it is a composition facade, not a bucket for new mutations.
-- A hook that grows past 250 lines splits. Today [useEverlinkPlacement](src/renderer/state/useEverlinkPlacement.ts) is the largest hook in the repo at ~380 lines; it is the cap, not a pattern to copy. If you touch that file for anything but bug fixes, break off the next logical sub-flow first.
+- A hook that grows past 250 lines splits. The historical example, `useEverlinkPlacement` (~380 lines at its peak), was deleted with Everlink on 2026-10-27. The largest renderer file is now [HarnessEditor.tsx](src/renderer/editor/HarnessEditor.tsx), a component over its soft limit: extract from it before adding features.
 
 ### R8. Comment discipline
 
