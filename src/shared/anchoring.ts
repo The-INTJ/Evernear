@@ -17,6 +17,7 @@ import { Mapping, Step } from "prosemirror-transform";
 import type { JsonObject } from "./domain/document";
 import type {
   AnchorResolutionResult,
+  AnchorResolutionStatus,
   TextAnchor,
 } from "./domain/workspace";
 
@@ -45,10 +46,26 @@ export function createMappingFromSteps(serializedSteps: JsonObject[]): Mapping {
 
 export function mapBoundaryForward(
   anchor: TextAnchor,
+  previousStatus: AnchorResolutionStatus,
   mapping: Mapping,
   nextDoc: ProseMirrorNode,
   nextVersion: number,
+  index: PlainTextIndex = buildPlainTextIndex(nextDoc),
 ): AnchorResolutionResult {
+  // An invalid or ambiguous anchor still holds positions from the last
+  // version where it resolved. Mapping those through later steps lands on
+  // whatever text sits there now, so only exact text plus context may
+  // bring it back.
+  if (previousStatus === "invalid" || previousStatus === "ambiguous") {
+    return resolveAnchorWithFallback(
+      anchor,
+      nextDoc,
+      "slice was unresolved before this edit",
+      nextVersion,
+      index,
+    );
+  }
+
   // `to` uses +1 so text inserted at the tail of a slice stays inside the
   // slice — writing at the trailing boundary should grow it, not escape it.
   // `from` stays +1 so text typed immediately before a slice stays outside.
@@ -57,7 +74,7 @@ export function mapBoundaryForward(
 
   if (mappedFrom < mappedTo) {
     const mappedExact = nextDoc.textBetween(mappedFrom, mappedTo, "\n\n");
-    const nextAnchor = buildAnchorFromRange(nextDoc, mappedFrom, mappedTo, anchor.documentId, nextVersion);
+    const nextAnchor = buildAnchorFromRange(nextDoc, mappedFrom, mappedTo, anchor.documentId, nextVersion, index);
     return {
       status: "resolved",
       reason: mappedExact === anchor.exact
@@ -72,6 +89,7 @@ export function mapBoundaryForward(
     nextDoc,
     "slice boundary mapping no longer matched exact text",
     nextVersion,
+    index,
   );
 }
 
@@ -80,8 +98,8 @@ export function resolveAnchorWithFallback(
   nextDoc: ProseMirrorNode,
   fallbackReason: string,
   nextVersion: number,
+  index: PlainTextIndex = buildPlainTextIndex(nextDoc),
 ): AnchorResolutionResult {
-  const index = buildPlainTextIndex(nextDoc);
   const exact = anchor.exact;
   const candidates: Array<{ startOffset: number; score: number }> = [];
 
@@ -140,27 +158,52 @@ export function resolveAnchorWithFallback(
   return {
     status: "repaired",
     reason: `${fallbackReason}; exact text plus context repaired the range`,
-    anchor: buildAnchorFromRange(nextDoc, from, to, anchor.documentId, nextVersion),
+    anchor: buildAnchorFromRange(nextDoc, from, to, anchor.documentId, nextVersion, index),
   };
 }
 
-export function buildPlainTextIndex(doc: ProseMirrorNode): PlainTextIndex {
+// Mirrors `doc.textBetween(from, to, "\n\n", leafText)` character for
+// character and records the document position of each character, so an
+// offset found by searching `text` maps straight back to positions. That
+// equality is what lets an anchor's `exact` (built with textBetween) be
+// found again in nested blocks such as block quotes. Block separators have
+// no width in the document, so both ends point at the block boundary.
+// The anchor substrate keeps the default empty `leafText`; entity matching
+// passes "\n" so a hard break still separates the words on either side.
+export function buildPlainTextIndex(
+  doc: ProseMirrorNode,
+  from = 0,
+  to = doc.content.size,
+  leafText = "",
+): PlainTextIndex {
   const textParts: string[] = [];
   const charStarts: number[] = [];
   const charEnds: number[] = [];
+  let first = true;
 
-  doc.forEach((blockNode, offset, index) => {
-    const blockStartPos = offset + 1;
-    if (index > 0) {
-      const separatorPos = blockStartPos - 1;
-      for (let i = 0; i < 2; i += 1) {
-        textParts.push("\n");
-        charStarts.push(separatorPos);
-        charEnds.push(separatorPos);
+  doc.nodesBetween(from, to, (node, pos) => {
+    const nodeText = node.isText
+      ? (node.text ?? "").slice(Math.max(from, pos) - pos, to - pos)
+      : !node.isLeaf
+        ? ""
+        : leafText || (node.type.spec.leafText ? node.type.spec.leafText(node) : "");
+
+    if (node.isBlock && ((node.isLeaf && nodeText) || node.isTextblock)) {
+      if (first) {
+        first = false;
+      } else {
+        textParts.push("\n", "\n");
+        charStarts.push(pos, pos);
+        charEnds.push(pos, pos);
       }
     }
 
-    walkNodeText(blockNode, blockStartPos, textParts, charStarts, charEnds);
+    const start = node.isText ? Math.max(from, pos) : pos;
+    for (let offset = 0; offset < nodeText.length; offset += 1) {
+      textParts.push(nodeText[offset]!);
+      charStarts.push(node.isText ? start + offset : pos);
+      charEnds.push(node.isText ? start + offset + 1 : pos + node.nodeSize);
+    }
   });
 
   return {
@@ -170,34 +213,10 @@ export function buildPlainTextIndex(doc: ProseMirrorNode): PlainTextIndex {
   };
 }
 
-// `absolutePos` is the position where this node's *content* starts (i.e.
-// just inside its opening tag). For a text node, that's the PM position
-// of its first character; for a block node, the offsets from
-// `node.forEach` are already relative to the content-start, so we just
-// add `offset` without a spurious +1 for each child.
-function walkNodeText(
-  node: ProseMirrorNode,
-  absolutePos: number,
-  textParts: string[],
-  charStarts: number[],
-  charEnds: number[],
-): void {
-  if (node.isText) {
-    const text = node.text ?? "";
-    for (let index = 0; index < text.length; index += 1) {
-      textParts.push(text[index] ?? "");
-      charStarts.push(absolutePos + index);
-      charEnds.push(absolutePos + index + 1);
-    }
-    return;
-  }
-
-  node.forEach((child, offset) => {
-    // For block children, step past the child's opening tag with +1.
-    // For inline (text) children, the content start is exactly at offset.
-    const childContentStart = absolutePos + offset + (child.isText ? 0 : 1);
-    walkNodeText(child, childContentStart, textParts, charStarts, charEnds);
-  });
+// Plain-text offset of the first character at or after `position`.
+export function plainOffsetAtPosition(index: PlainTextIndex, position: number): number {
+  const offset = index.charStarts.findIndex((start) => start >= position);
+  return offset === -1 ? index.charStarts.length : offset;
 }
 
 export function offsetToPosition(
@@ -223,8 +242,8 @@ export function buildAnchorFromRange(
   to: number,
   documentId: string,
   versionSeen: number,
+  index: PlainTextIndex = buildPlainTextIndex(doc),
 ): TextAnchor {
-  const index = buildPlainTextIndex(doc);
   const exact = doc.textBetween(from, to, "\n\n");
   const prefix = doc.textBetween(Math.max(1, from - 24), from, "\n\n");
   const suffix = doc.textBetween(to, Math.min(doc.content.size, to + 24), "\n\n");
@@ -236,7 +255,7 @@ export function buildAnchorFromRange(
     prefix,
     suffix,
     blockPath: resolveBlockPath(doc, from),
-    approxPlainTextOffset: index.text.indexOf(exact),
+    approxPlainTextOffset: plainOffsetAtPosition(index, from),
     versionSeen,
   };
 }

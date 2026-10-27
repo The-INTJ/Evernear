@@ -19,6 +19,7 @@
 import { z } from "zod";
 
 import type { JsonObject, JsonValue } from "../domain/document";
+import { compileMatchingPattern } from "../matchingPatterns";
 
 // ──────────────── small reusable pieces ────────────────
 
@@ -172,16 +173,20 @@ export const DeleteEntityInputSchema = z.object({
   entityId: NonEmptyString,
 });
 
-export const MatchingRuleKindSchema = z.enum(["literal", "alias", "regex"]);
+// A pattern that doesn't compile would be skipped by every editor, so it
+// never reaches the database.
+const MatchingPatternSchema = z.string().superRefine((pattern, ctx) => {
+  const compiled = compileMatchingPattern(pattern);
+  if (!compiled.ok) {
+    ctx.addIssue({ code: "custom", message: `Not a valid regex: ${compiled.error}` });
+  }
+});
 
 export const UpsertMatchingRuleInputSchema = z.object({
   id: z.string().optional(),
   entityId: NonEmptyString,
   label: z.string(),
-  kind: MatchingRuleKindSchema,
-  pattern: z.string(),
-  wholeWord: z.boolean(),
-  allowPossessive: z.boolean(),
+  pattern: MatchingPatternSchema,
   enabled: z.boolean(),
 });
 

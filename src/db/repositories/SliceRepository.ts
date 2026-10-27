@@ -9,7 +9,7 @@ import type {
   SliceRecord,
   TextAnchor,
 } from "../../shared/domain/workspace";
-import { createMappingFromSteps, mapBoundaryForward } from "../../shared/anchoring";
+import { buildPlainTextIndex, createMappingFromSteps, mapBoundaryForward } from "../../shared/anchoring";
 import type { SqliteHarness } from "../sqliteHarness";
 import { isoNow, stableStringify, truncate } from "../utils";
 import type {
@@ -228,9 +228,22 @@ export class SliceRepository {
 
   deleteSlice(sliceId: string): void {
     const database = this.sqlite.getConnection();
+    const slice = database.prepare(`
+      SELECT document_id, title
+      FROM slices
+      WHERE id = ?
+    `).get(sliceId) as { document_id: string; title: string } | undefined;
+    if (!slice) {
+      return;
+    }
+
     database.prepare("DELETE FROM entity_slices WHERE slice_id = ?").run(sliceId);
     database.prepare("DELETE FROM slice_boundaries WHERE slice_id = ?").run(sliceId);
     database.prepare("DELETE FROM slices WHERE id = ?").run(sliceId);
+    this.history.appendEvent("slice", sliceId, "sliceDeleted", 0, {
+      documentId: slice.document_id,
+      title: slice.title,
+    });
   }
 
   // Called after a document transaction to re-anchor every boundary in that
@@ -248,14 +261,17 @@ export class SliceRepository {
     const database = this.sqlite.getConnection();
     const nextDoc = basicSchema.nodeFromJSON(snapshot.contentJson);
     const mapping = createMappingFromSteps(serializedSteps);
+    const index = buildPlainTextIndex(nextDoc);
     const updatedAt = isoNow();
 
     for (const boundary of boundaries) {
       const nextResolution = mapBoundaryForward(
         boundary.anchor,
+        boundary.resolution.status,
         mapping,
         nextDoc,
         snapshot.currentVersion,
+        index,
       );
       const changed =
         nextResolution.status !== boundary.resolution.status

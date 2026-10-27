@@ -6,7 +6,6 @@ export const DEFAULT_PROJECT_NAME = "Untitled Project";
 export const DEFAULT_STORY_DOCUMENT_ID = "story-document";
 export const DEFAULT_STORY_DOCUMENT_TITLE = "Story Draft";
 
-export type MatchingRuleKind = "literal" | "alias" | "regex";
 export type AnchorResolutionStatus = "resolved" | "repaired" | "ambiguous" | "invalid";
 export type PanelMode = "entities" | "chooser" | "placement" | "document";
 
@@ -91,10 +90,9 @@ export type MatchingRuleRecord = {
   id: string;
   entityId: string;
   label: string;
-  kind: MatchingRuleKind;
+  // A regex: bare (matched ignoring case) or /slash/ form with the
+  // author's own flags. See shared/matchingPatterns.ts.
   pattern: string;
-  wholeWord: boolean;
-  allowPossessive: boolean;
   enabled: boolean;
   createdAt: string;
   updatedAt: string;
@@ -135,7 +133,6 @@ export type EntityMatchHit = {
   from: number;
   to: number;
   matchedText: string;
-  normalizedText: string;
 };
 
 export type WorkspaceState = {
@@ -293,10 +290,7 @@ export type UpsertMatchingRuleInput = {
   id?: string;
   entityId: string;
   label: string;
-  kind: MatchingRuleKind;
   pattern: string;
-  wholeWord: boolean;
-  allowPossessive: boolean;
   enabled: boolean;
 };
 

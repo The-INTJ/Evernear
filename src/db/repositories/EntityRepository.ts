@@ -7,6 +7,7 @@ import type {
   UpdateEntityInput,
   UpsertMatchingRuleInput,
 } from "../../shared/domain/workspace";
+import { patternFromText } from "../../shared/matchingPatterns";
 import type { SqliteHarness } from "../sqliteHarness";
 import { boolToInt, isoNow } from "../utils";
 import type { RawEntityRow, RawMatchingRuleRow } from "../rowTypes";
@@ -43,10 +44,7 @@ export class EntityRepository {
         matching_rules.id,
         matching_rules.entity_id,
         matching_rules.label,
-        matching_rules.kind,
         matching_rules.pattern,
-        matching_rules.whole_word,
-        matching_rules.allow_possessive,
         matching_rules.enabled,
         matching_rules.created_at,
         matching_rules.updated_at
@@ -122,6 +120,8 @@ export class EntityRepository {
 
   // ──────────────── matching rule mutations ────────────────
 
+  // `kind`, `whole_word` and `allow_possessive` predate ADR-008. The
+  // columns stay in the schema; every rule is written as a plain regex.
   upsertMatchingRule(input: UpsertMatchingRuleInput, ruleId: string): void {
     const now = isoNow();
     const isNew = !input.id;
@@ -144,7 +144,7 @@ export class EntityRepository {
         created_at,
         updated_at
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, 'regex', ?, 0, 0, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         entity_id = excluded.entity_id,
         label = excluded.label,
@@ -158,10 +158,7 @@ export class EntityRepository {
       ruleId,
       input.entityId,
       input.label,
-      input.kind,
       input.pattern,
-      boolToInt(input.wholeWord),
-      boolToInt(input.allowPossessive),
       boolToInt(input.enabled),
       createdAt,
       now,
@@ -175,10 +172,43 @@ export class EntityRepository {
       {
         entityId: input.entityId,
         label: input.label,
-        kind: input.kind,
         pattern: input.pattern,
       },
     );
+  }
+
+  // Rules written before ADR-008 hold literal or alias text plus
+  // whole-word / possessive flags. Rewrite each one, once, as the regex
+  // that matches the same phrase. Like adoptOrphanedMatchingRules this runs
+  // against non-empty databases, so every rewrite appends an event.
+  convertLegacyMatchingRules(): void {
+    const database = this.sqlite.getConnection();
+    const legacyRules = database.prepare(`
+      SELECT id, entity_id, label, pattern, whole_word
+      FROM matching_rules
+      WHERE kind <> 'regex'
+    `).all() as Array<{
+      id: string;
+      entity_id: string | null;
+      label: string;
+      pattern: string;
+      whole_word: number;
+    }>;
+
+    const update = database.prepare(`
+      UPDATE matching_rules
+      SET kind = 'regex', pattern = ?, whole_word = 0, allow_possessive = 0, updated_at = ?
+      WHERE id = ?
+    `);
+    for (const rule of legacyRules) {
+      const pattern = patternFromText(rule.pattern, rule.whole_word === 1);
+      update.run(pattern, isoNow(), rule.id);
+      this.history.appendEvent("matchingRule", rule.id, "matchingRuleUpdated", 0, {
+        entityId: rule.entity_id ?? "",
+        label: rule.label,
+        pattern,
+      });
+    }
   }
 
   deleteMatchingRule(input: DeleteMatchingRuleInput): void {
@@ -211,11 +241,11 @@ export class EntityRepository {
   adoptOrphanedMatchingRules(projectId: string, createEntityId: () => string): void {
     const database = this.sqlite.getConnection();
     const orphans = database.prepare(`
-      SELECT id, label, kind, pattern, updated_at
+      SELECT id, label, pattern, updated_at
       FROM matching_rules
       WHERE entity_id IS NULL
       ORDER BY updated_at ASC
-    `).all() as Array<{ id: string; label: string; kind: string; pattern: string; updated_at: string }>;
+    `).all() as Array<{ id: string; label: string; pattern: string; updated_at: string }>;
 
     for (const rule of orphans) {
       const entityId = createEntityId();
@@ -234,7 +264,6 @@ export class EntityRepository {
       this.history.appendEvent("matchingRule", rule.id, "matchingRuleUpdated", 0, {
         entityId,
         label: rule.label,
-        kind: rule.kind as MatchingRuleRecord["kind"],
         pattern: rule.pattern,
       });
     }

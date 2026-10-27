@@ -38,10 +38,7 @@ describe("EntityRepository.deleteMatchingRule", () => {
     const afterRule = repository.upsertMatchingRule({
       entityId,
       label: "Strider",
-      pattern: "Strider",
-      kind: "literal",
-      wholeWord: true,
-      allowPossessive: true,
+      pattern: "\\bStrider\\b",
       enabled: true,
     });
     const rule = afterRule.matchingRules.find((r) => r.entityId === entityId && r.label === "Strider");
@@ -67,6 +64,48 @@ describe("EntityRepository.deleteMatchingRule", () => {
     repository.deleteMatchingRule({ ruleId: "not-a-real-rule-id" });
     const deletedEventsAfter = countEvents(harness, "matchingRule", "matchingRuleDeleted");
     expect(deletedEventsAfter).toBe(deletedEventsBefore);
+  });
+});
+
+describe("EntityRepository.convertLegacyMatchingRules", () => {
+  function insertLegacyRule(entityId: string, id: string, kind: string, pattern: string, wholeWord: boolean): void {
+    harness.getConnection().prepare(`
+      INSERT INTO matching_rules
+        (id, entity_id, label, kind, pattern, whole_word, allow_possessive, enabled, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, 1, 1, '2026-04-01T00:00:00.000Z', '2026-04-01T00:00:00.000Z')
+    `).run(id, entityId, pattern, kind, pattern, wholeWord ? 1 : 0);
+  }
+
+  it("rewrites literal and alias rules as regexes once, appending one event each", () => {
+    const state = repository.ensureWorkspaceState();
+    const projectId = state.layout.activeProjectId!;
+    const entityId = repository.createEntity({ projectId, name: "The Spire" }).layout.selectedEntityId!;
+    insertLegacyRule(entityId, "legacy-literal", "literal", "The Spire", true);
+    insertLegacyRule(entityId, "legacy-alias", "alias", "Spire", false);
+    const eventsBefore = countEvents(harness, "matchingRule", "matchingRuleUpdated");
+
+    const rules = repository.loadWorkspace().matchingRules;
+    expect(rules.find((rule) => rule.id === "legacy-literal")?.pattern).toBe("\\bThe\\s+Spire\\b");
+    expect(rules.find((rule) => rule.id === "legacy-alias")?.pattern).toBe("Spire");
+    expect(countEvents(harness, "matchingRule", "matchingRuleUpdated")).toBe(eventsBefore + 2);
+
+    const kinds = harness.getConnection()
+      .prepare("SELECT DISTINCT kind FROM matching_rules")
+      .all() as Array<{ kind: string }>;
+    expect(kinds.map((row) => row.kind)).toEqual(["regex"]);
+
+    repository.loadWorkspace();
+    expect(countEvents(harness, "matchingRule", "matchingRuleUpdated")).toBe(eventsBefore + 2);
+  });
+
+  it("leaves rules that were already regexes untouched", () => {
+    const state = repository.ensureWorkspaceState();
+    const projectId = state.layout.activeProjectId!;
+    const entityId = repository.createEntity({ projectId, name: "Spire" }).layout.selectedEntityId!;
+    insertLegacyRule(entityId, "legacy-regex", "regex", "spires?", false);
+
+    const rule = repository.loadWorkspace().matchingRules.find((r) => r.id === "legacy-regex");
+    expect(rule?.pattern).toBe("spires?");
   });
 });
 

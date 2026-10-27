@@ -10,6 +10,7 @@ import type {
   SliceRecord,
   WorkspaceState,
 } from "../../shared/domain/workspace";
+import { compileMatchingPattern } from "../../shared/matchingPatterns";
 import type { EditorMatchingRule } from "../editor/editorUtils";
 
 export type WorkspaceLookups = {
@@ -47,10 +48,14 @@ export function useWorkspaceLookups(workspace: WorkspaceState | null): Workspace
 
   const editorRules = useMemo<EditorMatchingRule[]>(() => {
     if (!workspace) return [];
-    return workspace.matchingRules.map((rule) => ({
-      ...rule,
-      entityName: entitiesById.get(rule.entityId)?.name ?? "Entity",
-    }));
+    return workspace.matchingRules.map((rule) => {
+      const compiled = compileMatchingPattern(rule.pattern);
+      return {
+        ...rule,
+        entityName: entitiesById.get(rule.entityId)?.name ?? "Entity",
+        regex: compiled.ok ? compiled.regex : null,
+      };
+    });
   }, [workspace, entitiesById]);
 
   return { entitiesById, slicesById, boundariesBySliceId, documentsById, editorRules };

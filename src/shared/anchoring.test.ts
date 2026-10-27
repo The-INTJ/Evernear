@@ -114,7 +114,7 @@ describe("mapBoundaryForward", () => {
     });
 
     const mapping = createMappingFromSteps(steps);
-    const result = mapBoundaryForward(anchor, mapping, after, 2);
+    const result = mapBoundaryForward(anchor, "resolved", mapping, after, 2);
 
     expect(result.status).toBe("resolved");
     expect(result.anchor.exact).toBe("harbor");
@@ -134,7 +134,7 @@ describe("mapBoundaryForward", () => {
     });
 
     const mapping = createMappingFromSteps(steps);
-    const result = mapBoundaryForward(anchor, mapping, after, 2);
+    const result = mapBoundaryForward(anchor, "resolved", mapping, after, 2);
 
     expect(result.status).toBe("resolved");
     expect(result.reason.includes("absorbed")).toBe(true);
@@ -154,10 +154,103 @@ describe("mapBoundaryForward", () => {
     });
 
     const mapping = createMappingFromSteps(steps);
-    const result = mapBoundaryForward(anchor, mapping, after, 2);
+    const result = mapBoundaryForward(anchor, "resolved", mapping, after, 2);
 
     expect(result.status).toBe("invalid");
     expect(result.reason).toContain("exact text no longer exists");
+  });
+
+  it("keeps an invalid boundary invalid through a later unrelated edit", () => {
+    const v1 = docOf(["Intro paragraph here.", "A lone bear walked the ridge."]);
+    const anchor = anchorFor(v1, "lone bear");
+
+    const deletion = edit(v1, (tr) => tr.delete(anchor.from, anchor.to));
+    const lost = mapBoundaryForward(anchor, "resolved", createMappingFromSteps(deletion.steps), deletion.doc, 2);
+    expect(lost.status).toBe("invalid");
+
+    // A keystroke elsewhere must not map the stale positions onto
+    // whatever text now sits there.
+    const keystroke = edit(deletion.doc, (tr) => tr.insert(1, basicSchema.text("X")));
+    const later = mapBoundaryForward(lost.anchor, lost.status, createMappingFromSteps(keystroke.steps), keystroke.doc, 3);
+    expect(later.status).toBe("invalid");
+    expect(later.anchor.exact).toBe("lone bear");
+  });
+
+  it("repairs an invalid boundary once its exact text comes back", () => {
+    const v1 = docOf(["Intro paragraph here.", "A lone bear walked the ridge."]);
+    const anchor = anchorFor(v1, "lone bear");
+
+    const deletion = edit(v1, (tr) => tr.delete(anchor.from, anchor.to));
+    const lost = mapBoundaryForward(anchor, "resolved", createMappingFromSteps(deletion.steps), deletion.doc, 2);
+
+    const restore = edit(deletion.doc, (tr) => tr.insert(lost.anchor.from, basicSchema.text("lone bear")));
+    const back = mapBoundaryForward(lost.anchor, lost.status, createMappingFromSteps(restore.steps), restore.doc, 3);
+    expect(back.status).toBe("repaired");
+    expect(restore.doc.textBetween(back.anchor.from, back.anchor.to)).toBe("lone bear");
+  });
+});
+
+describe("buildPlainTextIndex mirrors textBetween", () => {
+  const nested = basicSchema.nodeFromJSON({
+    type: "doc",
+    content: [
+      { type: "paragraph", content: [{ type: "text", text: "Opening line." }] },
+      {
+        type: "blockquote",
+        content: [
+          { type: "paragraph", content: [{ type: "text", text: "First quoted." }] },
+          { type: "paragraph", content: [{ type: "text", text: "Second quoted." }] },
+        ],
+      },
+      {
+        type: "paragraph",
+        content: [
+          { type: "text", text: "Before break" },
+          { type: "hard_break" },
+          { type: "text", text: "after break." },
+        ],
+      },
+    ],
+  });
+
+  it("produces the same text as textBetween for nested blocks and hard breaks", () => {
+    expect(buildPlainTextIndex(nested).text).toBe(nested.textBetween(0, nested.content.size, "\n\n"));
+    expect(buildPlainTextIndex(nested, 0, nested.content.size, "\n").text)
+      .toBe(nested.textBetween(0, nested.content.size, "\n\n", "\n"));
+  });
+
+  it("maps every visible character back to its own position", () => {
+    const index = buildPlainTextIndex(nested);
+    for (let i = 0; i < index.text.length; i += 1) {
+      if (index.charStarts[i] === index.charEnds[i]) continue; // block separator
+      expect(nested.textBetween(index.charStarts[i]!, index.charEnds[i]!)).toBe(index.text[i]);
+    }
+  });
+
+  it("repairs an anchor inside a block quote after a full re-paste", () => {
+    const index = buildPlainTextIndex(nested);
+    const offset = index.text.indexOf("Second quoted.");
+    const from = offsetToPosition(index, offset)!;
+    const to = offsetToPosition(index, offset + "Second quoted.".length - 1, true)!;
+    const anchor = buildAnchorFromRange(nested, from, to, "doc-1", 1);
+
+    const repasted = basicSchema.nodeFromJSON(nested.toJSON());
+    const result = resolveAnchorWithFallback(anchor, repasted, "mapping collapsed", 2);
+    expect(result.status).toBe("repaired");
+    expect(repasted.textBetween(result.anchor.from, result.anchor.to)).toBe("Second quoted.");
+  });
+});
+
+describe("buildAnchorFromRange approxPlainTextOffset", () => {
+  it("records the anchor's own offset, not the first occurrence of its text", () => {
+    const doc = docOf(["The Spire was old.", "Later, The Spire fell."]);
+    const index = buildPlainTextIndex(doc);
+    const second = index.text.lastIndexOf("The Spire");
+    const from = offsetToPosition(index, second)!;
+    const to = offsetToPosition(index, second + "The Spire".length - 1, true)!;
+
+    const anchor = buildAnchorFromRange(doc, from, to, "doc-1", 1);
+    expect(anchor.approxPlainTextOffset).toBe(second);
   });
 });
 

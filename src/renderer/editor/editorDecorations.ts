@@ -30,7 +30,7 @@ export function recomputeDecorations(
 
   const startedAt = performance.now();
   const visibleBlocks = collectVisibleBlocks(view, surface);
-  const matchHits = collectMatchesForVisibleBlocks(matchingRules, visibleBlocks);
+  const matchHits = collectMatchesForVisibleBlocks(view.state.doc, matchingRules, visibleBlocks);
   const decorations: Decoration[] = [];
 
   for (const hit of matchHits) {
@@ -44,6 +44,10 @@ export function recomputeDecorations(
   }
 
   for (const boundary of sliceBoundaries) {
+    // Unresolved boundaries keep positions from an older version of the
+    // document; painting them would point at the wrong text.
+    const { status } = boundary.resolution;
+    if (status === "invalid" || status === "ambiguous") continue;
     const { from, to } = boundary.resolution.anchor;
     if (from >= to) continue;
 
@@ -80,7 +84,7 @@ export function recomputeDecorations(
 
   const visibleFrom = visibleBlocks.length > 0 ? Math.min(...visibleBlocks.map((block) => block.from)) : 0;
   const visibleTo = visibleBlocks.length > 0 ? Math.max(...visibleBlocks.map((block) => block.to)) : 0;
-  const visibleCharacterCount = visibleBlocks.reduce((total, block) => total + block.text.length, 0);
+  const visibleCharacterCount = visibleBlocks.reduce((total, block) => total + (block.to - block.from), 0);
 
   onMatchingBenchmark?.({
     visibleFrom,
@@ -145,7 +149,6 @@ function collectVisibleBlocks(
     visibleBlocks.push({
       from: offset + 1,
       to: offset + block.nodeSize - 1,
-      text: block.textBetween(0, block.content.size, "\n\n"),
     });
   });
 
