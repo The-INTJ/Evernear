@@ -7,7 +7,7 @@ import {
 
 import { redo, undo } from "prosemirror-history";
 import { schema as basicSchema } from "prosemirror-schema-basic";
-import { AllSelection, TextSelection } from "prosemirror-state";
+import { AllSelection } from "prosemirror-state";
 import { DecorationSet, EditorView } from "prosemirror-view";
 
 import type { JsonObject } from "../../shared/domain/document";
@@ -33,6 +33,7 @@ import {
   toggleMarkFromHandle,
 } from "./editorState";
 import { attachEntityHover, type EntityHoverPayload } from "./entityHover";
+import { applyBoundaryDrag, attachBoundaryEditing, innermostSliceAt, type BoundaryDrag } from "./boundaryDrag";
 
 export type { HarnessEditorSnapshot } from "./editorState";
 
@@ -52,8 +53,11 @@ export type HarnessEditorHandle = {
   toggleBold(): void;
   toggleItalic(): void;
   replaceSelection(text: string): { from: number; to: number } | null;
-  // Selects [from, to] and scrolls it to the upper third of the surface.
-  revealRange(from: number, to: number): void;
+  // Scrolls `pos` to the upper third of the surface without moving the
+  // selection.
+  scrollToPosition(pos: number): void;
+  getScrollTop(): number;
+  setScrollTop(top: number): void;
 };
 
 type HarnessEditorProps = {
@@ -61,15 +65,17 @@ type HarnessEditorProps = {
   decorationsEnabled: boolean;
   matchingRules?: EditorMatchingRule[];
   sliceBoundaries?: SliceBoundaryRecord[];
-  // When true, boundaries paint with the `--editing` modifier and gain
-  // start/end handle widgets. Foundation for drag-to-reposition; the
-  // gesture itself is not implemented yet.
+  // Edit slices: every slice gets start and end handles to drag, and
+  // clicking inside a slice focuses it.
   boundariesEditable?: boolean;
+  focusedSliceId?: string | null;
   pendingRange?: PendingSliceRange | null;
   onDocumentSnapshotChange(nextSnapshot: HarnessEditorSnapshot, transaction: SerializedTransactionBundle | null): void;
   onSelectionChange(selection: EditorSelectionInfo): void;
   onMatchingBenchmark?(benchmark: MatchingBenchmark): void;
   onEntityHover?(payload: EntityHoverPayload | null): void;
+  onBoundaryChange?(sliceId: string, from: number, to: number): void;
+  onSliceFocus?(sliceId: string | null): void;
 };
 
 export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>(
@@ -81,37 +87,42 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
     const onSelectionChangeRef = useRef(props.onSelectionChange);
     const onMatchingBenchmarkRef = useRef(props.onMatchingBenchmark);
     const onEntityHoverRef = useRef(props.onEntityHover);
+    const onBoundaryChangeRef = useRef(props.onBoundaryChange);
+    const onSliceFocusRef = useRef(props.onSliceFocus);
+    const dragPreviewRef = useRef<BoundaryDrag | null>(null);
     const currentDecorationsRef = useRef<DecorationSet>(DecorationSet.empty);
     const rulesRef = useRef(props.matchingRules ?? []);
     const boundariesRef = useRef(props.sliceBoundaries ?? []);
     const pendingRangeRef = useRef(props.pendingRange ?? null);
     const decorationsEnabledRef = useRef(props.decorationsEnabled);
     const boundariesEditableRef = useRef(props.boundariesEditable ?? false);
+    const focusedSliceIdRef = useRef(props.focusedSliceId ?? null);
 
     onDocumentSnapshotChangeRef.current = props.onDocumentSnapshotChange;
     onSelectionChangeRef.current = props.onSelectionChange;
     onMatchingBenchmarkRef.current = props.onMatchingBenchmark;
     onEntityHoverRef.current = props.onEntityHover;
+    onBoundaryChangeRef.current = props.onBoundaryChange;
+    onSliceFocusRef.current = props.onSliceFocus;
     rulesRef.current = props.matchingRules ?? [];
     boundariesRef.current = props.sliceBoundaries ?? [];
     pendingRangeRef.current = props.pendingRange ?? null;
     decorationsEnabledRef.current = props.decorationsEnabled;
     boundariesEditableRef.current = props.boundariesEditable ?? false;
+    focusedSliceIdRef.current = props.focusedSliceId ?? null;
 
     // Reads everything through refs, so the copy captured by the mount
     // effect always sees current props.
     const redecorate = (view: EditorView) => {
-      recomputeDecorations(
-        view,
-        surfaceRef.current,
-        currentDecorationsRef,
-        rulesRef.current,
-        boundariesRef.current,
-        pendingRangeRef.current,
-        decorationsEnabledRef.current,
-        boundariesEditableRef.current,
-        onMatchingBenchmarkRef.current,
-      );
+      recomputeDecorations(view, surfaceRef.current, currentDecorationsRef, {
+        matchingRules: rulesRef.current,
+        sliceBoundaries: applyBoundaryDrag(boundariesRef.current, dragPreviewRef.current),
+        pendingRange: pendingRangeRef.current,
+        decorationsEnabled: decorationsEnabledRef.current,
+        boundariesEditable: boundariesEditableRef.current,
+        focusedSliceId: focusedSliceIdRef.current,
+        onMatchingBenchmark: onMatchingBenchmarkRef.current,
+      });
     };
 
     useEffect(() => {
@@ -163,11 +174,26 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
       currentSurface?.addEventListener("scroll", handleScroll);
       window.addEventListener("resize", handleScroll);
       const detachEntityHover = attachEntityHover(view.dom, (payload) => onEntityHoverRef.current?.(payload));
+      const detachBoundaryEditing = attachBoundaryEditing(view, () => ({
+        isEditable: () => boundariesEditableRef.current,
+        rangeOf: (sliceId) => {
+          const boundary = boundariesRef.current.find((candidate) => candidate.sliceId === sliceId);
+          return boundary ? { from: boundary.resolution.anchor.from, to: boundary.resolution.anchor.to } : null;
+        },
+        sliceAt: (pos) => innermostSliceAt(boundariesRef.current, pos),
+        onPreview: (drag) => {
+          dragPreviewRef.current = drag;
+          redecorate(view);
+        },
+        onCommit: (sliceId, from, to) => onBoundaryChangeRef.current?.(sliceId, from, to),
+        onFocusSlice: (sliceId) => onSliceFocusRef.current?.(sliceId),
+      }));
 
       return () => {
         currentSurface?.removeEventListener("scroll", handleScroll);
         window.removeEventListener("resize", handleScroll);
         detachEntityHover();
+        detachBoundaryEditing();
         view.destroy();
         viewRef.current = null;
       };
@@ -180,7 +206,14 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
       }
 
       redecorate(view);
-    }, [props.decorationsEnabled, props.matchingRules, props.sliceBoundaries, props.pendingRange, props.boundariesEditable]);
+    }, [
+      props.decorationsEnabled,
+      props.matchingRules,
+      props.sliceBoundaries,
+      props.pendingRange,
+      props.boundariesEditable,
+      props.focusedSliceId,
+    ]);
 
     useImperativeHandle(ref, () => ({
       getSnapshot() {
@@ -234,18 +267,20 @@ export const HarnessEditor = forwardRef<HarnessEditorHandle, HarnessEditorProps>
           to: from + text.length,
         };
       },
-      revealRange(from: number, to: number) {
+      scrollToPosition(pos: number) {
         const view = viewRef.current;
         if (!view) {
           return;
         }
-
-        const size = view.state.doc.content.size;
-        const start = Math.max(0, Math.min(from, size));
-        const end = Math.max(start, Math.min(to, size));
-        view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, start, end)));
-        view.focus();
-        scrollPositionIntoUpperThird(view, surfaceRef.current, start);
+        scrollPositionIntoUpperThird(view, surfaceRef.current, Math.max(0, Math.min(pos, view.state.doc.content.size)));
+      },
+      getScrollTop() {
+        return surfaceRef.current?.scrollTop ?? 0;
+      },
+      setScrollTop(top: number) {
+        if (surfaceRef.current) {
+          surfaceRef.current.scrollTop = top;
+        }
       },
     }));
 

@@ -9,8 +9,10 @@ type Props = {
   onSaveDocumentMeta: () => void;
   highlightsEnabled: boolean;
   slicesVisible: boolean;
+  editingSlices: boolean;
   onToggleHighlights: () => void;
   onToggleSlices: () => void;
+  onToggleEditingSlices: () => void;
   pendingWrites: number;
   saveError: string | null;
 };
@@ -25,8 +27,10 @@ export function TitleBar({
   onSaveDocumentMeta,
   highlightsEnabled,
   slicesVisible,
+  editingSlices,
   onToggleHighlights,
   onToggleSlices,
+  onToggleEditingSlices,
   pendingWrites,
   saveError,
 }: Props) {
@@ -44,7 +48,8 @@ export function TitleBar({
 
       <div className={styles.toggles} aria-label="Highlighting">
         <Toggle label="Entities" on={highlightsEnabled} shortcut="Ctrl+H" onClick={onToggleHighlights} />
-        <Toggle label="Slices" on={slicesVisible} shortcut="Ctrl+J" onClick={onToggleSlices} />
+        <Toggle label="Slices" on={slicesVisible || editingSlices} shortcut="Ctrl+J" onClick={onToggleSlices} />
+        <Toggle label="Edit slices" on={editingSlices} shortcut="Ctrl+E" onClick={onToggleEditingSlices} editing />
       </div>
 
       <SaveStatus pendingWrites={pendingWrites} saveError={saveError} />
@@ -57,16 +62,18 @@ function Toggle({
   on,
   shortcut,
   onClick,
+  editing,
 }: {
   label: string;
   on: boolean;
   shortcut: string;
   onClick: () => void;
+  editing?: boolean;
 }) {
   return (
     <button
       aria-pressed={on}
-      className={classNames(styles.toggle, on && styles.on)}
+      className={classNames(styles.toggle, on && (editing ? styles.editing : styles.on))}
       onClick={onClick}
       title={`${on ? "Hide" : "Show"} ${label.toLowerCase()} (${shortcut})`}
       type="button"

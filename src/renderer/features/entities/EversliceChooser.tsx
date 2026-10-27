@@ -131,7 +131,10 @@ export function EversliceChooser(props: Props) {
 
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     if (event.key === "Escape") {
+      // Stop here: the window-level Esc (leave slice editing) must not
+      // also fire for the key that closed this chooser.
       event.preventDefault();
+      event.stopPropagation();
       onClose();
       return;
     }

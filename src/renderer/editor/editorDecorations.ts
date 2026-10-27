@@ -11,17 +11,32 @@ type DecorationRef = {
   current: DecorationSet;
 };
 
+export type DecorationInputs = {
+  matchingRules: EditorMatchingRule[];
+  sliceBoundaries: SliceBoundaryRecord[];
+  pendingRange: { from: number; to: number } | null;
+  decorationsEnabled: boolean;
+  // Edit slices: handles on every slice, and the focused one drawn darker.
+  boundariesEditable: boolean;
+  focusedSliceId: string | null;
+  onMatchingBenchmark?: (benchmark: MatchingBenchmark) => void;
+};
+
 export function recomputeDecorations(
   view: EditorView,
   surface: HTMLDivElement | null,
   decorationRef: DecorationRef,
-  matchingRules: EditorMatchingRule[],
-  sliceBoundaries: SliceBoundaryRecord[],
-  pendingRange: { from: number; to: number } | null,
-  decorationsEnabled: boolean,
-  boundariesEditable: boolean,
-  onMatchingBenchmark: ((benchmark: MatchingBenchmark) => void) | undefined,
+  inputs: DecorationInputs,
 ): void {
+  const {
+    matchingRules,
+    sliceBoundaries,
+    pendingRange,
+    decorationsEnabled,
+    boundariesEditable,
+    focusedSliceId,
+    onMatchingBenchmark,
+  } = inputs;
   if (!decorationsEnabled || !surface) {
     decorationRef.current = DecorationSet.empty;
     refreshDecorations(view, decorationRef);
@@ -55,19 +70,22 @@ export function recomputeDecorations(
     // A tint over the text plus one bar in the margin per paragraph the
     // slice touches. Inline borders would repeat at every text fragment
     // (each mark change, each paragraph) and nudge the prose sideways.
+    const focused = boundariesEditable && boundary.sliceId === focusedSliceId;
     decorations.push(Decoration.inline(from, to, {
-      class: boundariesEditable ? "pm-slice pm-slice--editing" : "pm-slice",
+      class: focused ? "pm-slice pm-slice--focused" : "pm-slice",
       "data-slice-id": boundary.sliceId,
     }, { inclusiveEnd: true }));
     view.state.doc.nodesBetween(from, to, (node, pos) => {
       if (!node.isTextblock) return true;
-      decorations.push(Decoration.node(pos, pos + node.nodeSize, { class: "pm-slice-block" }));
+      decorations.push(Decoration.node(pos, pos + node.nodeSize, {
+        class: focused ? "pm-slice-block pm-slice-block--focused" : "pm-slice-block",
+      }));
       return false;
     });
 
     if (boundariesEditable) {
-      decorations.push(Decoration.widget(from, buildBoundaryHandle(boundary.sliceId, "start"), { side: -1 }));
-      decorations.push(Decoration.widget(to, buildBoundaryHandle(boundary.sliceId, "end"), { side: 1 }));
+      decorations.push(handleWidget(from, boundary.sliceId, "start"));
+      decorations.push(handleWidget(to, boundary.sliceId, "end"));
     }
   }
 
@@ -117,14 +135,23 @@ function buildPendingMarker(className: string): () => HTMLElement {
   };
 }
 
-function buildBoundaryHandle(sliceId: string, position: "start" | "end"): () => HTMLElement {
-  return () => {
+// stopEvent hands the handle's mouse events to boundaryDrag.ts instead of
+// the view, so pressing one starts a drag rather than a text selection.
+function handleWidget(pos: number, sliceId: string, position: "start" | "end"): Decoration {
+  return Decoration.widget(pos, () => {
     const element = document.createElement("span");
     element.className = `pm-slice-handle pm-slice-handle--${position}`;
+    element.contentEditable = "false";
     element.dataset.sliceId = sliceId;
     element.dataset.handle = position;
+    element.title = position === "start" ? "Drag to move where this slice starts" : "Drag to move where this slice ends";
     return element;
-  };
+  }, {
+    side: position === "start" ? -1 : 1,
+    key: `${sliceId}-${position}`,
+    ignoreSelection: true,
+    stopEvent: () => true,
+  });
 }
 
 function refreshDecorations(

@@ -15,17 +15,19 @@ import { useEditorSelections } from "./state/useEditorSelections";
 import { useEverslicePlacement } from "./state/useEverslicePlacement";
 import { useGlobalShortcuts } from "./state/useGlobalShortcuts";
 import { useHoverPreview } from "./state/useHoverPreview";
-import { useSliceNavigation } from "./state/useSliceNavigation";
+import { useSliceBoundaryActions } from "./state/useSliceBoundaryActions";
+import { useSliceEditing } from "./state/useSliceEditing";
 import { useWorkspace } from "./state/useWorkspace";
 import { useWorkspaceActions } from "./state/useWorkspaceActions";
 import { useWorkspaceLookups } from "./state/useWorkspaceLookups";
-import { entityMatchingText, getActiveProject } from "./utils/workspace";
+import { entityMatchingText, getActiveProject, sliceEditingSummary } from "./utils/workspace";
 
 import { NoticeBar } from "./features/chrome/NoticeBar";
 import { TitleBar } from "./features/chrome/TitleBar";
 import { EditorPane } from "./features/documents/EditorPane";
 import { NavPanel } from "./features/documents/NavPanel";
 import { SelectionBubble } from "./features/documents/SelectionBubble";
+import { SliceEditBar } from "./features/documents/SliceEditBar";
 import { EntityDialog } from "./features/entities/EntityDialog";
 import { EversliceChooser } from "./features/entities/EversliceChooser";
 import { HoverPreview } from "./features/panes/HoverPreview";
@@ -45,7 +47,8 @@ export function App() {
   const selections = useEditorSelections();
   const lookups = useWorkspaceLookups(workspace);
   const everslice = useEverslicePlacement({ workspaceHook, selections, editorRef: mainEditorRef });
-  const sliceNavigation = useSliceNavigation({ workspaceHook, lookups, editorRef: mainEditorRef });
+  const sliceEditing = useSliceEditing({ workspaceHook, lookups, editorRef: mainEditorRef });
+  const boundaryActions = useSliceBoundaryActions({ workspaceHook, lookups, editorRef: mainEditorRef });
   const hover = useHoverPreview({ lookups, workspace });
 
   const activeProject = getActiveProject(workspace);
@@ -74,13 +77,16 @@ export function App() {
     setDrafts: { setNewFolderTitle, setNewDocumentTitle },
   });
 
-  useGlobalShortcuts({ toggleHighlights: actions.toggleHighlights, toggleSlices: actions.toggleSlices });
-
+  const { editing, focusedSliceId } = sliceEditing;
   const matchingRules = layout?.highlightsEnabled ? lookups.editorRules : NO_RULES;
   const sliceBoundaries = useMemo(() => {
-    if (!workspace?.layout.slicesVisible || !activeDocument) return NO_BOUNDARIES;
+    if (!(workspace?.layout.slicesVisible || editing) || !workspace || !activeDocument) return NO_BOUNDARIES;
     return workspace.sliceBoundaries.filter((boundary) => boundary.documentId === activeDocument.id);
-  }, [workspace, activeDocument]);
+  }, [workspace, activeDocument, editing]);
+  const editSummary = useMemo(
+    () => sliceEditingSummary(workspace, activeDocument?.id ?? null, focusedSliceId, lookups.entitiesById),
+    [workspace, activeDocument?.id, focusedSliceId, lookups.entitiesById],
+  );
 
   const { mainSelection } = selections;
   const matchedEntity = useMemo(
@@ -95,6 +101,17 @@ export function App() {
   );
   const dialogSliceCount = workspace?.entitySlices.filter((link) => link.entityId === dialogEntityId).length ?? 0;
   const modalOpen = everslice.isOpen || dialogEntity !== null;
+
+  useGlobalShortcuts({
+    toggleHighlights: actions.toggleHighlights,
+    toggleSlices: actions.toggleSlices,
+    toggleEditingSlices: sliceEditing.toggleEditing,
+    escape: () => {
+      if (!editing || modalOpen) return false;
+      sliceEditing.finishEditing();
+      return true;
+    },
+  });
 
   const handleMainSnapshotChange = useCallback(
     (snapshot: HarnessEditorSnapshot, transaction: SerializedTransactionBundle | null) => {
@@ -116,7 +133,7 @@ export function App() {
     setDialogEntityId(entityId);
   }, [clearHoverState]);
 
-  const { openSlice } = sliceNavigation;
+  const { openSlice } = sliceEditing;
   const openSliceFromHover = useCallback((sliceId: string) => {
     clearHoverState();
     openSlice(sliceId);
@@ -131,8 +148,10 @@ export function App() {
         onSaveDocumentMeta={() => actions.saveDocumentMeta()}
         highlightsEnabled={layout?.highlightsEnabled ?? false}
         slicesVisible={layout?.slicesVisible ?? false}
+        editingSlices={editing}
         onToggleHighlights={actions.toggleHighlights}
         onToggleSlices={actions.toggleSlices}
+        onToggleEditingSlices={sliceEditing.toggleEditing}
         pendingWrites={pendingWrites}
         saveError={saveError}
       />
@@ -168,9 +187,21 @@ export function App() {
           matchingRules={matchingRules}
           sliceBoundaries={sliceBoundaries}
           pendingRange={everslice.frozenPendingRange}
+          editing={editing}
+          focusedSliceId={focusedSliceId}
+          editBar={(
+            <SliceEditBar
+              summary={editSummary}
+              onRemoveSlice={actions.deleteSlice}
+              onPlaceSlice={boundaryActions.placeSlice}
+              onDone={sliceEditing.finishEditing}
+            />
+          )}
           onSnapshotChange={handleMainSnapshotChange}
           onSelectionChange={selections.setMainSelection}
           onEntityHover={hover.handleEditorHover}
+          onBoundaryChange={boundaryActions.moveBoundary}
+          onSliceFocus={sliceEditing.focusSlice}
         />
       </main>
 

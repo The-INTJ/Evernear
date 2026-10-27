@@ -45,7 +45,10 @@ export function EntityDialog({ entity, rules, sliceCount, onSave, onDelete, onCl
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === "Escape") {
+      // Stop here: the window-level Esc (leave slice editing) must not
+      // also fire for the key that closed this dialog.
       event.preventDefault();
+      event.stopPropagation();
       onClose();
     } else if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
       event.preventDefault();
