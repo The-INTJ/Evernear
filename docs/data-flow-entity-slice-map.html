@@ -173,13 +173,13 @@ h1 { margin: 0; font-size: clamp(2rem, 5vw, 4.2rem); line-height: 0.98; letter-s
 <div class="flow-step"><strong>2. Append history</strong><span>Document steps and optional checkpoint are written before projection update.</span></div>
 <div class="flow-step"><strong>3. Update projection</strong><span>Document currentVersion, contentJson, plainText, and metrics move forward.</span></div>
 <div class="flow-step"><strong>4. Remap boundaries</strong><span>Mapping moves SliceBoundary TextAnchors through the same step set.</span></div>
-<div class="flow-step"><strong>5. Surface result</strong><span>resolved/repaired/ambiguous/invalid controls preview and repair UX.</span></div>
+<div class="flow-step"><strong>5. Surface result</strong><span>resolved/repaired/ambiguous/invalid controls preview and repair UX; lost slices can be placed again in Edit slices.</span></div>
 </div>
 <table class="dense-table"><thead><tr><th>Resolution</th><th>Meaning</th><th>Required behavior</th></tr></thead><tbody>
 <tr><td><span class="badge">resolved</span></td><td>Mapping preserved the range confidently.</td><td>Preview and decoration can render normally.</td></tr>
 <tr><td><span class="badge">repaired</span></td><td>Exact text plus context recovered the range.</td><td>Render with visible confidence if needed.</td></tr>
 <tr><td><span class="badge">ambiguous</span></td><td>Several plausible ranges exist.</td><td>Fail closed; never pick one silently.</td></tr>
-<tr><td><span class="badge">invalid</span></td><td>Range collapsed, deleted, or cannot be found.</td><td>Surface repair state; do not preview wrong content.</td></tr>
+<tr><td><span class="badge">invalid</span></td><td>Range collapsed, deleted, or cannot be found.</td><td>Surface repair state; do not preview wrong content. Positions are never mapped again (ADR-009).</td></tr>
 </tbody></table>
 </div>
 </section><!-- /edit-repair-flow -->
